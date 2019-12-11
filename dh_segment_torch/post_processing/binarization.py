@@ -3,7 +3,7 @@ import cv2
 from scipy.ndimage import label
 
 
-def thresholding(probs: np.ndarray, threshold: float=-1) -> np.ndarray:
+def thresholding(probs: np.ndarray, threshold: float = -1) -> np.ndarray:
     """
     Computes the binary mask of the detected Page from the probabilities output by network.
 
@@ -14,7 +14,7 @@ def thresholding(probs: np.ndarray, threshold: float=-1) -> np.ndarray:
 
     if threshold < 0:  # Otsu's thresholding
         probs = np.uint8(probs * 255)
-        #TODO Correct that weird gaussianBlur
+        # TODO Correct that weird gaussianBlur
         probs = cv2.GaussianBlur(probs, (5, 5), 0)
 
         thresh_val, bin_img = cv2.threshold(probs, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -25,7 +25,7 @@ def thresholding(probs: np.ndarray, threshold: float=-1) -> np.ndarray:
     return mask
 
 
-def cleaning_binary(mask: np.ndarray, kernel_size: int=5) -> np.ndarray:
+def cleaning_binary(mask: np.ndarray, kernel_size: int = 5) -> np.ndarray:
     """
     Uses mathematical morphology to clean and remove small elements from binary images.
 
@@ -42,7 +42,7 @@ def cleaning_binary(mask: np.ndarray, kernel_size: int=5) -> np.ndarray:
 
 
 def hysteresis_thresholding(probs: np.array, low_threshold: float, high_threshold: float,
-                            candidates_mask: np.ndarray=None) -> np.ndarray:
+                            candidates_mask: np.ndarray = None) -> np.ndarray:
     low_mask = probs > low_threshold
     if candidates_mask is not None:
         low_mask = candidates_mask & low_mask
@@ -58,8 +58,8 @@ def hysteresis_thresholding(probs: np.array, low_threshold: float, high_threshol
 def cleaning_probs(probs: np.ndarray, sigma: float) -> np.ndarray:
     # Smooth
     if sigma > 0.:
-        return cv2.GaussianBlur(probs, (int(3*sigma)*2+1, int(3*sigma)*2+1), sigma)
+        return cv2.GaussianBlur(probs, (int(3 * sigma) * 2 + 1, int(3 * sigma) * 2 + 1), sigma)
     elif sigma == 0.:
-        return cv2.fastNlMeansDenoising((probs*255).astype(np.uint8), h=20)/255
+        return cv2.fastNlMeansDenoising((probs * 255).astype(np.uint8), h=20) / 255
     else:  # Negative sigma, do not do anything
         return probs

@@ -6,7 +6,7 @@ import math
 from shapely import geometry
 
 
-def find_polygonal_regions(image_mask: np.ndarray, min_area: float=0.1, n_max_polygons: int=math.inf) -> list:
+def find_polygonal_regions(image_mask: np.ndarray, min_area: float = 0.1, n_max_polygons: int = math.inf) -> list:
     """
     Finds the shapes in a binary mask and returns their coordinates as polygons.
 
@@ -29,7 +29,7 @@ def find_polygonal_regions(image_mask: np.ndarray, min_area: float=0.1, n_max_po
             continue
         polygon = geometry.Polygon([point[0] for point in c])
         # Check that polygon has area greater than minimal area
-        if polygon.area >= min_area*np.prod(image_mask.shape[:2]):
+        if polygon.area >= min_area * np.prod(image_mask.shape[:2]):
             found_polygons.append(
                 (np.array([point for point in polygon.exterior.coords], dtype=np.uint), polygon.area)
             )

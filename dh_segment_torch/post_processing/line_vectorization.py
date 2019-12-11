@@ -46,7 +46,8 @@ def find_lines(lines_mask: np.ndarray) -> list:
     if np.sum(lines_mask) == 0:
         return []
     # Find extremities points
-    end_points_candidates = np.stack(np.where((convolve2d(lines_mask, np.ones((3, 3)), mode='same') == 2) & lines_mask)).T
+    end_points_candidates = np.stack(
+        np.where((convolve2d(lines_mask, np.ones((3, 3)), mode='same') == 2) & lines_mask)).T
     connected_components = skimage_label(lines_mask, connectivity=2)
     # Group endpoint by connected components and keep only the two points furthest away
     d = defaultdict(list)

@@ -5,8 +5,8 @@ from shapely import geometry
 from scipy.spatial import KDTree
 
 
-def find_boxes(boxes_mask: np.ndarray, mode: str= 'min_rectangle', min_area: float=0.2,
-               p_arc_length: float=0.01, n_max_boxes=math.inf) -> list:
+def find_boxes(boxes_mask: np.ndarray, mode: str = 'min_rectangle', min_area: float = 0.2,
+               p_arc_length: float = 0.01, n_max_boxes=math.inf) -> list:
     """
     Finds the coordinates of the box in the binary image `boxes_mask`.
 
@@ -41,7 +41,6 @@ def find_boxes(boxes_mask: np.ndarray, mode: str= 'min_rectangle', min_area: flo
         """
         polygon = geometry.Polygon([point for point in box])
         if polygon.area > min_area * boxes_mask.size:
-
             # Correct out of range corners
             box = np.maximum(box, 0)
             box = np.stack((np.minimum(box[:, 0], boxes_mask.shape[1]),
@@ -74,7 +73,7 @@ def find_boxes(boxes_mask: np.ndarray, mode: str= 'min_rectangle', min_area: flo
             elif len(hull_points) == 4:
                 box = hull_points[:, 0, :]
             else:
-                    continue
+                continue
             # Todo : test if it looks like a rectangle (2 sides must be more or less parallel)
             # todo : (otherwise we may end with strange quadrilaterals)
             if len(box) != 4:
