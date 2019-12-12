@@ -169,9 +169,10 @@ class TrainingParams(BaseParams):
     :vartype data_augmentation_flip_ud: bool
     :ivar data_augmentation_color: option to use data augmentation with color
     :vartype data_augmentation_color: bool
-    :ivar data_augmentation_max_rotation: maximum angle of rotation (in radians) for data augmentation
+    :ivar data_augmentation_max_rotation: maximum angle of rotation (in degrees) for data augmentation
     :vartype data_augmentation_max_rotation: float
-    :ivar data_augmentation_max_scaling: maximum scale of zooming during data augmentation (range: [0,1])
+    :ivar data_augmentation_max_scaling: maximum scale of zooming during data augmentation (range: ]0,inf]).
+    A value smaller than 1 means downscaling, a value greater than 1 means upscaling, 1 means no scaling
     :vartype data_augmentation_max_scaling: float
     :ivar make_patches: option to crop image into patches. This will cut the entire image in several patches
     :vartype make_patches: bool
@@ -202,7 +203,7 @@ class TrainingParams(BaseParams):
         self.data_augmentation_flip_lr = kwargs.get('data_augmentation_flip_lr', False)
         self.data_augmentation_flip_ud = kwargs.get('data_augmentation_flip_ud', False)
         self.data_augmentation_color = kwargs.get('data_augmentation_color', False)
-        self.data_augmentation_max_rotation = kwargs.get('data_augmentation_max_rotation', 0.2)
+        self.data_augmentation_max_rotation = kwargs.get('data_augmentation_max_rotation', 10)
         self.data_augmentation_max_scaling = kwargs.get('data_augmentation_max_scaling', 0.05)
         self.make_patches = kwargs.get('make_patches', True)
         self.patch_shape = kwargs.get('patch_shape', (300, 300))
@@ -214,7 +215,13 @@ class TrainingParams(BaseParams):
         self.local_entropy_sigma = kwargs.get('local_entropy_sigma', 3)
         self.focal_loss_gamma = kwargs.get('focal_loss_gamma', 0.)
 
+        self.maximum_input_size = 1e9
+        self.minimum_input_size = 1e4
+
     def check_params(self) -> None:
         """Checks if there is no parameter inconsistency
         """
         assert self.training_margin*2 < min(self.patch_shape)
+        assert 0 <= self.data_augmentation_max_scaling <= 1.0
+        # todo: check minimum size and maximum size of image
+        # todo: check patch shape >= h x w

@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-__author__ = "solivr"
-__license__ = "GPL"
-
 import cv2
 import math
+from PIL import Image
+import numpy as np
+from typing import Tuple
 import torch
 from torchvision import transforms
 from ..utils.params_config import TrainingParams
 
 
-class LoadSample(object):
+class SampleLoad(object):
     """
     todo: doc
     """
@@ -24,7 +24,8 @@ class LoadSample(object):
         label_image = cv2.imread(label_filename)
         label_image = cv2.cvtColor(label_image, cv2.COLOR_BGR2RGB)
 
-        return {'image': image, 'label': label_image}
+        sample.update({'image': image, 'label': label_image, 'shape': image.shape[:2]})
+        return sample
 
 
 class CustomResize(object):
@@ -56,7 +57,8 @@ class CustomResize(object):
         resized_image = cv2.resize(image, dsize=[new_width, new_height], interpolation=cv2.INTER_LINEAR)
         resized_label = cv2.resize(label_image, dsize=[new_width, new_height], interpolation=cv2.INTER_NEAREST)
 
-        return {'image': resized_image, 'label': resized_label}
+        sample.update({'image': resized_image, 'label': resized_label, 'shape': resized_image.shape[:2]})
+        return sample
 
 
 class SampleColorJitter(transforms.ColorJitter):
@@ -74,7 +76,8 @@ class SampleColorJitter(transforms.ColorJitter):
 
         transform = self.get_params(self.brightness, self.contrast, self.saturation, self.hue)
 
-        return {'image': transform(image), 'label': label}
+        sample.update({'image': transform(image)})
+        return sample
 
 
 class SampleRandomVerticalFlip(object):
@@ -95,7 +98,8 @@ class SampleRandomVerticalFlip(object):
         image, label = sample['image'], sample['label']
         transform = transforms.RandomVerticalFlip(self.p)
 
-        return {'image': transform(image), 'label': transform(label)}
+        sample.update({'image': transform(image), 'label': transform(label)})
+        return sample
 
 
 class SampleRandomHorizontalFlip(object):
@@ -116,10 +120,54 @@ class SampleRandomHorizontalFlip(object):
         image, label = sample['image'], sample['label']
         transform = transforms.RandomHorizontalFlip(self.p)
 
-        return {'image': transform(image), 'label': transform(label)}
+        sample.update({'image': transform(image), 'label': transform(label)})
+        return sample
 
 
-class ToTensor(object):
+class SampleStandardRandomRotation(transforms.RandomRotation):
+    """
+    todo: doc
+    """
+    def __call__(self,
+                 sample: dict):
+        image, label = sample['image'], sample['label']
+
+        angle = self.get_params(self.degrees)
+
+        rotated_image = transforms.functional.rotate(image, angle, self.resample, self.expand, self.center, self.fill)
+        rotated_label = transforms.functional.rotate(label, angle, Image.NEAREST, self.expand, self.center, self.fill)
+
+        sample.update({'image': rotated_image, 'label': rotated_label, 'shape': rotated_image.shape[:2]})
+        return sample
+
+
+class SampleCroppedRandomRotation(object):
+    """
+    todo: doc
+    """
+    def __init__(self):
+        pass
+
+    def __call__(self,
+                 sample: dict):
+        # todo
+        pass
+
+
+class SamplePatcher(object):
+    """
+    todo: doc
+    """
+    def __init__(self,
+                 patch_shape: Tuple[int]):
+        self.patch_shape = patch_shape
+
+    def __call__(self,
+                 sample: dict):
+        pass
+
+
+class SampleToTensor(object):
     """
     Convert ndarrays to Tensors for sample (image, label).
     """
@@ -130,32 +178,46 @@ class ToTensor(object):
         :param sample:
         :return:
         """
-        image, label = sample['image'], sample['label']
+        image, label, shape = sample['image'], sample['label'], sample['shape']
 
         # swap color axis to C x H x W
         image = image.transpose((2, 0, 1))
+        label = label.transpose((2, 0, 1))
 
-        return {'image': torch.from_numpy(image), 'label': torch.from_numpy(label)}
+        sample.update({'image': torch.from_numpy(image),
+                       'label': torch.from_numpy(label),
+                       'shape': torch.from_numpy(shape)})
+        return sample
 
 
 def make_transforms(parameters: TrainingParams):
+    """
+    todo: doc
+    :param parameters:
+    :return:
+    """
 
     transform_list = list()
 
-    # todo : scaling
     if parameters.data_augmentation_max_scaling > 0:
-        pass
+        scaled_size = parameters.data_augmentation_max_scaling * parameters.input_resized_size
+
+        resized_size = np.maximum(parameters.minimum_input_size, scaled_size)
+        resized_size = np.minimum(parameters.maximum_input_size, resized_size)
+    else:
+        resized_size = parameters.input_resized_size
 
     # resize
-    transform_list.append(CustomResize(parameters.input_resized_size))
+    transform_list.append(CustomResize(resized_size))
 
-    # todo: rotation
+    # todo: cropped rotation
     if parameters.data_augmentation_max_rotation > 0:
-        pass
+        transform_list.append(SampleStandardRandomRotation())
 
     # todo: make patches
     if parameters.make_patches:
-        pass
+        raise NotImplementedError
+        # transform_list.append(SamplePatcher())
 
     if parameters.data_augmentation_flip_lr:
         transform_list.append(transforms.SampleRandomHorizontalFlip())
@@ -167,6 +229,6 @@ def make_transforms(parameters: TrainingParams):
         transform_list.append(SampleColorJitter(brightness=1, contrast=1, saturation=1, hue=0.5))
 
     # to tensor
-    transform_list.append(ToTensor())
+    transform_list.append(SampleToTensor())
 
     return transforms.Compose(transform_list)
