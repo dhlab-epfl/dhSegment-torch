@@ -4,7 +4,8 @@ from torch.utils.data import Dataset
 import pandas as pd
 import os
 from dh_segment.utils.params_config import TrainingParams
-from .transforms import SampleLoad
+from .transforms import SampleLoad, SampleAssignLabel
+from.labels import assign_color_code
 
 
 class InputCSVDataset(Dataset):
@@ -36,8 +37,9 @@ class InputCSVDataset(Dataset):
         transform_load = SampleLoad()
         sample = transform_load(sample)
 
-        # todo: Assign color to class id
-        # call label_image_to_class and multilabel_image_to_class
+        # Assign class id to color
+        transform_assign_label = SampleAssignLabel(classes_file, prediction_type) # todo: pass these params...
+        sample = transform_assign_label(sample)
 
         if self.transform:
             sample = self.transform(sample)

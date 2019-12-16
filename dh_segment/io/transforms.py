@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 import cv2
 import math
+import os
 from PIL import Image
 import numpy as np
 from typing import Tuple
 import torch
 from torchvision import transforms
-from ..utils.params_config import TrainingParams
+from ..utils.params_config import TrainingParams, PredictionType
 
 
 class SampleLoad(object):
@@ -26,6 +27,83 @@ class SampleLoad(object):
 
         sample.update({'image': image, 'label': label_image, 'shape': image.shape[:2]})
         return sample
+
+
+class AssignLabel(object):
+    """
+    todo: doc
+    """
+    def __init__(self,
+                 classes_file: str,
+                 prediction_type: PredictionType):
+        self.classes_file = classes_file
+        self.prediction_type = prediction_type
+
+    def __call__(self,
+                 image: np.ndarray):
+        assert len(image.shape) == 3, "Image must have [H, W, C] dimensions"
+
+        if self.prediction_type == PredictionType.CLASSIFICATION:
+            return self._assign_color_code_classification(image)
+        elif self.prediction_type == PredictionType.MULTILABEL:
+            return self._assign_color_code_multilabel(image)
+        else:
+            raise NotImplementedError
+
+    def _assign_color_code_classification(self,
+                                          image: np.ndarray) -> np.ndarray:
+        classes_color_values, _ = self._get_classes_from_file()
+
+        # Convert label_image [H,W,3] to the classes [H,W],int32 according to the classes [C,3]
+        diff = image[:, :, None, :] - classes_color_values[None, None, :, :]  # [H,W,C,3]
+
+        pixel_class_diff = np.sum(np.square(diff), axis=-1)  # [H,W,C]
+        label_image = np.argmin(pixel_class_diff, axis=-1)  # [H,W]
+        return label_image
+
+    def _assign_color_code_multilabel(self,
+                                      image: np.ndarray) -> np.ndarray:
+
+        classes_color_values, colors_labels = self._get_classes_from_file()
+
+        # Convert label_image [H,W,3] to the classes [H,W,C],int32 according to the classes [C,3]
+        if len(image.shape) == 3:
+            diff = image[:, :, None, :] - classes_color_values[None, None, :, :]  # [H,W,C,3]
+        else:
+            raise NotImplementedError('Length is : {}'.format(len(image.shape)))
+
+        pixel_class_diff = np.sum(np.square(diff), axis=-1)  # [H,W,C]
+        class_label = np.argmin(pixel_class_diff, axis=-1)  # [H,W]
+
+        return np.take(colors_labels, class_label, axis=0) > 0
+
+    def _get_classes_from_file(self) -> Tuple[np.ndarray, np.ndarray]:
+        if not os.path.exists(self.classes_file):
+            raise FileNotFoundError(self.classes_file)
+
+        content = np.loadtxt(self.classes_file).astype(np.float32)
+
+        if self.prediction_type == PredictionType.CLASSIFICATION:
+            assert content.shape[1] == 3, "Color file should represent RGB values"
+            return content, None
+        elif self.prediction_type == PredictionType.MULTILABEL:
+            assert content.shape[1] > 3, "The number of columns should be greater in multilabel framework"
+            colors = content[:, :3]
+            labels = content[:, 3:]
+            return colors, labels.astype(np.int32)
+
+
+class SampleAssignLabel(AssignLabel):
+    """
+    todo: doc
+    """
+
+    def __call__(self,
+                 sample: dict):
+        label = sample['label']
+        label = super()(label)
+
+        return sample.update({'label': label})
 
 
 class CustomResize(object):
@@ -72,7 +150,7 @@ class SampleColorJitter(transforms.ColorJitter):
         :param sample:
         :return:
         """
-        image, label = sample['image'], sample['label']
+        image = sample['image']
 
         transform = self.get_params(self.brightness, self.contrast, self.saturation, self.hue)
 
