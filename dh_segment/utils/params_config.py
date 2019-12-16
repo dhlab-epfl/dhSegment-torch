@@ -11,19 +11,15 @@ class PredictionType:
     """
 
     :cvar CLASSIFICATION:
-    :cvar REGRESSION:
     :cvar MULTILABEL:
     """
     CLASSIFICATION = 'CLASSIFICATION'
-    REGRESSION = 'REGRESSION'
     MULTILABEL = 'MULTILABEL'
 
     @classmethod
     def parse(cls, prediction_type):
         if prediction_type == 'CLASSIFICATION':
             return PredictionType.CLASSIFICATION
-        elif prediction_type == 'REGRESSION':
-            return PredictionType.REGRESSION
         elif prediction_type == 'MULTILABEL':
             return PredictionType.MULTILABEL
         else:
@@ -218,10 +214,25 @@ class TrainingParams(BaseParams):
         self.maximum_input_size = 1e9
         self.minimum_input_size = 1e4
 
+        self.check_params()
+
     def check_params(self) -> None:
         """Checks if there is no parameter inconsistency
         """
         assert self.training_margin*2 < min(self.patch_shape)
-        assert 0 <= self.data_augmentation_max_scaling <= 1.0
-        # todo: check minimum size and maximum size of image
+        # todo: check minimum size and maximum size of image (taking into account scaling)
         # todo: check patch shape >= h x w
+
+        if not self.data_augmentation:
+            print('Data augmentation is disabled. All augmentation parameters will be disabled.')
+            self.data_augmentation_flip_lr = False
+            self.data_augmentation_flip_ud = False
+            self.data_augmentation_color = False
+            self.data_augmentation_max_rotation = 0
+            self.data_augmentation_max_scaling = 0
+        else:
+            # Todo: maybe check here that parameters are in acceptable range ?
+            assert 0 <= self.data_augmentation_max_scaling <= 1.0
+
+
+
