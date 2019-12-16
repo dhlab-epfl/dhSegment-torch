@@ -167,8 +167,8 @@ class TrainingParams(BaseParams):
     :vartype data_augmentation_color: bool
     :ivar data_augmentation_max_rotation: maximum angle of rotation (in degrees) for data augmentation
     :vartype data_augmentation_max_rotation: float
-    :ivar data_augmentation_max_scaling: maximum scale of zooming during data augmentation (range: ]0,inf]).
-    A value smaller than 1 means downscaling, a value greater than 1 means upscaling, 1 means no scaling
+    :ivar data_augmentation_max_scaling: maximum factor of zooming during data augmentation (range: ]1,inf]).
+    It creates a range [size/scale; size*scale].
     :vartype data_augmentation_max_scaling: float
     :ivar make_patches: option to crop image into patches. This will cut the entire image in several patches
     :vartype make_patches: bool
@@ -200,7 +200,7 @@ class TrainingParams(BaseParams):
         self.data_augmentation_flip_ud = kwargs.get('data_augmentation_flip_ud', False)
         self.data_augmentation_color = kwargs.get('data_augmentation_color', False)
         self.data_augmentation_max_rotation = kwargs.get('data_augmentation_max_rotation', 10)
-        self.data_augmentation_max_scaling = kwargs.get('data_augmentation_max_scaling', 0.05)
+        self.data_augmentation_max_scaling = kwargs.get('data_augmentation_max_scaling', 1.5)
         self.make_patches = kwargs.get('make_patches', True)
         self.patch_shape = kwargs.get('patch_shape', (300, 300))
         self.input_resized_size = int(kwargs.get('input_resized_size', 72e4))  # (600*1200)
@@ -220,19 +220,25 @@ class TrainingParams(BaseParams):
         """Checks if there is no parameter inconsistency
         """
         assert self.training_margin*2 < min(self.patch_shape)
-        # todo: check minimum size and maximum size of image (taking into account scaling)
         # todo: check patch shape >= h x w
 
+        # Check min and max size of image
+        assert int(self.input_resized_size / self.data_augmentation_max_scaling) >= self.minimum_input_size, \
+            "Scaling factor exceeds minimum image size"
+        assert int(self.input_resized_size * self.data_augmentation_max_scaling) <= self.maximum_input_size, \
+            "Scaling factor exceeds maximum image size"
+
+        # Check data augmentation params
         if not self.data_augmentation:
             print('Data augmentation is disabled. All augmentation parameters will be disabled.')
             self.data_augmentation_flip_lr = False
             self.data_augmentation_flip_ud = False
             self.data_augmentation_color = False
             self.data_augmentation_max_rotation = 0
-            self.data_augmentation_max_scaling = 0
+            self.data_augmentation_max_scaling = 1.0
         else:
             # Todo: maybe check here that parameters are in acceptable range ?
-            assert 0 <= self.data_augmentation_max_scaling <= 1.0
+            assert self.data_augmentation_max_scaling >= 1.0, "Scaling factor should be greater or equal to 1.0"
 
 
 

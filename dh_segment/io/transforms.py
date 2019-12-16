@@ -139,6 +139,16 @@ class CustomResize(object):
         return sample
 
 
+class RandomResize(CustomResize):
+
+    def __init__(self,
+                 scaling: float,
+                 output_size: int):
+        super().__init__(output_size)
+        range = [int(self.output_size / scaling), int(self.output_size * scaling)]
+        self.output_size = np.random.randint(low=range[0], high=range[1])
+
+
 class SampleColorJitter(transforms.ColorJitter):
     """
     Wrapper for ``transforms.ColorJitter`` to use sample {image, label} as input and output
@@ -277,16 +287,12 @@ def make_transforms(parameters: TrainingParams):
 
     transform_list = list()
 
-    if parameters.data_augmentation_max_scaling > 0:
-        scaled_size = parameters.data_augmentation_max_scaling * parameters.input_resized_size
-
-        resized_size = np.maximum(parameters.minimum_input_size, scaled_size)
-        resized_size = np.minimum(parameters.maximum_input_size, resized_size)
-    else:
-        resized_size = parameters.input_resized_size
-
     # resize
-    transform_list.append(CustomResize(resized_size))
+    if parameters.data_augmentation_max_scaling > 1.0:
+        transform_list.append(RandomResize(parameters.data_augmentation_max_scaling,
+                                           parameters.input_resized_size))
+    else:
+        transform_list.append(CustomResize(parameters.input_resized_size))
 
     # todo: cropped rotation
     if parameters.data_augmentation_max_rotation > 0:
