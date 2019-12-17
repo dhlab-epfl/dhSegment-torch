@@ -61,7 +61,8 @@ class AssignLabelMultilabel(object):
 
 class CustomResize(object):
     """
-    Resize according to number of pixels and keeps the same ratio for sample (image, label)
+    Resize according to number of pixels and keeps the same ratio for sample (image, label).
+    Needs numpy array as input.
     """
     def __init__(self,
                  output_size: int):
@@ -93,7 +94,9 @@ class CustomResize(object):
 
 
 class RandomResize(CustomResize):
-
+    """
+    todo: doc
+    """
     def __init__(self,
                  scaling: float,
                  output_size: int):
@@ -108,7 +111,8 @@ class RandomResize(CustomResize):
 
 class SampleColorJitter(transforms.ColorJitter):
     """
-    Wrapper for ``transforms.ColorJitter`` to use sample {image, label} as input and output
+    Wrapper for ``transforms.ColorJitter`` to use sample {image, label} as input and output.
+    Needs PIL Images as input.
     """
     def __call__(self,
                  sample: dict):
@@ -127,7 +131,8 @@ class SampleColorJitter(transforms.ColorJitter):
 
 class SampleRandomVerticalFlip(object):
     """
-    Wrapper for ``transforms.RandomVerticalFlip`` to use sample {image, label} as input and output
+    Wrapper for ``transforms.RandomVerticalFlip`` to use sample {image, label} as input and output.
+    Needs PIL Images as input.
     """
     def __init__(self,
                  p: float = 0.5):
@@ -135,11 +140,6 @@ class SampleRandomVerticalFlip(object):
 
     def __call__(self,
                  sample: dict):
-        """
-        todo: doc
-        :param sample:
-        :return:
-        """
         image, label = sample['image'], sample['label']
         transform = transforms.RandomVerticalFlip(self.p)
 
@@ -149,7 +149,8 @@ class SampleRandomVerticalFlip(object):
 
 class SampleRandomHorizontalFlip(object):
     """
-    Wrapper for ``transforms.RandomVerticalFlip`` to use sample {image, label} as input and output
+    Wrapper for ``transforms.RandomVerticalFlip`` to use sample {image, label} as input and output.
+    Needs PIL Images as input.
     """
     def __init__(self,
                  p: float = 0.5):
@@ -157,11 +158,6 @@ class SampleRandomHorizontalFlip(object):
 
     def __call__(self,
                  sample: dict):
-        """
-        todo: doc
-        :param sample:
-        :return:
-        """
         image, label = sample['image'], sample['label']
         transform = transforms.RandomHorizontalFlip(self.p)
 
@@ -172,6 +168,7 @@ class SampleRandomHorizontalFlip(object):
 class SampleRandomRotation(object):
     """
     todo: doc
+    Needs numpy array as input.
     """
     def __init__(self,
                  max_angle: int,
@@ -227,7 +224,6 @@ class SampleRandomRotation(object):
     @staticmethod
     def crop(image: np.ndarray,
              border: Tuple[int, int]):
-
         rows, columns = image.shape[:2]
         if (border[0] < rows - border[0]) and (border[1] < columns - border[1]):
             return image[border[0]: rows - border[0], border[1]:columns - border[1], :]
@@ -239,6 +235,7 @@ class SampleRandomRotation(object):
 class SamplePatcher(object):
     """
     todo: doc
+    Needs numpy array as input.
     """
     def __init__(self,
                  patch_shape: Tuple[int]):
@@ -251,20 +248,41 @@ class SamplePatcher(object):
 
 class SampleToTensor(object):
     """
-    Convert ndarrays to Tensors for sample (image, label).
+    Convert ndarrays to Tensors for sample {image, label, shape}.
     """
     def __call__(self,
                  sample: dict):
-        """
-
-        :param sample:
-        :return:
-        """
         image, label, shape = sample['image'], sample['label'], sample['shape']
 
         sample.update({'image': F.to_tensor(image),
                        'label': torch.from_numpy(label),
                        'shape': torch.tensor(shape)})
+        return sample
+
+
+class SampleNumpyToPIL(object):
+    """
+    Convert numpy array image to PIL image
+    """
+    def __call__(self,
+                 sample: dict):
+        image, label = sample['image'], sample['label']
+
+        sample.update({'image': Image.fromarray(image),
+                       'label': Image.fromarray(label)})
+        return sample
+
+
+class SamplePILToNumpy(object):
+    """
+    Convert a PIL image to a numpy array
+    """
+    def __call__(self,
+                 sample: dict):
+        image, label = sample['image'], sample['label']
+
+        sample.update(({'image': np.array(image),
+                        'label': np.array(label)}))
         return sample
 
 
@@ -290,19 +308,23 @@ def make_transforms(parameters: DataParams):
         transform_list.append(SampleRandomRotation(max_angle=parameters.data_augmentation_max_rotation,
                                                    do_crop=False))
 
-    # todo: make patches
     if parameters.make_patches:
         raise NotImplementedError
+        # todo
         # transform_list.append(SamplePatcher())
 
+    transform_list.append(SampleNumpyToPIL())
+
     if parameters.data_augmentation_flip_lr:
-        transform_list.append(transforms.SampleRandomHorizontalFlip()) # todo: this needs PIL image
+        transform_list.append(SampleRandomHorizontalFlip())
 
     if parameters.data_augmentation_flip_ud:
-        transform_list.append(transforms.SampleRandomVerticalFlip()) # todo: this needs PIL image
+        transform_list.append(SampleRandomVerticalFlip())
 
     if parameters.data_augmentation_color:
-        transform_list.append(SampleColorJitter(brightness=1, contrast=1, saturation=1, hue=0.5)) # todo: this needs PIL image
+        transform_list.append(SampleColorJitter(brightness=1, contrast=1, saturation=1, hue=0.5))
+
+    transform_list.append(SamplePILToNumpy())
 
     # Assign class id to color
     # Attention: this should be the last operation before ToTensor transform
