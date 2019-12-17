@@ -11,8 +11,7 @@ class SegmentationModel(nn.Module):
         self.decoder = decoder
 
     def forward(self, x):
-        feature_maps = self.encoder(x)
-        network_output = self.decoder(*feature_maps)
-
+        features_maps = self.encoder(x)
+        network_output = self.decoder(*features_maps)
         return network_output
 
