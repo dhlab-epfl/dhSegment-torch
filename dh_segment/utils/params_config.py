@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-__author__ = "solivr"
-__license__ = "GPL"
-
 import os
 import numpy as np
 import warnings
@@ -258,8 +255,8 @@ class DataParams(BaseParams):
         self.patch_shape = kwargs.get('patch_shape', (300, 300))
 
         self.data_augmentation = kwargs.get('data_augmentation', False)
-        self.data_augmentation_flip_lr = kwargs.get('data_augmentation_flip_lr', False)
-        self.data_augmentation_flip_ud = kwargs.get('data_augmentation_flip_ud', False)
+        self.data_augmentation_horizontal_flip = kwargs.get('data_augmentation_flip_lr', False)
+        self.data_augmentation_vertical_flip = kwargs.get('data_augmentation_flip_ud', False)
         self.data_augmentation_color = kwargs.get('data_augmentation_color', False)
         self.data_augmentation_max_rotation = kwargs.get('data_augmentation_max_rotation', 10)
         self.data_augmentation_max_scaling = kwargs.get('data_augmentation_max_scaling', 1.5)
@@ -293,8 +290,8 @@ class DataParams(BaseParams):
         # Check data augmentation params
         if not self.data_augmentation:
             logging.info('Data augmentation is disabled. All augmentation parameters will be disabled.')
-            self.data_augmentation_flip_lr = False
-            self.data_augmentation_flip_ud = False
+            self.data_augmentation_horizontal_flip = False
+            self.data_augmentation_vertical_flip = False
             self.data_augmentation_color = False
             self.data_augmentation_max_rotation = 0
             self.data_augmentation_max_scaling = 1.0
