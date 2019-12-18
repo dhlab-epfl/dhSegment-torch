@@ -13,7 +13,10 @@ from ..utils.params_config import DataParams, PredictionType
 
 class AssignLabelClassification(object):
     """
-    todo: doc
+    Converts the RGB image to a HxW image with the corresponding class label for each pixel.
+
+    :ivar color_array: the list of possible color codes with shape N x 3, with N the number of possible color codes.
+    :vartype color_array: np.ndarray
     """
     def __init__(self,
                  colors_array: np.ndarray):
@@ -34,13 +37,19 @@ class AssignLabelClassification(object):
 
 class AssignLabelMultilabel(object):
     """
-    todo: doc
+    Converts the RGB image to a HxWxC image with onehot encoding in C dimension.
+
+    :ivar color_array: the list of possible color codes with shape N x 3, with N the number of possible color codes.
+    :vartype color_array: np.ndarray
+    :ivar code_array: list of onehot encoded labels with shape N x C, with C
+    the number of classes and N the number of possible color codes.
+    :vartype code_array: np.ndarray
     """
     def __init__(self,
                  colors_array: np.ndarray,
-                 code_array: np.ndarray):
+                 onehot_label_array: np.ndarray):
         self.colors_array = colors_array
-        self.codes_array = code_array
+        self.onehot_label_array = onehot_label_array
 
     def __call__(self,
                  sample: dict):
@@ -55,7 +64,7 @@ class AssignLabelMultilabel(object):
         pixel_class_diff = np.sum(np.square(diff), axis=-1)  # [H,W,C]
         label_image = np.argmin(pixel_class_diff, axis=-1)  # [H,W]
 
-        label_image = np.take(self.codes_array, label_image, axis=0) > 0  # [H, W, C]
+        label_image = np.take(self.onehot_label_array, label_image, axis=0) > 0  # [H, W, C]
         return label_image.transpose((2, 0, 1)) # [C, H, W]
 
 
@@ -63,6 +72,9 @@ class CustomResize(object):
     """
     Resize according to number of pixels and keeps the same ratio for sample (image, label).
     Needs numpy array as input.
+
+    :ivar output_size: the size of the output image (in pixels)
+    :vartype output_size: int
     """
     def __init__(self,
                  output_size: int):
@@ -95,7 +107,13 @@ class CustomResize(object):
 
 class RandomResize(CustomResize):
     """
-    todo: doc
+    Resizes the image using a random size (in pixels) keeping the original image ratio.
+
+    :ivar scaling: scaling factor corresponding to the zoom in or zoom out. A scaling value of 2 means
+    having a range of new size of [input_size/2, input_size*2]
+    :vartpe scaling: float
+    :ivar output_size: size of the output image (in pixels)
+    :vartype output_size: int
     """
     def __init__(self,
                  scaling: float,
@@ -116,11 +134,6 @@ class SampleColorJitter(transforms.ColorJitter):
     """
     def __call__(self,
                  sample: dict):
-        """
-        todo: doc
-        :param sample:
-        :return:
-        """
         image = sample['image']
 
         transform = self.get_params(self.brightness, self.contrast, self.saturation, self.hue)
@@ -133,6 +146,9 @@ class SampleRandomVerticalFlip(object):
     """
     Wrapper for ``transforms.RandomVerticalFlip`` to use sample {image, label} as input and output.
     Needs PIL Images as input.
+
+    :ivar p: probability of vertival flip
+    :vartype p: float
     """
     def __init__(self,
                  p: float = 0.5):
@@ -151,6 +167,9 @@ class SampleRandomHorizontalFlip(object):
     """
     Wrapper for ``transforms.RandomVerticalFlip`` to use sample {image, label} as input and output.
     Needs PIL Images as input.
+
+    :ivar p: probability of horizontal flip
+    :vartype p: float
     """
     def __init__(self,
                  p: float = 0.5):
@@ -167,8 +186,14 @@ class SampleRandomHorizontalFlip(object):
 
 class SampleRandomRotation(object):
     """
-    todo: doc
+    Rotates the ``image`` and ``label`` with a random angle. if ``do_crop`` is set to True,
+    the black borders resulting from the rotation are cropped and the size of the image ``shape`` is updated.
     Needs numpy array as input.
+
+    :ivar max_angle: maximum angle of rotation (the range will be between [-angle, angle])
+    :vartype max_angle: int
+    :ivar do_crop: wether to crop the black borders or not
+    :vartype do_crop: bool
     """
     def __init__(self,
                  max_angle: int,
@@ -286,11 +311,12 @@ class SamplePILToNumpy(object):
         return sample
 
 
-def make_transforms(parameters: DataParams):
+def make_transforms(parameters: DataParams) -> transforms.Compose:
     """
-    todo: doc
-    :param parameters:
-    :return:
+    Create the transforms and concatenates them to form a list of transforms to apply to the ``sample`` dictionary.
+
+    :param parameters: data parameters to generate the transforms
+    :return: a list of transforms to apply wrapped in transform Compose
     """
 
     transform_list = list()
@@ -315,10 +341,10 @@ def make_transforms(parameters: DataParams):
 
     transform_list.append(SampleNumpyToPIL())
 
-    if parameters.data_augmentation_flip_lr:
+    if parameters.data_augmentation_horizontal_flip:
         transform_list.append(SampleRandomHorizontalFlip())
 
-    if parameters.data_augmentation_flip_ud:
+    if parameters.data_augmentation_vertical_flip:
         transform_list.append(SampleRandomVerticalFlip())
 
     if parameters.data_augmentation_color:
@@ -326,7 +352,6 @@ def make_transforms(parameters: DataParams):
 
     transform_list.append(SamplePILToNumpy())
 
-    # Assign class id to color
     # Attention: this should be the last operation before ToTensor transform
     if parameters.prediction_type == PredictionType.CLASSIFICATION:
         transform_list.append(AssignLabelClassification(parameters.color_codes))
