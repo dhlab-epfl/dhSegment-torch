@@ -1,3 +1,7 @@
+import os
+
+import torch
+
 class BaseParams:
     def to_dict(self):
         return self.__dict__
@@ -14,6 +18,29 @@ class BaseParams:
 
     def check_params(self):
         pass
+
+
+class ModelParams(BaseParams):
+    def __init__(self, **kwargs):
+        self.encoder_network = kwargs.get('encoder_network', 'dh_segment_torch.network.encoder.Resnet50Encoder')
+        self.encoder_params = kwargs.get('encoder_params', dict())
+        self.decoder_network = kwargs.get('decoder_network', 'dh_segment_torch.network.decoder.UnetDecoder')
+        self.decoder_params = kwargs.get('decoder_params', {'decoder_channels': [512, 256, 128, 64, 32]})
+
+
+    def check_params(self):
+        pass
+
+
+class DataParams(BaseParams):
+    def __init__(self, **kwargs):
+        self.n_classes = kwargs.get('n_classes', None)
+        self.color_codes = kwargs.get('color_codes', None)
+        pass
+
+    def check_params(self):
+        pass
+
 
 class TrainingParams(BaseParams):
     """Parameters to configure training process
@@ -65,6 +92,7 @@ class TrainingParams(BaseParams):
         self.learning_rate = kwargs.get('learning_rate', 1e-5)
         self.exponential_learning = kwargs.get('exponential_learning', True)
         self.batch_size = kwargs.get('batch_size', 5)
+        self.accumulation_steps = kwargs.get('accumulation_steps', 1)
         self.data_augmentation = kwargs.get('data_augmentation', False)
         self.data_augmentation_flip_lr = kwargs.get('data_augmentation_flip_lr', False)
         self.data_augmentation_flip_ud = kwargs.get('data_augmentation_flip_ud', False)
@@ -80,8 +108,28 @@ class TrainingParams(BaseParams):
         self.local_entropy_ratio = kwargs.get('local_entropy_ratio', 0.)
         self.local_entropy_sigma = kwargs.get('local_entropy_sigma', 3)
         self.focal_loss_gamma = kwargs.get('focal_loss_gamma', 0.)
+        self.device = kwargs.get('device', 'cpu')
+        self.non_blocking = kwargs.get('non_blocking', True)
+        self.model_out_dir = kwargs.get('model_out_dir', './model')
+        self.tensorboard_log_dir = kwargs.get('tensorboard_log_dir', os.path.join(self.model_out_dir, 'logs'))
+        self.early_stopping_patience = kwargs.get("early_stopping_patience", None)
+
 
     def check_params(self) -> None:
         """Checks if there is no parameter inconsistency
         """
         assert self.training_margin*2 < min(self.patch_shape)
+        assert check_valid_device(self.device)
+
+
+def check_valid_device(device):
+    try:
+        device = torch.device(device)
+    except RuntimeError:
+        return False
+    if device.type == 'cpu':
+        return True
+    elif device.type == 'cuda':
+        if device.index is None or device.index < torch.cuda.device_count():
+            return True
+    return False
