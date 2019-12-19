@@ -307,19 +307,13 @@ class DataParams(BaseParams):
                 logging.error(f'Rotation angle should be lower or equal to 180. '
                               f'Changed its value to {self.data_augmentation_max_rotation}')
 
-            # Check min and max size of image
-            # assert int(self.input_resized_size / self.data_augmentation_max_scaling) >= self.minimum_input_size, \
-            #     "Scaling factor exceeds minimum image size"
-            # assert int(self.input_resized_size * self.data_augmentation_max_scaling) <= self.maximum_input_size, \
-            #     "Scaling factor exceeds maximum image size"
-
             if int(self.input_resized_size / self.data_augmentation_max_scaling) < self.minimum_input_size:
                 self.data_augmentation_max_scaling = self.input_resized_size / self.minimum_input_size
-                logging.error(f"Scaling factor exeeded minimum image size. "
+                logging.error(f"Scaling factor exceeded minimum image size. "
                               f"Changed it value to {self.data_augmentation_max_scaling}")
             if int(self.input_resized_size * self.data_augmentation_max_scaling) > self.maximum_input_size:
                 self.data_augmentation_max_scaling = self.maximum_input_size / self.input_resized_size
-                logging.error(f"Scaling factor exeeded maximum image size. "
+                logging.error(f"Scaling factor exceeded maximum image size. "
                               f"Changed it value to {self.data_augmentation_max_scaling}")
 
 
