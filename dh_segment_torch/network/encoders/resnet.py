@@ -4,7 +4,9 @@ import torch.nn as nn
 from pretrainedmodels import pretrained_settings
 from torch.hub import load_state_dict_from_url
 from torchvision.models.resnet import ResNet, Bottleneck, BasicBlock
-import torchvision.transforms.functional as F
+
+from .utils import normalize_batch
+
 
 class ResNetEncoder(ResNet):
 
@@ -21,7 +23,7 @@ class ResNetEncoder(ResNet):
 
     def forward(self, x):
         if self.pretrained:
-            x = F.normalize(x, self.pretrained_settings['mean'], self.pretrained_settings['std'])
+            x = normalize_batch(x, self.pretrained_settings['mean'], self.pretrained_settings['std'])
 
         layers = [
             nn.Sequential(self.conv1, self.bn1, self.relu),

@@ -2,7 +2,8 @@ from typing import List, Dict
 
 from torch.hub import load_state_dict_from_url
 from torchvision.models.mobilenet import MobileNetV2
-import torchvision.transforms.functional as F
+
+from .utils import normalize_batch
 
 
 class MobileNetV2Encoder(MobileNetV2):
@@ -19,7 +20,7 @@ class MobileNetV2Encoder(MobileNetV2):
 
     def forward(self, x):
         if self.pretrained:
-            x = F.normalize(x, self.pretrained_settings['mean'], self.pretrained_settings['std'])
+            x = normalize_batch(x, self.pretrained_settings['mean'], self.pretrained_settings['std'])
 
         layers = [
             self.features[:2],
