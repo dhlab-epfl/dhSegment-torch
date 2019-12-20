@@ -1,5 +1,7 @@
 from functools import partial
 
+import numpy as np
+
 import torch
 
 from ignite.contrib.handlers import TensorboardLogger
@@ -19,6 +21,11 @@ class LogImagesHandler(BaseHandler):
                  global_step_engine=None,
                  global_step_event=Events.ITERATION_COMPLETED,
                  ):
+        if not torch.is_tensor(colors):
+            colors = np.array(colors)
+            if np.max(colors) == 255:
+                colors /= 255
+            colors = torch.from_numpy(colors.astype(np.float32))
         self.colors = colors
         self.one_large_image = one_large_image
         self.max_images = max_images
@@ -35,6 +42,12 @@ class LogImagesHandler(BaseHandler):
             global_step = self.get_global_step(engine)
 
         xs, (ys, shapes), y_preds = output
+
+        xs = xs.cpu()
+        ys = ys.cpu()
+        shapes = shapes.cpu()
+        y_preds = y_preds.cpu()
+
         out_images = []
 
         for idx in range(len(xs)):

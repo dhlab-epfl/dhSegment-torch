@@ -6,7 +6,7 @@ def cut_with_padding(input_tensor, shape, margin=0):
 
 
 def compute_with_shapes(input_tensor, shapes, reduce=torch.mean, margin=0):
-    res = torch.tensor(0.0)
+    res = torch.tensor(0.0).to(input_tensor.device)
     for idx in range(shapes.shape[0]):
         shape = shapes[idx]
         res += reduce(cut_with_padding(input_tensor[idx], shape, margin))  # .item()
