@@ -12,6 +12,6 @@ Loading a model
 -----
 """
 
-__all__ = ['LoadedModel']
-
-from .loader import *
+# __all__ = ['LoadedModel']
+#
+# from .loader import *

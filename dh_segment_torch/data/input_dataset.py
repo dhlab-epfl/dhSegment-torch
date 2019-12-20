@@ -1,14 +1,17 @@
 #!/usr/bin/env python
+import logging
+import os
+from abc import ABC
+from glob import glob
+from typing import List
+
+import cv2
+import numpy as np
+import pandas as pd
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torchvision import transforms as tsfm
-from typing import List
-import pandas as pd
-from glob import glob
-import os
-import cv2
-import logging
-from abc import ABC
 
 
 class InputDataset(Dataset, ABC):
@@ -161,3 +164,54 @@ def load_sample(sample: dict) -> dict:
 
     sample.update({'image': image, 'label': label_image, 'shape': image.shape[:2]})
     return sample
+
+
+def get_dataset(data: str, transform: tsfm.Compose = None):
+    if os.path.isdir(data):
+        return InputFolderDataset(data, transform)
+    elif check_csv_file(data):
+        return InputCSVDataset(data, transform=transform)
+    elif isinstance(data, list) and len(data) > 0 and all([check_csv_file(path) for path in data]):
+        return InputListCSVDataset(data, transform=transform)
+    else:
+        raise TypeError(f'input_data {data} is neither a directory nor a csv file')
+
+
+def check_csv_file(path):
+    return os.path.isfile(path) and path.endswith('csv')
+
+
+# TODO paddings center ?
+def compute_paddings(heights, widths):
+    max_height = np.max(heights)
+    max_width = np.max(widths)
+
+    paddings_height = max_height - heights
+    paddings_width = max_width - widths
+    paddings_zeros = np.zeros(len(heights), dtype=int)
+
+    paddings = np.stack([paddings_zeros, paddings_width, paddings_zeros, paddings_height]).T
+    return list(map(tuple, paddings))
+
+
+def collate_fn(examples):
+    if not isinstance(examples, list):
+        examples = [examples]
+    heights = np.array([x['shape'][0] for x in examples])
+    widths = np.array([x['shape'][1] for x in examples])
+    paddings = compute_paddings(heights, widths)
+    images = []
+    masks = []
+    shapes_out = []
+    for example, padding in zip(examples, paddings):
+
+        image, label, shape = example['image'], example['label'], example['shape']
+        images.append(F.pad(image, padding))
+        masks.append(F.pad(label, padding))
+        shapes_out.append(shape)
+
+    return {'images': torch.stack(images, dim=0),
+            'labels': torch.stack(masks, dim=0),
+            'shapes': torch.stack(shapes_out, dim=0)
+            }
+

@@ -8,7 +8,7 @@ import logging
 import torch
 from torchvision import transforms
 import torchvision.transforms.functional as F
-from ..utils.params_config import DataParams, PredictionType
+from ..params import DataParams, PredictionType
 
 
 class AssignLabelClassification(object):
@@ -25,14 +25,15 @@ class AssignLabelClassification(object):
     def __call__(self,
                  sample: dict):
 
-        image = sample['image']
+        label = sample['label']
         # Convert label_image [H,W,3] to the classes [H,W],int32 according to the classes [C,3]
-        diff = image[:, :, None, :] - self.colors_array[None, None, :, :]  # [H,W,C,3]
+        diff = label[:, :, None, :] - self.colors_array[None, None, :, :]  # [H,W,C,3]
 
         pixel_class_diff = np.sum(np.square(diff), axis=-1)  # [H,W,C]
         label_image = np.argmin(pixel_class_diff, axis=-1)  # [H,W]
 
-        return label_image
+        sample.update({'label': label_image})
+        return sample
 
 
 class AssignLabelMultilabel(object):
@@ -53,19 +54,21 @@ class AssignLabelMultilabel(object):
 
     def __call__(self,
                  sample: dict):
-        image = sample['image']
+        label = sample['label']
 
         # Convert label_image [H,W,3] to the classes [H,W,C],int32 according to the classes [C,3]
-        if len(image.shape) == 3:
-            diff = image[:, :, None, :] - self.colors_array[None, None, :, :]  # [H,W,C,3]
+        if len(label.shape) == 3:
+            diff = label[:, :, None, :] - self.colors_array[None, None, :, :]  # [H,W,C,3]
         else:
-            raise NotImplementedError('Length is : {}'.format(len(image.shape)))
+            raise NotImplementedError('Length is : {}'.format(len(label.shape)))
 
         pixel_class_diff = np.sum(np.square(diff), axis=-1)  # [H,W,C]
         label_image = np.argmin(pixel_class_diff, axis=-1)  # [H,W]
 
         label_image = np.take(self.onehot_label_array, label_image, axis=0) > 0  # [H, W, C]
-        return label_image.transpose((2, 0, 1)) # [C, H, W]
+        sample.update({'label': label_image.transpose((2, 0, 1))})# [C, H, W]
+
+        return sample
 
 
 class CustomResize(object):
@@ -98,8 +101,8 @@ class CustomResize(object):
         new_height = int(math.sqrt(self.output_size / ratio))
         new_width = int(self.output_size / new_height)
 
-        resized_image = cv2.resize(image, dsize=[new_width, new_height], interpolation=cv2.INTER_LINEAR)
-        resized_label = cv2.resize(label_image, dsize=[new_width, new_height], interpolation=cv2.INTER_NEAREST)
+        resized_image = cv2.resize(image, dsize=(new_width, new_height), interpolation=cv2.INTER_LINEAR)
+        resized_label = cv2.resize(label_image, dsize=(new_width, new_height), interpolation=cv2.INTER_NEAREST)
 
         sample.update({'image': resized_image, 'label': resized_label, 'shape': resized_image.shape[:2]})
         return sample
@@ -124,7 +127,7 @@ class RandomResize(CustomResize):
     def __call__(self,
                  sample: dict):
         self.output_size = np.random.randint(low=self.range[0], high=self.range[1])
-        super()(sample)  # todo: verify syntax
+        return super().__call__(sample)  # todo: verify syntax
 
 
 class SampleColorJitter(transforms.ColorJitter):
@@ -357,6 +360,38 @@ def make_transforms(parameters: DataParams) -> transforms.Compose:
         transform_list.append(AssignLabelClassification(parameters.color_codes))
     elif parameters.prediction_type == PredictionType.MULTILABEL:
         transform_list.append(AssignLabelMultilabel(parameters.color_codes, parameters.onehot_labels))
+
+    # to tensor
+    transform_list.append(SampleToTensor())
+
+    return transforms.Compose(transform_list)
+
+
+def make_eval_transforms(parameters: DataParams) -> transforms.Compose:
+    """
+    Create the transforms for evaluation and concatenates them to form a list of
+    transforms to apply to the ``sample`` dictionary.
+
+    :param parameters: data parameters to generate the transforms
+    :return: a list of transforms to apply wrapped in transform Compose
+    """
+
+    transform_list = list()
+
+    transform_list.append(CustomResize(output_size=parameters.input_resized_size))
+
+    if parameters.make_patches:
+        raise NotImplementedError
+        # todo
+        # transform_list.append(SamplePatcher())
+
+    # Attention: this should be the last operation before ToTensor transform
+    if parameters.prediction_type == PredictionType.CLASSIFICATION:
+        transform_list.append(AssignLabelClassification(parameters.color_codes))
+    elif parameters.prediction_type == PredictionType.MULTILABEL:
+        transform_list.append(AssignLabelMultilabel(parameters.color_codes, parameters.onehot_labels))
+    else:
+        raise TypeError(f"Unsupported prediction type {parameters.prediction_type}")
 
     # to tensor
     transform_list.append(SampleToTensor())

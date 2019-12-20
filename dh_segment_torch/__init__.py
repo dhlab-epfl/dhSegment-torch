@@ -1,2 +1,2 @@
-from .network import *
+from .trainer import train
 
