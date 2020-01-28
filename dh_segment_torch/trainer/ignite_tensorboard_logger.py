@@ -4,6 +4,8 @@ import numpy as np
 
 import torch
 
+import torch.nn.functional as F
+
 from ignite.contrib.handlers import TensorboardLogger
 from ignite.contrib.handlers.base_logger import BaseHandler
 from ignite.engine import Events
@@ -16,6 +18,8 @@ from .utils import cut_with_padding
 class LogImagesHandler(BaseHandler):
     def __init__(self,
                  colors,
+                 one_hot=None,
+                 multilabel=False,
                  one_large_image=False,
                  max_images=1,
                  global_step_engine=None,
@@ -26,7 +30,11 @@ class LogImagesHandler(BaseHandler):
             if np.max(colors) == 255:
                 colors /= 255
             colors = torch.from_numpy(colors.astype(np.float32))
+        if one_hot is not None and not torch.is_tensor(one_hot):
+            one_hot = np.array(one_hot)
+            self.one_hot = torch.from_numpy(one_hot).unsqueeze(0)
         self.colors = colors
+        self.multilabel = multilabel
         self.one_large_image = one_large_image
         self.max_images = max_images
         self.global_step_engine = global_step_engine
@@ -54,7 +62,12 @@ class LogImagesHandler(BaseHandler):
             if idx == self.max_images:
                 break
             x, y, shape, y_pred = xs[idx], ys[idx], shapes[idx], y_preds[idx]
-            y_pred = y_pred.argmax(dim=0)
+            if self.multilabel:
+                y = one_hot_indices(y, self.one_hot)
+                y_pred = torch.sigmoid(y_pred)
+                y_pred = one_hot_indices(y_pred, self.one_hot)
+            else:
+                y_pred = y_pred.argmax(dim=0)
 
             y = indices_to_image(y, self.colors)
             y_pred = indices_to_image(y_pred, self.colors)
@@ -95,3 +108,11 @@ def get_global_step(engine, event_name):
 
 def concat_images(*images):
     return torch.cat([image.unsqueeze(0) for image in images])
+
+
+def one_hot_indices(probas, one_hot):
+    probas = (probas > 0.5).float()
+    probas = probas.permute((1, 2, 0))
+    indices = torch.cdist(probas, one_hot).argmin(dim=2).long()
+
+    return indices

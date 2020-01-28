@@ -132,11 +132,12 @@ class DataParams(BaseParams):
             assert content.shape[1] == 3, "Color file should represent RGB values"
             color_codes = content
             onehot_labels = None
+            n_classes = len(color_codes)
         elif self.prediction_type == PredictionType.MULTILABEL:
             assert content.shape[1] > 3, "The number of columns should be greater in multilabel framework"
             color_codes = content[:, :3]
             onehot_labels = content[:, 3:]
-        n_classes = len(color_codes)
+            n_classes = onehot_labels.shape[1]
         return color_codes, onehot_labels, n_classes
 
     def check_params(self):
@@ -204,7 +205,7 @@ class TrainingParams(BaseParams):
     is wanted, set it to -1
     :vartype input_resized_size: int
     :ivar weights_labels: weight given to each label. Should be a list of length = number of classes
-    :vartype weights_labels: list
+    :vartype weights_labels: list_labe
     :ivar training_margin: size of the margin to add to the images. This is particularly useful when training with \
     patches
     :vartype training_margin: int
@@ -222,13 +223,14 @@ class TrainingParams(BaseParams):
         self.exponential_learning = kwargs.get('exponential_learning', True)
         self.batch_size = kwargs.get('batch_size', 5)
         self.accumulation_steps = kwargs.get('accumulation_steps', 1)
-        self.weights_labels = kwargs.get('weights_labels')
+        self.weight_decay = kwargs.get('weight_decay', 1e-6)
+        self.weights_labels = kwargs.get('weights_labels', None)
         self.weights_evaluation_miou = kwargs.get('weights_evaluation_miou', None)
         self.training_margin = kwargs.get('training_margin', 16)
         self.local_entropy_ratio = kwargs.get('local_entropy_ratio', 0.)
         self.local_entropy_sigma = kwargs.get('local_entropy_sigma', 3)
         self.focal_loss_gamma = kwargs.get('focal_loss_gamma', 0.)
-        self.device = kwargs.get('device', 'cpu')
+        self.device = kwargs.get('device', 'cpu') if torch.cuda.is_available() else 'cpu'
         self.non_blocking = kwargs.get('non_blocking', True)
         self.pin_memory = kwargs.get('pin_memory', True)
         self.model_out_dir = kwargs.get('model_out_dir', './model')
@@ -237,6 +239,8 @@ class TrainingParams(BaseParams):
         self.num_data_workers = kwargs.get("num_data_workers", 16)
         self.resume_training = kwargs.get("restore_training", False)
         self.train_checkpoint_interval = kwargs.get("train_checkpoint_interval", 1000) # TODO check TF default
+        self.patches_images_buffer_size = kwargs.get("patches_images_buffer_size", 5)
+        self.drop_last_batch = kwargs.get("drop_last_batch", False)
 
     def check_params(self) -> None:
         """Checks if there is no parameter inconsistency

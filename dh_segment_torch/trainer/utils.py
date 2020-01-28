@@ -28,15 +28,28 @@ def patch_loss_with_padding(loss_class, margin=0):
     return LossPatchedWithPadding
 
 
+class WeightedBCEWithLogitsLoss(torch.nn.BCEWithLogitsLoss):
+
+    def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if self.weight is not None:
+            weight_labels = self.weight.unsqueeze(1).unsqueeze(1).expand(target.shape[1:])
+        else:
+            weight_labels = None
+        return torch.nn.functional.binary_cross_entropy_with_logits(input, target,
+                                                                    weight_labels,
+                                                                    pos_weight=self.pos_weight,
+                                                                    reduction=self.reduction)
+
+
 def patch_metric_with_padding(metric_class, margin=0):
     class MetricWithPadding(metric_class):
         def update(self, output):
-            y_pred, (y, shapes) = output
+            y_pred, (y, shapes), _ = output
             for idx in range(shapes.shape[0]):
                 shape = shapes[idx]
                 y_pred_tmp = cut_with_padding(y_pred[idx], shape, margin).unsqueeze(0).contiguous()
                 y_tmp = cut_with_padding(y[idx], shape, margin).unsqueeze(0).contiguous()
-                super().update((y_pred_tmp, y_tmp))
+                super().update((y_pred_tmp, y_tmp, None))
 
     return MetricWithPadding
 
@@ -50,3 +63,7 @@ def to_onehot(indices, num_classes):
                          dtype=torch.float32,
                          device=indices.device)
     return onehot.scatter_(1, indices.unsqueeze(1), 1)
+
+
+def should_run(iteration: int, every: int):
+    return iteration >= every and iteration % every == 0
