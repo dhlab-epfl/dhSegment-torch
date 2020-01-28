@@ -147,6 +147,8 @@ class InputListCSVDataset(InputDataset):
                          transform=transform)
 
 
+
+
 def load_sample(sample: dict) -> dict:
     """
     Loads the image and the label image. Returns the updated dictionary.
@@ -175,7 +177,6 @@ def get_dataset(data: str, transform: tsfm.Compose = None):
         return InputListCSVDataset(data, transform=transform)
     else:
         raise TypeError(f'input_data {data} is neither a directory nor a csv file')
-
 
 def check_csv_file(path):
     return os.path.isfile(path) and path.endswith('csv')
@@ -215,3 +216,19 @@ def collate_fn(examples):
             'shapes': torch.stack(shapes_out, dim=0)
             }
 
+
+def patches_worker_init_fn(worker_id):
+    worker_info = torch.utils.data.get_worker_info()
+    dataset = worker_info.dataset
+    dataset_size = len(dataset.dataframe)
+    num_workers = worker_info.num_workers
+    worker_id = worker_info.id
+
+    if num_workers > dataset_size:
+        start = worker_id % dataset_size
+        end = start + 1
+    else:
+        items_per_worker = dataset_size // num_workers
+        start = worker_id * items_per_worker
+        end = min(start + items_per_worker, dataset_size)
+    dataset.dataframe = dataset.dataframe.iloc[start:end]

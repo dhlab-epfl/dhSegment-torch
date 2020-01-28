@@ -3,11 +3,13 @@ import cv2
 import math
 from PIL import Image
 import numpy as np
+import pandas as pd
 from typing import Tuple
 import logging
 import torch
 from torchvision import transforms
 import torchvision.transforms.functional as F
+from skimage.util import view_as_windows
 from ..params import DataParams, PredictionType
 
 
@@ -66,6 +68,7 @@ class AssignLabelMultilabel(object):
         label_image = np.argmin(pixel_class_diff, axis=-1)  # [H,W]
 
         label_image = np.take(self.onehot_label_array, label_image, axis=0) > 0  # [H, W, C]
+        label_image = label_image.astype(np.float32)
         sample.update({'label': label_image.transpose((2, 0, 1))})# [C, H, W]
 
         return sample
@@ -92,6 +95,10 @@ class CustomResize(object):
         :param sample:
         :return:
         """
+        # TODO add to doc
+        if self.output_size == -1:
+            return sample
+
         image, label_image = sample['image'], sample['label']
 
         # compute new size
@@ -160,7 +167,7 @@ class SampleRandomVerticalFlip(object):
     def __call__(self,
                  sample: dict):
         image, label = sample['image'], sample['label']
-        transform = transforms.RandomVerticalFlip(self.p)
+        transform = F.vflip if np.random.random() < self.p else lambda x: x
 
         sample.update({'image': transform(image), 'label': transform(label)})
         return sample
@@ -181,7 +188,7 @@ class SampleRandomHorizontalFlip(object):
     def __call__(self,
                  sample: dict):
         image, label = sample['image'], sample['label']
-        transform = transforms.RandomHorizontalFlip(self.p)
+        transform = F.hflip if np.random.random() < self.p else lambda x: x
 
         sample.update({'image': transform(image), 'label': transform(label)})
         return sample
@@ -260,9 +267,27 @@ class SampleRandomRotation(object):
             return image
 
 
-class SamplePatcher(object):
+def extract_patches(image, patch_shape=(300, 300), overlap=(None, None)):
+    if len(image.shape) > 3:
+        raise ValueError("Expected single image")
+
+    patch_h, patch_w = patch_shape
+
+    stride_h, stride_w = overlap
+    if stride_h is None:
+        stride_h = patch_h // 2
+    if stride_w is None:
+        stride_w = patch_w // 2
+
+    window_shape = (patch_h, patch_w, image.shape[2])
+    step = (stride_h, stride_w, 1)
+    patches = view_as_windows(image, window_shape, step)
+    patches = patches.reshape(-1, patch_h, patch_w, image.shape[2])
+    return patches
+
+
+class SampleToPatches(object):
     """
-    todo: doc
     Needs numpy array as input.
     """
     def __init__(self,
@@ -271,7 +296,46 @@ class SamplePatcher(object):
 
     def __call__(self,
                  sample: dict):
-        pass
+        images = extract_patches(sample['image'], self.patch_shape)
+        labels = extract_patches(sample['label'], self.patch_shape)
+        shapes = [self.patch_shape for _ in range(len(images))]
+
+        sample = {
+            'images': images,
+            'labels': labels,
+            'shapes': shapes
+        }
+
+        return sample
+
+
+def transform_to_several(transform: object):
+    def patched_transform(samples: dict):
+        samples = pd.DataFrame({
+            'image': [image for image in samples['images']],
+            'label': [label for label in samples['labels']],
+            'shape': [shape for shape in samples['shapes']]
+        }).to_dict('record')
+
+        results = []
+        for sample in samples:
+            results.append(transform(sample))
+
+        if torch.is_tensor(results[0]['image']):
+            stack = lambda x: torch.stack(x)
+        else:
+            stack = lambda x: np.stack(x)
+
+        results = pd.DataFrame.from_dict(results)
+
+        samples = {
+            'images': stack(results['image'].values.tolist()),
+            'labels': stack(results['label'].values.tolist()),
+            'shapes': stack(results['shape'].values.tolist())
+        }
+        return samples
+
+    return patched_transform
 
 
 class SampleToTensor(object):
@@ -324,8 +388,6 @@ def make_transforms(parameters: DataParams) -> transforms.Compose:
 
     transform_list = list()
 
-    # todo : normalize
-
     # resize
     if parameters.data_augmentation_max_scaling > 1.0:
         transform_list.append(RandomResize(scaling=parameters.data_augmentation_max_scaling,
@@ -354,6 +416,53 @@ def make_transforms(parameters: DataParams) -> transforms.Compose:
         transform_list.append(SampleColorJitter(brightness=1, contrast=1, saturation=1, hue=0.5))
 
     transform_list.append(SamplePILToNumpy())
+
+    # Attention: this should be the last operation before ToTensor transform
+    if parameters.prediction_type == PredictionType.CLASSIFICATION:
+        transform_list.append(AssignLabelClassification(parameters.color_codes))
+    elif parameters.prediction_type == PredictionType.MULTILABEL:
+        transform_list.append(AssignLabelMultilabel(parameters.color_codes, parameters.onehot_labels))
+
+    # to tensor
+    transform_list.append(SampleToTensor())
+
+    return transforms.Compose(transform_list)
+
+
+def make_global_transforms(parameters: DataParams, eval: bool = False):
+    transform_list = list()
+
+
+    # resize
+    if not eval and parameters.data_augmentation_max_scaling > 1.0:
+        transform_list.append(RandomResize(scaling=parameters.data_augmentation_max_scaling,
+                                           output_size=parameters.input_resized_size))
+    else:
+        transform_list.append(CustomResize(output_size=parameters.input_resized_size))
+
+    if not eval and parameters.data_augmentation_max_rotation > 0:
+        transform_list.append(SampleRandomRotation(max_angle=parameters.data_augmentation_max_rotation,
+                                                   do_crop=False))
+
+    return transforms.Compose(transform_list)
+
+
+def make_local_transforms(parameters: DataParams, eval: bool = False):
+    transform_list = list()
+
+    if not eval:
+        transform_list.append(SampleNumpyToPIL())
+
+        if parameters.data_augmentation_horizontal_flip:
+            transform_list.append(SampleRandomHorizontalFlip())
+
+        if parameters.data_augmentation_vertical_flip:
+            transform_list.append(SampleRandomVerticalFlip())
+
+        if parameters.data_augmentation_color:
+            transform_list.append(SampleColorJitter(brightness=1, contrast=1, saturation=1, hue=0.5))
+
+        transform_list.append(SamplePILToNumpy())
 
     # Attention: this should be the last operation before ToTensor transform
     if parameters.prediction_type == PredictionType.CLASSIFICATION:
