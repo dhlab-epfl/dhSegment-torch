@@ -35,6 +35,8 @@ class Trainer:
         os.makedirs(self.training_params.tensorboard_log_dir, exist_ok=True)
 
         self.model = self.get_model()
+        self.model.to(training_params.device)
+
         train_loader, val_loader = self.get_train_val_loaders()
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -43,6 +45,7 @@ class Trainer:
         self.lr_scheduler = self.get_lr_scheduler()
 
         self.criterion = self.get_criterion()
+        self.criterion.to(training_params.device)
 
         self.preparch_batch_fn = self.get_prepare_batch_fn()
 
@@ -72,7 +75,15 @@ class Trainer:
         self.tensorboard_writer = SummaryWriter(training_params.tensorboard_log_dir)
 
         self.tensorboard_train_metrics = TensorboardLogMetrics(self.tensorboard_writer, self.train_metrics,
-                                                               prefix='Train', metrics_names=['Loss'])
+                                                               prefix='Train', metrics_names=['Loss'],
+                                                               log_every=50)
+
+        self.tensorboard_train_images = TensorboardLogImages(self.tensorboard_writer,
+                                                             data_params.color_codes,
+                                                             data_params.onehot_labels,
+                                                             training_params.training_margin,
+                                                             is_multilabel, prefix='Train', log_every=200)
+
         self.tensorboard_val_metrics = TensorboardLogMetrics(self.tensorboard_writer, [val_loss, miou, acc],
                                                              metrics_names=metrics_names,
                                                              prefix='Val', log_every=1)
