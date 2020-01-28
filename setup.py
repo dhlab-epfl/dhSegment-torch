@@ -13,7 +13,6 @@ setup(name='dh_segment_torch',
       },
       install_requires=[
           'sacred==0.8',
-          'pytorch=='
       ],
       extras_require={
           'doc': [
