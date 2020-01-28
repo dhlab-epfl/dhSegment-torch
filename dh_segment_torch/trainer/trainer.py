@@ -128,6 +128,7 @@ class Trainer:
         x, y = self.preparch_batch_fn(batch)
         y_pred = self.model(x)
         loss = self.criterion(y_pred, y)
+        loss.backward()
 
         if self.iteration % self.accumulation_steps == 0:
             self.optimizer.step()
