@@ -64,6 +64,7 @@ class Checkpoint:
             os.rename(tmp.name, save_path)
             if to_remove is not None:
                 os.remove(remove_path)
+                self.save_names.remove(to_remove)
             self.save_names.append(save_name)
 
     def _find_earliest(self):
