@@ -117,3 +117,35 @@ def get_patches_dataset(data: str, pre_transform: tsfm.Compose = None, post_tran
 
 def check_csv_file(path):
     return os.path.isfile(path) and path.endswith('csv')
+
+
+def patches_worker_init_fn(worker_id):
+    worker_info = torch.utils.data.get_worker_info()
+    dataset = worker_info.dataset
+    dataset_size = len(dataset.dataframe)
+    num_workers = worker_info.num_workers
+    worker_id = worker_info.id
+
+    if num_workers < dataset_size:
+        """
+        Assign worker to image
+        Assign slices of quadtree to each worker -> some worker will have small, other will have several
+        E.g. 3 workers 1 image as follow: |1|2|
+                                          |3|4|
+        Then worker 1 get 1, worker 2 get 2, worker 3 get 3 and 4
+        If 5 workers, then image is |1 |2 |3 |4 |
+                                    |5 |6 |7 |8 |
+                                    |9 |10|11|12|
+                                    |13|14|15|16|
+        Worker 1 gets 1,2,5,6, worker 2 [3,4,7,8], worker 3 [9,10,13,14], worker 4 [11,15], worker 5 [12,16]
+        etc.
+        """
+        worker_per_image = num_workers // dataset_size
+        image_id = worker_id % (dataset_size * worker_per_image)
+        start = worker_id % dataset_size
+        end = start + 1
+    else:
+        items_per_worker = dataset_size // num_workers
+        start = worker_id * items_per_worker
+        end = min(start + items_per_worker, dataset_size)
+        dataset.dataframe = dataset.dataframe.iloc[start:end]

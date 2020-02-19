@@ -13,10 +13,10 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm.autonotebook import tqdm
 
 from .checkpoint import Checkpoint, save_name_to_iter
-from .metrics import ConfusionMatrix, mIoU, AverageAccuracy, Metric, AverageLoss
+from .metrics import ConfusionMatrix, mIoU, AverageAccuracy, AverageLoss
 from .tensorboard import TensorboardLogMetrics, TensorboardLogImages
 from .utils import patch_loss_with_padding, patch_metric_with_padding, WeightedBCEWithLogitsLoss, should_run
-from ..data.input_dataset import get_dataset, collate_fn
+from ..data.input_dataset import get_dataset, collate_fn, patches_worker_init_fn
 from ..data.input_patches import get_patches_dataset
 from ..data.transforms import make_transforms, make_eval_transforms, make_global_transforms, make_local_transforms
 from ..network import SegmentationModel
@@ -117,6 +117,7 @@ class Trainer:
             self.train_epoch()
             if should_run(epoch, self.training_params.evaluate_every_epoch):
                 self.validate()
+        self.validate()
 
     def train_epoch(self):
         self.epoch += 1
@@ -130,6 +131,7 @@ class Trainer:
             pbar.refresh()
             pbar.update()
             self.tensorboard_train_metrics.log(self.iteration, reset=True)
+            self.tensorboard_train_images.log(self.iteration, x, y, y_pred)
         self.reset_metrics(self.train_metrics)
         pbar.close()
 
@@ -299,7 +301,7 @@ def get_patches_train_val_loaders(data_params: DataParams, training_params: Trai
                                         drop_last=training_params.drop_last_batch
                                         )
     train_loader = DataLoader(train_dataset, batch_size=None, num_workers=training_params.num_data_workers,
-                              pin_memory=training_params.pin_memory)
+                              pin_memory=training_params.pin_memory, worker_init_fn=patches_worker_init_fn)
 
     val_pre_transforms = make_global_transforms(data_params, eval=True)
     val_post_transforms = make_local_transforms(data_params, eval=True)
@@ -308,6 +310,5 @@ def get_patches_train_val_loaders(data_params: DataParams, training_params: Trai
                                       patch_size=data_params.patch_shape, batch_size=training_params.batch_size,
                                       shuffle=False, prefetch_shuffle=1, drop_last=False)
     val_loader = DataLoader(val_dataset, batch_size=None, num_workers=training_params.num_data_workers,
-                            pin_memory=training_params.pin_memory)
-
+                            pin_memory=training_params.pin_memory, worker_init_fn=patches_worker_init_fn)
     return train_loader, val_loader
