@@ -42,38 +42,41 @@ class ResNetEncoder(ResNet):
 
 
 class Resnet18Encoder(ResNetEncoder):
-    def __init__(self, blocks: int = 4, pretrained: bool = True, progress: bool = False):
+    def __init__(self, blocks: int = 4, pretrained: bool = True, progress: bool = False, **kwargs):
         super().__init__(output_dims=[3, 64, 64, 128, 256, 512][:blocks+2],
                          pretrained_settings=pretrained_settings['resnet18']['imagenet'],
                          blocks=blocks,
                          pretrained=pretrained,
                          progress=progress,
                          block=BasicBlock,
-                         layers=[2, 2, 2, 2]
+                         layers=[2, 2, 2, 2],
+                         **kwargs
                          )
 
 
 class Resnet34Encoder(ResNetEncoder):
-    def __init__(self, blocks: int = 4, pretrained: bool = True, progress: bool = False):
+    def __init__(self, blocks: int = 4, pretrained: bool = True, progress: bool = False, **kwargs):
         super().__init__(output_dims=[3, 64, 64, 128, 256, 512][:blocks+2],
                          pretrained_settings=pretrained_settings['resnet34']['imagenet'],
                          blocks=blocks,
                          pretrained=pretrained,
                          progress=progress,
                          block=BasicBlock,
-                         layers=[3, 4, 6, 3]
+                         layers=[3, 4, 6, 3],
+                         **kwargs
                          )
 
 
 class Resnet50Encoder(ResNetEncoder):
-    def __init__(self, blocks: int = 4, pretrained: bool = True, progress: bool = False):
+    def __init__(self, blocks: int = 4, pretrained: bool = True, progress: bool = False, **kwargs):
         super().__init__(output_dims=[3, 64, 256, 512, 1024, 2048][:blocks+2],
                          pretrained_settings=pretrained_settings['resnet50']['imagenet'],
                          blocks=blocks,
                          pretrained=pretrained,
                          progress=progress,
                          block=Bottleneck,
-                         layers=[3, 4, 6, 3]
+                         layers=[3, 4, 6, 3],
+                         **kwargs
                          )
 
 

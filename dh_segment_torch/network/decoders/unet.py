@@ -45,7 +45,7 @@ def get_channels_reduce(channels, max_channels: int = None, normalizer_fn: nn.Mo
     :return:
     """
     if max_channels and channels > max_channels:
-        reduce = Conv2DNormalize(channels, max_channels, 1, normalizer_fn)
+        reduce = Conv2DNormalize(channels, max_channels, kernel_size=1, normalizer_fn=normalizer_fn)
     else:
         reduce = nn.Identity()
     return reduce, min(channels, max_channels) if max_channels else channels
@@ -70,7 +70,7 @@ class UnetDecoder(nn.Module):
         encoder_channels = list(reversed(encoder_channels))
         output_encoder_channels = encoder_channels[0]
         self.reduce_output_encoder, output_encoder_channels = get_channels_reduce(
-            output_encoder_channels, max_channels)
+            output_encoder_channels, max_channels, normalizer_fn)
 
         self.level_ops = nn.ModuleList()
 
@@ -78,7 +78,7 @@ class UnetDecoder(nn.Module):
         for enc_channels, dec_channels in zip(encoder_channels[1:], decoder_channels):
             ops = {}
 
-            ops['reduce_dim'], enc_channels = get_channels_reduce(enc_channels, max_channels)
+            ops['reduce_dim'], enc_channels = get_channels_reduce(enc_channels, max_channels, normalizer_fn)
 
             ops['up_concat'] = UpsampleConcat('bilinear', use_deconvolutions, prev_channels)
 

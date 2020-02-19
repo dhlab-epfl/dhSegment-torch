@@ -48,7 +48,8 @@ class ModelParams(BaseParams):
         self.encoder_network = kwargs.get('encoder_network', 'dh_segment_torch.network.encoders.Resnet50Encoder')
         self.encoder_params = kwargs.get('encoder_params', dict())
         self.decoder_network = kwargs.get('decoder_network', 'dh_segment_torch.network.decoders.UnetDecoder')
-        self.decoder_params = kwargs.get('decoder_params', {'decoder_channels': [512, 256, 128, 64, 32]})
+        self.decoder_params = kwargs.get('decoder_params', {'decoder_channels': [512, 256, 128, 64, 32],
+                                                            'max_channels': 512})
 
         self.pretraining = kwargs.get('pretraining', True)
 
