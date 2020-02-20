@@ -1,10 +1,10 @@
 from abc import ABCMeta
 
 import torch
+from torch.optim.lr_scheduler import _LRScheduler
 
 
 class Metric(metaclass=ABCMeta):
-
     def update(self, output):
         """
 
@@ -19,6 +19,21 @@ class Metric(metaclass=ABCMeta):
     @property
     def value(self):
         return 0
+
+
+class LearningRate(Metric):
+    def __init__(self, learning_rate_scheduler: _LRScheduler):
+        self.learning_rate_scheduler = learning_rate_scheduler
+
+    def update(self, output):
+        pass
+
+    @property
+    def value(self):
+        lr = self.learning_rate_scheduler.get_last_lr()
+        if len(lr) == 1:
+            lr = lr[0]
+        return lr
 
 
 class AverageLoss(Metric):
@@ -47,9 +62,13 @@ class ConfusionMatrix(Metric):
         self.n_classes = n_classes
         self.is_multilabel = is_multilabel
         if is_multilabel:
-            self.confusion_matrix = torch.zeros((n_classes, 2, 2), dtype=torch.int64).cpu()
+            self.confusion_matrix = torch.zeros(
+                (n_classes, 2, 2), dtype=torch.int64
+            ).cpu()
         else:
-            self.confusion_matrix = torch.zeros((n_classes, n_classes), dtype=torch.int64).cpu()
+            self.confusion_matrix = torch.zeros(
+                (n_classes, n_classes), dtype=torch.int64
+            ).cpu()
 
     def update(self, output):
         y_pred, y, _ = output
@@ -60,7 +79,7 @@ class ConfusionMatrix(Metric):
             probas = torch.sigmoid(y_pred)
 
             for class_idx in range(self.n_classes):
-                y_pred_class = (probas[:, class_idx] > 0.5)
+                y_pred_class = probas[:, class_idx] > 0.5
                 y_class = y[:, class_idx]
                 cm = compute_cm(y_pred_class, y_class, 2)
                 self.confusion_matrix[class_idx] += cm
@@ -71,9 +90,13 @@ class ConfusionMatrix(Metric):
 
     def reset(self):
         if self.is_multilabel:
-            self.confusion_matrix = torch.zeros((self.n_classes, 2, 2), dtype=torch.int64).cpu()
+            self.confusion_matrix = torch.zeros(
+                (self.n_classes, 2, 2), dtype=torch.int64
+            ).cpu()
         else:
-            self.confusion_matrix = torch.zeros((self.n_classes, self.n_classes), dtype=torch.int64).cpu()
+            self.confusion_matrix = torch.zeros(
+                (self.n_classes, self.n_classes), dtype=torch.int64
+            ).cpu()
 
     @property
     def value(self):
@@ -99,10 +122,12 @@ class WrappingMetric(object):
     @property
     def value(self):
         metric = self.metric.value
+        # If multilabel
         if len(metric.shape) > 2:
             n_classes = metric.shape[0]
             iou = torch.empty(n_classes)
             for class_idx in range(n_classes):
+                # Compute metric as binary, get result of class (index 1)
                 iou[class_idx] = self.compute_metric(metric[class_idx])[1]
             return iou
         else:

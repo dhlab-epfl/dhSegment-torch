@@ -12,12 +12,16 @@ from .utils import should_run
 
 
 class Checkpoint:
-    def __init__(self, checkpoint_dir: str, prefix: str,
-                 save_dict: Dict[str, nn.Module],
-                 metric: Optional[Metric] = None,
-                 metric_name: Optional[str] = None,
-                 max_checkpoints: int = 1,
-                 save_every: int = 1):
+    def __init__(
+        self,
+        checkpoint_dir: str,
+        prefix: str,
+        save_dict: Dict[str, nn.Module],
+        metric: Optional[Metric] = None,
+        metric_name: Optional[str] = None,
+        max_checkpoints: int = 1,
+        save_every: int = 1,
+    ):
         self.checkpoint_dir = checkpoint_dir
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir)
@@ -76,14 +80,18 @@ class Checkpoint:
             return self._find_earliest()
         else:
             save_names = sorted(self.save_names, key=save_name_to_iter)
-            min_idx = np.argmin([save_name_to_score(save_name, self.metric_name)
-                                 for save_name in save_names])
+            min_idx = np.argmin(
+                [
+                    save_name_to_score(save_name, self.metric_name)
+                    for save_name in save_names
+                ]
+            )
             return save_names[min_idx]
 
     def _get_save_data(self):
         save_data = {}
         for name, item in self.save_dict.items():
-            if hasattr(item, 'state_dict'):
+            if hasattr(item, "state_dict"):
                 save_data[name] = item.state_dict()
             elif callable(item):
                 save_data[name] = item()
@@ -103,8 +111,8 @@ class Checkpoint:
 
 
 def save_name_to_iter(save_name):
-    return int(save_name.split('iter=')[-1].replace('.pth', ''))
+    return int(save_name.split("iter=")[-1].replace(".pth", ""))
 
 
 def save_name_to_score(save_name, metric_name):
-    return float(save_name.split(f"{metric_name}=")[1].split('_')[0])
+    return float(save_name.split(f"{metric_name}=")[1].split("_")[0])

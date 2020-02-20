@@ -12,10 +12,14 @@ from .utils import should_run, cut_with_padding
 
 
 class TensorboardLogMetrics:
-    def __init__(self, writer: SummaryWriter, metrics: List[Metric],
-                 metrics_names: Optional[List[str]] = None,
-                 prefix: Optional[str] = None,
-                 log_every: int = 100):
+    def __init__(
+        self,
+        writer: SummaryWriter,
+        metrics: List[Metric],
+        metrics_names: Optional[List[str]] = None,
+        prefix: Optional[str] = None,
+        log_every: int = 100,
+    ):
         self.writer = writer
         self.metrics = {}
         if metrics_names is not None:
@@ -27,9 +31,9 @@ class TensorboardLogMetrics:
             self.metrics[name] = metric
 
         if prefix is not None:
-            self.prefix = prefix + '/'
+            self.prefix = prefix + "/"
         else:
-            self.prefix = ''
+            self.prefix = ""
 
         self.log_every = log_every
 
@@ -40,24 +44,33 @@ class TensorboardLogMetrics:
 
         for name, metric in self.metrics.items():
             value = metric.value
-            if isinstance(value, numbers.Number) or isinstance(value, torch.Tensor) and value.ndimension() == 0:
+            if (
+                isinstance(value, numbers.Number)
+                or isinstance(value, torch.Tensor)
+                and value.ndimension() == 0
+            ):
                 self.writer.add_scalar(self.prefix + name, value, iteration)
             elif isinstance(value, torch.Tensor) and value.ndimension() == 1:
                 for idx, val in enumerate(value):
-                    self.writer.add_scalar(f"{self.prefix}name/{idx}", val.item(), iteration)
+                    self.writer.add_scalar(
+                        f"{self.prefix}name/{idx}", val.item(), iteration
+                    )
             if reset:
                 metric.reset()
 
 
 class TensorboardLogImages:
-    def __init__(self, writer: SummaryWriter,
-                 colors: np.array,
-                 one_hot: Optional[np.array] = None,
-                 margin: int = 0,
-                 multilabel: bool = False,
-                 random_sample_image: bool = True,
-                 prefix: Optional[str] = None,
-                 log_every: int = 200):
+    def __init__(
+        self,
+        writer: SummaryWriter,
+        colors: np.array,
+        one_hot: Optional[np.array] = None,
+        margin: int = 0,
+        multilabel: bool = False,
+        random_sample_image: bool = True,
+        prefix: Optional[str] = None,
+        log_every: int = 200,
+    ):
         if multilabel and one_hot is None:
             raise ValueError("Cannot be multilabel without one hot encoding")
 
@@ -76,9 +89,9 @@ class TensorboardLogImages:
         self.multilabel = multilabel
         self.random_sample_image = random_sample_image
         if prefix is not None:
-            self.prefix = prefix + '/'
+            self.prefix = prefix + "/"
         else:
-            self.prefix = ''
+            self.prefix = ""
 
         self.log_every = log_every
 
@@ -115,7 +128,9 @@ class TensorboardLogImages:
 
         images = torch.cat([image.unsqueeze(0) for image in [x, y, y_pred]])
         image = make_grid(images, padding=5, pad_value=0.5, normalize=True, nrow=3)
-        self.writer.add_image(f"{self.prefix}Image", image, global_step=iteration, dataformats="CHW")
+        self.writer.add_image(
+            f"{self.prefix}Image", image, global_step=iteration, dataformats="CHW"
+        )
 
 
 def one_hot_indices(probas, one_hot):
@@ -125,7 +140,8 @@ def one_hot_indices(probas, one_hot):
 
     return indices
 
+
 def indices_to_image(indices, colors, batch=False):
     colors_transform = colors.T.unsqueeze(1).expand(-1, indices.shape[0], -1)
-    indices_transform = indices.unsqueeze(0).expand(3,-1,-1)
+    indices_transform = indices.unsqueeze(0).expand(3, -1, -1)
     return torch.gather(colors_transform, -1, indices_transform)

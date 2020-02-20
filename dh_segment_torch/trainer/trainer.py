@@ -2,29 +2,51 @@ import importlib
 import os
 from functools import partial
 from glob import glob
-from typing import Tuple, Any, List
+from typing import Tuple, Any
 
 import torch
 import torch.nn as nn
 from ignite.utils import convert_tensor
-from torch.optim import lr_scheduler as lrs, AdamW, Adam
+from torch.optim import lr_scheduler as lrs, Adam
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm.autonotebook import tqdm
 
 from .checkpoint import Checkpoint, save_name_to_iter
-from .metrics import ConfusionMatrix, mIoU, AverageAccuracy, AverageLoss
+from .metrics import (
+    ConfusionMatrix,
+    mIoU,
+    AverageAccuracy,
+    AverageLoss,
+    IoU,
+    LearningRate,
+)
 from .tensorboard import TensorboardLogMetrics, TensorboardLogImages
-from .utils import patch_loss_with_padding, patch_metric_with_padding, WeightedBCEWithLogitsLoss, should_run
+from .utils import (
+    patch_loss_with_padding,
+    patch_metric_with_padding,
+    WeightedBCEWithLogitsLoss,
+    should_run,
+)
 from ..data.input_dataset import get_dataset, collate_fn, patches_worker_init_fn
 from ..data.input_patches import get_patches_dataset
-from ..data.transforms import make_transforms, make_eval_transforms, make_global_transforms, make_local_transforms
+from ..data.transforms import (
+    make_transforms,
+    make_eval_transforms,
+    make_global_transforms,
+    make_local_transforms,
+)
 from ..network import SegmentationModel
 from ..params import TrainingParams, DataParams, ModelParams, PredictionType
 
 
 class Trainer:
-    def __init__(self, model_params: ModelParams, data_params: DataParams, training_params: TrainingParams):
+    def __init__(
+        self,
+        model_params: ModelParams,
+        data_params: DataParams,
+        training_params: TrainingParams,
+    ):
         self.model_params = model_params
         self.data_params = data_params
         self.training_params = training_params
@@ -60,57 +82,88 @@ class Trainer:
 
         self.train_loss = AverageLoss()
 
-        self.train_metrics = [self.train_loss]
+        lr_metric = LearningRate(self.lr_scheduler)
 
-        confusion_matrix = patch_metric_with_padding(ConfusionMatrix,
-                                                     self.training_params.training_margin)(
-            data_params.n_classes, is_multilabel)
+        self.train_metrics = [self.train_loss, lr_metric]
+
+        confusion_matrix = patch_metric_with_padding(
+            ConfusionMatrix, self.training_params.training_margin
+        )(data_params.n_classes, is_multilabel)
+        iou = IoU(confusion_matrix)
         miou = mIoU(confusion_matrix)
         acc = AverageAccuracy(confusion_matrix)
 
-        metrics_names = ['Loss', 'mIoU', 'Accuracy']
+        metrics_names = ["Loss", "iou", "mIoU", "Accuracy"]
         val_loss = AverageLoss()
         self.val_metrics = [val_loss, confusion_matrix]
 
         self.tensorboard_writer = SummaryWriter(training_params.tensorboard_log_dir)
 
-        self.tensorboard_train_metrics = TensorboardLogMetrics(self.tensorboard_writer, self.train_metrics,
-                                                               prefix='Train', metrics_names=['Loss'],
-                                                               log_every=50)
+        self.tensorboard_train_metrics = TensorboardLogMetrics(
+            self.tensorboard_writer,
+            self.train_metrics,
+            prefix="Train",
+            metrics_names=["Loss", "LR"],
+            log_every=50,
+        )
 
-        self.tensorboard_train_images = TensorboardLogImages(self.tensorboard_writer,
-                                                             data_params.color_codes,
-                                                             data_params.onehot_labels,
-                                                             training_params.training_margin,
-                                                             is_multilabel, prefix='Train', log_every=200)
+        self.tensorboard_train_images = TensorboardLogImages(
+            self.tensorboard_writer,
+            data_params.color_codes,
+            data_params.onehot_labels,
+            training_params.training_margin,
+            is_multilabel,
+            prefix="Train",
+            log_every=200,
+        )
 
-        self.tensorboard_val_metrics = TensorboardLogMetrics(self.tensorboard_writer, [val_loss, miou, acc],
-                                                             metrics_names=metrics_names,
-                                                             prefix='Val', log_every=1)
+        self.tensorboard_val_metrics = TensorboardLogMetrics(
+            self.tensorboard_writer,
+            [val_loss, iou, miou, acc],
+            metrics_names=metrics_names,
+            prefix="Val",
+            log_every=1,
+        )
 
-        self.tensorboard_val_images = TensorboardLogImages(self.tensorboard_writer,
-                                                           data_params.color_codes,
-                                                           data_params.onehot_labels,
-                                                           training_params.training_margin,
-                                                           is_multilabel, prefix='Val', log_every=1)
+        self.tensorboard_val_images = TensorboardLogImages(
+            self.tensorboard_writer,
+            data_params.color_codes,
+            data_params.onehot_labels,
+            training_params.training_margin,
+            is_multilabel,
+            prefix="Val",
+            log_every=1,
+        )
 
-        self.trainer_checkpoint = Checkpoint(self.model_dir, prefix='model',
-                                             save_dict={
-                                                 'model': self.model,
-                                                 'optimizer': self.optimizer,
-                                                 'scheduler': self.lr_scheduler,
-                                                 'iteration': self.get_iteration,
-                                                 'epoch': self.get_epoch
-                                             }, max_checkpoints=5, save_every=500)
+        self.trainer_checkpoint = Checkpoint(
+            self.model_dir,
+            prefix="model",
+            save_dict={
+                "model": self.model,
+                "optimizer": self.optimizer,
+                "scheduler": self.lr_scheduler,
+                "iteration": self.get_iteration,
+                "epoch": self.get_epoch,
+            },
+            max_checkpoints=5,
+            save_every=500,
+        )
 
-        self.best_checkpoint = Checkpoint(self.model_dir, prefix='best',
-                                          save_dict={'model': self.model}, metric=miou, max_checkpoints=2)
+        self.best_checkpoint = Checkpoint(
+            self.model_dir,
+            prefix="best",
+            save_dict={"model": self.model},
+            metric=miou,
+            max_checkpoints=2,
+        )
 
         if training_params.resume_training:
             self.restore_training()
         else:
-            if len(glob(os.path.join(self.model_dir, 'model*.pth'))) > 0:
-                raise ValueError("Model dir contained saved models but did not want to restore")
+            if len(glob(os.path.join(self.model_dir, "model*.pth"))) > 0:
+                raise ValueError(
+                    "Model dir contained saved models but did not want to restore"
+                )
 
     def train(self):
         for epoch in tqdm(range(self.max_epochs)):
@@ -127,7 +180,9 @@ class Trainer:
             self.lr_scheduler.step()
             self.update_metrics(self.train_metrics, y_pred, y, loss)
             self.trainer_checkpoint.save(self.iteration)
-            pbar.set_description(f"iter {self.iteration}: loss={self.train_loss.value:.5f}")
+            pbar.set_description(
+                f"iter {self.iteration}: loss={self.train_loss.value:.5f}"
+            )
             pbar.refresh()
             pbar.update()
             self.tensorboard_train_metrics.log(self.iteration, reset=True)
@@ -168,25 +223,26 @@ class Trainer:
             return x, y, y_pred, loss.item()
 
     def restore_training(self):
-        all_savepoints = glob(os.path.join(self.model_dir, 'model*.pth'))
+        all_savepoints = glob(os.path.join(self.model_dir, "model*.pth"))
         if len(all_savepoints) > 0:
             latest_checkpoint = sorted(all_savepoints, key=save_name_to_iter)[-1]
             checkpoint_data = torch.load(latest_checkpoint)
-            self.model.load_state_dict(checkpoint_data['model'])
-            self.optimizer.load_state_dict(checkpoint_data['optimizer'])
-            self.lr_scheduler.load_state_dict(checkpoint_data['scheduler'])
-            self.iteration = checkpoint_data['iteration']
-            self.epoch = checkpoint_data['epoch']
+            self.model.load_state_dict(checkpoint_data["model"])
+            self.optimizer.load_state_dict(checkpoint_data["optimizer"])
+            self.lr_scheduler.load_state_dict(checkpoint_data["scheduler"])
+            self.iteration = checkpoint_data["iteration"]
+            self.epoch = checkpoint_data["epoch"]
 
     def get_model(self) -> nn.Module:
         encoder = get_class_from_name(self.model_params.encoder_network)(
-            pretrained=self.model_params.pretraining,
-            **self.model_params.encoder_params)
+            pretrained=self.model_params.pretraining, **self.model_params.encoder_params
+        )
 
         decoder = get_class_from_name(self.model_params.decoder_network)(
             encoder_channels=encoder.output_dims,
             n_classes=self.data_params.n_classes,
-            **self.model_params.decoder_params)
+            **self.model_params.decoder_params,
+        )
 
         model = SegmentationModel(encoder, decoder)
 
@@ -199,21 +255,29 @@ class Trainer:
             return get_dataset_train_val_loaders(self.data_params, self.training_params)
 
     def get_optimizer(self):
-        return Adam(self.model.parameters(),
-                    lr=self.training_params.learning_rate,
-                    weight_decay=self.training_params.weight_decay)
+        return Adam(
+            self.model.parameters(),
+            lr=self.training_params.learning_rate,
+            weight_decay=self.training_params.weight_decay,
+        )
 
     def get_lr_scheduler(self):
         if self.training_params.exponential_learning:
-            return lrs.LambdaLR(self.optimizer, lambda epoch: 0.95 ** (epoch / 200))  # TODO hardcoded exponential decay
+            return lrs.LambdaLR(
+                self.optimizer, lambda epoch: 0.95 ** (epoch / 200)
+            )  # TODO hardcoded exponential decay
         else:
             return lrs.LambdaLR(self.optimizer, lambda epoch: 1.0)
 
     def get_criterion(self):
         if self.training_params.weights_labels is not None:
-            weight_labels = torch.tensor(self.training_params.weights_labels, dtype=torch.float32)
+            weight_labels = torch.tensor(
+                self.training_params.weights_labels, dtype=torch.float32
+            )
         else:
-            weight_labels = torch.tensor([1.0] * self.data_params.n_classes, dtype=torch.float32)
+            weight_labels = torch.tensor(
+                [1.0] * self.data_params.n_classes, dtype=torch.float32
+            )
         if self.data_params.prediction_type == PredictionType.CLASSIFICATION:
             criterion_class = nn.CrossEntropyLoss
         elif self.data_params.prediction_type == PredictionType.MULTILABEL:
@@ -222,13 +286,24 @@ class Trainer:
             raise ValueError("Prediction type does not have a defined loss")
 
         return patch_loss_with_padding(
-            criterion_class, margin=self.training_params.training_margin)(weight=weight_labels)
+            criterion_class, margin=self.training_params.training_margin
+        )(weight=weight_labels)
 
     def get_prepare_batch_fn(self):
         def prepare_batch(batch):
-            convert_tensor_fn = partial(convert_tensor, device=self.training_params.device, non_blocking=self.training_params.non_blocking)
-            return (convert_tensor_fn(batch['images']),
-                    (convert_tensor_fn(batch['labels']), convert_tensor_fn(batch['shapes'])))
+            convert_tensor_fn = partial(
+                convert_tensor,
+                device=self.training_params.device,
+                non_blocking=self.training_params.non_blocking,
+            )
+            return (
+                convert_tensor_fn(batch["images"]),
+                (
+                    convert_tensor_fn(batch["labels"]),
+                    convert_tensor_fn(batch["shapes"]),
+                ),
+            )
+
         return prepare_batch
 
     def get_iteration(self):
@@ -265,7 +340,7 @@ def get_class_from_name(full_class_name: str) -> Any:
     :param full_class_name: full name of the class, for instance `foo.bar.Baz`
     :return: the loaded class
     """
-    module_name, class_name = full_class_name.rsplit('.', maxsplit=1)
+    module_name, class_name = full_class_name.rsplit(".", maxsplit=1)
     # load the module, will raise ImportError if module cannot be loaded
     m = importlib.import_module(module_name)
     # get the class, will raise AttributeError if class cannot be found
@@ -273,42 +348,78 @@ def get_class_from_name(full_class_name: str) -> Any:
     return c
 
 
-def get_dataset_train_val_loaders(data_params: DataParams, training_params: TrainingParams) -> Tuple[DataLoader, DataLoader]:
+def get_dataset_train_val_loaders(
+    data_params: DataParams, training_params: TrainingParams
+) -> Tuple[DataLoader, DataLoader]:
     train_transforms = make_transforms(data_params)
     train_dataset = get_dataset(data_params.train_data, train_transforms)
-    train_loader = DataLoader(train_dataset, training_params.batch_size, shuffle=True,
-                              drop_last=training_params.drop_last_batch, collate_fn=collate_fn,
-                              num_workers=training_params.num_data_workers, pin_memory=training_params.pin_memory)
+    train_num_images = len(train_dataset.dataframe)
+    train_loader = DataLoader(
+        train_dataset,
+        training_params.batch_size,
+        shuffle=True,
+        drop_last=training_params.drop_last_batch,
+        collate_fn=collate_fn,
+        num_workers=min(train_num_images, training_params.num_data_workers),
+        pin_memory=training_params.pin_memory,
+    )
 
     val_transforms = make_eval_transforms(data_params)
     val_dataset = get_dataset(data_params.validation_data, val_transforms)
-    val_loader = DataLoader(val_dataset, training_params.batch_size, shuffle=False, collate_fn=collate_fn,
-                            num_workers=training_params.num_data_workers, pin_memory=training_params.pin_memory)
+    val_num_images = len(val_dataset.dataframe)
+    val_loader = DataLoader(
+        val_dataset,
+        training_params.batch_size,
+        shuffle=False,
+        collate_fn=collate_fn,
+        num_workers=min(val_num_images, training_params.num_data_workers),
+        pin_memory=training_params.pin_memory,
+    )
 
     return train_loader, val_loader
 
 
-def get_patches_train_val_loaders(data_params: DataParams, training_params: TrainingParams) -> Tuple[DataLoader, DataLoader]:
+def get_patches_train_val_loaders(
+    data_params: DataParams, training_params: TrainingParams
+) -> Tuple[DataLoader, DataLoader]:
     train_pre_transforms = make_global_transforms(data_params)
     train_post_transforms = make_local_transforms(data_params)
-    train_dataset = get_patches_dataset(data_params.train_data,
-                                        train_pre_transforms,
-                                        train_post_transforms,
-                                        patch_size=data_params.patch_shape,
-                                        batch_size=training_params.batch_size,
-                                        shuffle=True,
-                                        prefetch_shuffle=training_params.patches_images_buffer_size,
-                                        drop_last=training_params.drop_last_batch
-                                        )
-    train_loader = DataLoader(train_dataset, batch_size=None, num_workers=training_params.num_data_workers,
-                              pin_memory=training_params.pin_memory, worker_init_fn=patches_worker_init_fn)
+    train_dataset = get_patches_dataset(
+        data_params.train_data,
+        train_pre_transforms,
+        train_post_transforms,
+        patch_size=data_params.patch_shape,
+        batch_size=training_params.batch_size,
+        shuffle=True,
+        prefetch_shuffle=training_params.patches_images_buffer_size,
+        drop_last=training_params.drop_last_batch,
+    )
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=None,
+        num_workers=training_params.num_data_workers,
+        pin_memory=training_params.pin_memory,
+        worker_init_fn=patches_worker_init_fn,
+    )
 
     val_pre_transforms = make_global_transforms(data_params, eval=True)
     val_post_transforms = make_local_transforms(data_params, eval=True)
 
-    val_dataset = get_patches_dataset(data_params.validation_data, val_pre_transforms, val_post_transforms,
-                                      patch_size=data_params.patch_shape, batch_size=training_params.batch_size,
-                                      shuffle=False, prefetch_shuffle=1, drop_last=False)
-    val_loader = DataLoader(val_dataset, batch_size=None, num_workers=training_params.num_data_workers,
-                            pin_memory=training_params.pin_memory, worker_init_fn=patches_worker_init_fn)
+    val_dataset = get_patches_dataset(
+        data_params.validation_data,
+        val_pre_transforms,
+        val_post_transforms,
+        patch_size=data_params.patch_shape,
+        batch_size=training_params.batch_size,
+        shuffle=False,
+        prefetch_shuffle=1,
+        drop_last=False,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=None,
+        num_workers=training_params.num_data_workers,
+        pin_memory=training_params.pin_memory,
+        worker_init_fn=patches_worker_init_fn,
+    )
     return train_loader, val_loader

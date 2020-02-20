@@ -16,15 +16,16 @@ from .utils import cut_with_padding
 
 
 class LogImagesHandler(BaseHandler):
-    def __init__(self,
-                 colors,
-                 one_hot=None,
-                 multilabel=False,
-                 one_large_image=False,
-                 max_images=1,
-                 global_step_engine=None,
-                 global_step_event=Events.ITERATION_COMPLETED,
-                 ):
+    def __init__(
+        self,
+        colors,
+        one_hot=None,
+        multilabel=False,
+        one_large_image=False,
+        max_images=1,
+        global_step_engine=None,
+        global_step_event=Events.ITERATION_COMPLETED,
+    ):
         if not torch.is_tensor(colors):
             colors = np.array(colors)
             if np.max(colors) == 255:
@@ -42,7 +43,9 @@ class LogImagesHandler(BaseHandler):
 
     def __call__(self, engine, logger, event_name):
         if not isinstance(logger, TensorboardLogger):
-            raise RuntimeError("Handler 'LogImagesHandler' works only with TensorboardLogger")
+            raise RuntimeError(
+                "Handler 'LogImagesHandler' works only with TensorboardLogger"
+            )
         output = engine.state.output
         if self.global_step_engine:
             global_step = self.get_global_step(self.global_step_engine)
@@ -77,28 +80,40 @@ class LogImagesHandler(BaseHandler):
                 y = cut_with_padding(y, shape)
                 y_pred = cut_with_padding(y_pred, shape)
             images = concat_images(x, y, y_pred)
-            out_image = make_grid(images, padding=5, pad_value=0.5, normalize=True, nrow=3)
+            out_image = make_grid(
+                images, padding=5, pad_value=0.5, normalize=True, nrow=3
+            )
             out_images.append(out_image)
         if not self.one_large_image:
             for out_image in out_images:
-                logger.writer.add_image(tag=f"Image outputs (image, annotation, prediction)",
-                                        img_tensor=out_image,
-                                        global_step=global_step, dataformats='CHW')
+                logger.writer.add_image(
+                    tag=f"Image outputs (image, annotation, prediction)",
+                    img_tensor=out_image,
+                    global_step=global_step,
+                    dataformats="CHW",
+                )
         else:
             images = concat_images(*out_images)
             out_image = make_grid(images, padding=0, nrow=1)
-            logger.writer.add_image(tag=f"Image outputs (image, annotation, prediction)",
-                                    img_tensor=out_image,
-                                    global_step=global_step, dataformats='CHW')
+            logger.writer.add_image(
+                tag=f"Image outputs (image, annotation, prediction)",
+                img_tensor=out_image,
+                global_step=global_step,
+                dataformats="CHW",
+            )
 
 
 def indices_to_image(indices, colors, batch=False):
     if batch:
-        colors_transform = colors.T.unsqueeze(1).unsqueeze(0).expand(indices.shape[0], -1, indices.shape[1], -1)
+        colors_transform = (
+            colors.T.unsqueeze(1)
+            .unsqueeze(0)
+            .expand(indices.shape[0], -1, indices.shape[1], -1)
+        )
         indices_transform = indices.unsqueeze(1).expand(-1, 3, -1, -1)
     else:
         colors_transform = colors.T.unsqueeze(1).expand(-1, indices.shape[0], -1)
-        indices_transform = indices.unsqueeze(0).expand(3,-1,-1)
+        indices_transform = indices.unsqueeze(0).expand(3, -1, -1)
     return torch.gather(colors_transform, -1, indices_transform)
 
 

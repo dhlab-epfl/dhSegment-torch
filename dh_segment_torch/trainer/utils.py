@@ -2,7 +2,9 @@ import torch
 
 
 def cut_with_padding(input_tensor, shape, margin=0):
-    return input_tensor[..., margin:shape[0].item() - margin, margin:shape[1].item() - margin]
+    return input_tensor[
+        ..., margin : shape[0].item() - margin, margin : shape[1].item() - margin
+    ]
 
 
 def compute_with_shapes(input_tensor, shapes, reduce=torch.mean, margin=0):
@@ -17,7 +19,7 @@ def compute_with_shapes(input_tensor, shapes, reduce=torch.mean, margin=0):
 def patch_loss_with_padding(loss_class, margin=0):
     class LossPatchedWithPadding(loss_class):
         def __init__(self, *args, **kwargs):
-            kwargs['reduction'] = 'none'
+            kwargs["reduction"] = "none"
             super().__init__(*args, **kwargs)
 
         def forward(self, input, target):
@@ -29,16 +31,20 @@ def patch_loss_with_padding(loss_class, margin=0):
 
 
 class WeightedBCEWithLogitsLoss(torch.nn.BCEWithLogitsLoss):
-
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         if self.weight is not None:
-            weight_labels = self.weight.unsqueeze(1).unsqueeze(1).expand(target.shape[1:])
+            weight_labels = (
+                self.weight.unsqueeze(1).unsqueeze(1).expand(target.shape[1:])
+            )
         else:
             weight_labels = None
-        return torch.nn.functional.binary_cross_entropy_with_logits(input, target,
-                                                                    weight_labels,
-                                                                    pos_weight=self.pos_weight,
-                                                                    reduction=self.reduction)
+        return torch.nn.functional.binary_cross_entropy_with_logits(
+            input,
+            target,
+            weight_labels,
+            pos_weight=self.pos_weight,
+            reduction=self.reduction,
+        )
 
 
 def patch_metric_with_padding(metric_class, margin=0):
@@ -47,8 +53,14 @@ def patch_metric_with_padding(metric_class, margin=0):
             y_pred, (y, shapes), _ = output
             for idx in range(shapes.shape[0]):
                 shape = shapes[idx]
-                y_pred_tmp = cut_with_padding(y_pred[idx], shape, margin).unsqueeze(0).contiguous()
-                y_tmp = cut_with_padding(y[idx], shape, margin).unsqueeze(0).contiguous()
+                y_pred_tmp = (
+                    cut_with_padding(y_pred[idx], shape, margin)
+                    .unsqueeze(0)
+                    .contiguous()
+                )
+                y_tmp = (
+                    cut_with_padding(y[idx], shape, margin).unsqueeze(0).contiguous()
+                )
                 super().update((y_pred_tmp, y_tmp, None))
 
     return MetricWithPadding
@@ -59,9 +71,13 @@ def to_onehot(indices, num_classes):
     tensor of one-hot indicators of shape `(N, num_classes, ...) and of type uint8. Output's device is equal to the
     input's device`.
     """
-    onehot = torch.zeros(indices.shape[0], num_classes, *indices.shape[1:],
-                         dtype=torch.float32,
-                         device=indices.device)
+    onehot = torch.zeros(
+        indices.shape[0],
+        num_classes,
+        *indices.shape[1:],
+        dtype=torch.float32,
+        device=indices.device
+    )
     return onehot.scatter_(1, indices.unsqueeze(1), 1)
 
 
