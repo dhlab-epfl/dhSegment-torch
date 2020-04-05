@@ -393,6 +393,7 @@ def get_patches_train_val_loaders(
         shuffle=True,
         prefetch_shuffle=training_params.patches_images_buffer_size,
         drop_last=training_params.drop_last_batch,
+        repeat_dataset=training_params.repeat_dataset
     )
     train_loader = DataLoader(
         train_dataset,

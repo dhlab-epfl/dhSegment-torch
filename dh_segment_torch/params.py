@@ -294,6 +294,7 @@ class TrainingParams(BaseParams):
         )  # TODO check TF default
         self.patches_images_buffer_size = kwargs.get("patches_images_buffer_size", 5)
         self.drop_last_batch = kwargs.get("drop_last_batch", False)
+        self.repeat_dataset = kwargs.get("repeat_dataset", 1)
 
     def check_params(self) -> None:
         """Checks if there is no parameter inconsistency

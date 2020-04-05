@@ -20,21 +20,20 @@ class AssignLabelClassification(object):
     :ivar color_array: the list of possible color codes with shape N x 3, with N the number of possible color codes.
     :vartype color_array: np.ndarray
     """
-    def __init__(self,
-                 colors_array: np.ndarray):
+
+    def __init__(self, colors_array: np.ndarray):
         self.colors_array = colors_array
 
-    def __call__(self,
-                 sample: dict):
+    def __call__(self, sample: dict):
 
-        label = sample['label']
+        label = sample["label"]
         # Convert label_image [H,W,3] to the classes [H,W],int32 according to the classes [C,3]
         diff = label[:, :, None, :] - self.colors_array[None, None, :, :]  # [H,W,C,3]
 
         pixel_class_diff = np.sum(np.square(diff), axis=-1)  # [H,W,C]
         label_image = np.argmin(pixel_class_diff, axis=-1)  # [H,W]
 
-        sample.update({'label': label_image})
+        sample.update({"label": label_image})
         return sample
 
 
@@ -48,28 +47,30 @@ class AssignLabelMultilabel(object):
     the number of classes and N the number of possible color codes.
     :vartype code_array: np.ndarray
     """
-    def __init__(self,
-                 colors_array: np.ndarray,
-                 onehot_label_array: np.ndarray):
+
+    def __init__(self, colors_array: np.ndarray, onehot_label_array: np.ndarray):
         self.colors_array = colors_array
         self.onehot_label_array = onehot_label_array
 
-    def __call__(self,
-                 sample: dict):
-        label = sample['label']
+    def __call__(self, sample: dict):
+        label = sample["label"]
 
         # Convert label_image [H,W,3] to the classes [H,W,C],int32 according to the classes [C,3]
         if len(label.shape) == 3:
-            diff = label[:, :, None, :] - self.colors_array[None, None, :, :]  # [H,W,C,3]
+            diff = (
+                label[:, :, None, :] - self.colors_array[None, None, :, :]
+            )  # [H,W,C,3]
         else:
-            raise NotImplementedError('Length is : {}'.format(len(label.shape)))
+            raise NotImplementedError("Length is : {}".format(len(label.shape)))
 
         pixel_class_diff = np.sum(np.square(diff), axis=-1)  # [H,W,C]
         label_image = np.argmin(pixel_class_diff, axis=-1)  # [H,W]
 
-        label_image = np.take(self.onehot_label_array, label_image, axis=0) > 0  # [H, W, C]
+        label_image = (
+            np.take(self.onehot_label_array, label_image, axis=0) > 0
+        )  # [H, W, C]
         label_image = label_image.astype(np.float32)
-        sample.update({'label': label_image.transpose((2, 0, 1))})# [C, H, W]
+        sample.update({"label": label_image.transpose((2, 0, 1))})  # [C, H, W]
 
         return sample
 
@@ -82,14 +83,13 @@ class CustomResize(object):
     :ivar output_size: the size of the output image (in pixels)
     :vartype output_size: int
     """
-    def __init__(self,
-                 output_size: int):
+
+    def __init__(self, output_size: int):
 
         assert isinstance(output_size, int)
         self.output_size = output_size
 
-    def __call__(self,
-                  sample: dict):
+    def __call__(self, sample: dict):
         """
 
         :param sample:
@@ -99,7 +99,7 @@ class CustomResize(object):
         if self.output_size == -1:
             return sample
 
-        image, label_image = sample['image'], sample['label']
+        image, label_image = sample["image"], sample["label"]
 
         # compute new size
         input_shape = image.shape
@@ -108,10 +108,20 @@ class CustomResize(object):
         new_height = int(math.sqrt(self.output_size / ratio))
         new_width = int(self.output_size / new_height)
 
-        resized_image = cv2.resize(image, dsize=(new_width, new_height), interpolation=cv2.INTER_LINEAR)
-        resized_label = cv2.resize(label_image, dsize=(new_width, new_height), interpolation=cv2.INTER_NEAREST)
+        resized_image = cv2.resize(
+            image, dsize=(new_width, new_height), interpolation=cv2.INTER_LINEAR
+        )
+        resized_label = cv2.resize(
+            label_image, dsize=(new_width, new_height), interpolation=cv2.INTER_NEAREST
+        )
 
-        sample.update({'image': resized_image, 'label': resized_label, 'shape': resized_image.shape[:2]})
+        sample.update(
+            {
+                "image": resized_image,
+                "label": resized_label,
+                "shape": resized_image.shape[:2],
+            }
+        )
         return sample
 
 
@@ -125,14 +135,12 @@ class RandomResize(CustomResize):
     :ivar output_size: size of the output image (in pixels)
     :vartype output_size: int
     """
-    def __init__(self,
-                 scaling: float,
-                 output_size: int):
+
+    def __init__(self, scaling: float, output_size: int):
         super().__init__(output_size)
         self.range = [int(self.output_size / scaling), int(self.output_size * scaling)]
 
-    def __call__(self,
-                 sample: dict):
+    def __call__(self, sample: dict):
         self.output_size = np.random.randint(low=self.range[0], high=self.range[1])
         return super().__call__(sample)  # todo: verify syntax
 
@@ -142,13 +150,15 @@ class SampleColorJitter(transforms.ColorJitter):
     Wrapper for ``transforms.ColorJitter`` to use sample {image, label} as input and output.
     Needs PIL Images as input.
     """
-    def __call__(self,
-                 sample: dict):
-        image = sample['image']
 
-        transform = self.get_params(self.brightness, self.contrast, self.saturation, self.hue)
+    def __call__(self, sample: dict):
+        image = sample["image"]
 
-        sample.update({'image': transform(image)})
+        transform = self.get_params(
+            self.brightness, self.contrast, self.saturation, self.hue
+        )
+
+        sample.update({"image": transform(image)})
         return sample
 
 
@@ -160,16 +170,15 @@ class SampleRandomVerticalFlip(object):
     :ivar p: probability of vertival flip
     :vartype p: float
     """
-    def __init__(self,
-                 p: float = 0.5):
+
+    def __init__(self, p: float = 0.5):
         self.p = p
 
-    def __call__(self,
-                 sample: dict):
-        image, label = sample['image'], sample['label']
+    def __call__(self, sample: dict):
+        image, label = sample["image"], sample["label"]
         transform = F.vflip if np.random.random() < self.p else lambda x: x
 
-        sample.update({'image': transform(image), 'label': transform(label)})
+        sample.update({"image": transform(image), "label": transform(label)})
         return sample
 
 
@@ -181,16 +190,15 @@ class SampleRandomHorizontalFlip(object):
     :ivar p: probability of horizontal flip
     :vartype p: float
     """
-    def __init__(self,
-                 p: float = 0.5):
+
+    def __init__(self, p: float = 0.5):
         self.p = p
 
-    def __call__(self,
-                 sample: dict):
-        image, label = sample['image'], sample['label']
+    def __call__(self, sample: dict):
+        image, label = sample["image"], sample["label"]
         transform = F.hflip if np.random.random() < self.p else lambda x: x
 
-        sample.update({'image': transform(image), 'label': transform(label)})
+        sample.update({"image": transform(image), "label": transform(label)})
         return sample
 
 
@@ -205,22 +213,26 @@ class SampleRandomRotation(object):
     :ivar do_crop: wether to crop the black borders or not
     :vartype do_crop: bool
     """
-    def __init__(self,
-                 max_angle: int,
-                 do_crop: bool = False):
+
+    def __init__(self, max_angle: int, do_crop: bool = False):
         self.angle = max_angle
         self.do_crop = do_crop
 
-    def __call__(self,
-                 sample: dict):
-        image, label = sample['image'], sample['label']
+    def __call__(self, sample: dict):
+        image, label = sample["image"], sample["label"]
         rows, columns = image.shape[:2]
 
         angle = np.random.randint(-self.angle, self.angle)
-        rot_matrix = cv2.getRotationMatrix2D(((columns - 1) / 2.0, (rows - 1) / 2.0), angle, 1)
+        rot_matrix = cv2.getRotationMatrix2D(
+            ((columns - 1) / 2.0, (rows - 1) / 2.0), angle, 1
+        )
 
-        rotated_image = cv2.warpAffine(image, rot_matrix, (columns, rows), flags=cv2.INTER_LINEAR)
-        rotated_label = cv2.warpAffine(label, rot_matrix, (columns, rows), flags=cv2.INTER_NEAREST)
+        rotated_image = cv2.warpAffine(
+            image, rot_matrix, (columns, rows), flags=cv2.INTER_LINEAR
+        )
+        rotated_label = cv2.warpAffine(
+            label, rot_matrix, (columns, rows), flags=cv2.INTER_NEAREST
+        )
 
         if self.do_crop:
             # todo: if crop not possible should we return rotated image or original image ?
@@ -230,14 +242,15 @@ class SampleRandomRotation(object):
 
             crop_shape = crop_image.shape[:2]
 
-            sample.update({'image': crop_image, 'label': crop_label, 'shape': crop_shape})
+            sample.update(
+                {"image": crop_image, "label": crop_label, "shape": crop_shape}
+            )
             return sample
 
-        sample.update({'image': rotated_image, 'label': rotated_label})
+        sample.update({"image": rotated_image, "label": rotated_label})
         return sample
 
-    def compute_border_to_crop(self,
-                               input_shape: Tuple[int, int]):
+    def compute_border_to_crop(self, input_shape: Tuple[int, int]):
         """See https://stackoverflow.com/questions/16702966/rotate-image-and-crop-out-black-borders for formulae
         """
         angle = abs(self.angle)
@@ -247,7 +260,9 @@ class SampleRandomRotation(object):
         else:
             long_side, short_side = w, h
 
-        long_side = (long_side * math.cos(angle) - short_side * math.sin(angle)) / math.cos(2 * angle)
+        long_side = (
+            long_side * math.cos(angle) - short_side * math.sin(angle)
+        ) / math.cos(2 * angle)
         short_side = (short_side - math.sin(angle) * long_side) / math.cos(angle)
         if h > w:
             h_output, w_output = long_side, short_side
@@ -257,13 +272,16 @@ class SampleRandomRotation(object):
         return math.ceil((h - h_output) / 2), math.ceil((w - w_output) / 2)
 
     @staticmethod
-    def crop(image: np.ndarray,
-             border: Tuple[int, int]):
+    def crop(image: np.ndarray, border: Tuple[int, int]):
         rows, columns = image.shape[:2]
         if (border[0] < rows - border[0]) and (border[1] < columns - border[1]):
-            return image[border[0]: rows - border[0], border[1]:columns - border[1], :]
+            return image[
+                border[0] : rows - border[0], border[1] : columns - border[1], :
+            ]
         else:
-            logging.error('Cropping image after rotation led to null image. Ignoring crop.')
+            logging.error(
+                "Cropping image after rotation led to null image. Ignoring crop."
+            )
             return image
 
 
@@ -290,38 +308,35 @@ class SampleToPatches(object):
     """
     Needs numpy array as input.
     """
-    def __init__(self,
-                 patch_shape: Tuple[int]):
+
+    def __init__(self, patch_shape: Tuple[int]):
         self.patch_shape = patch_shape
 
-    def __call__(self,
-                 sample: dict):
-        images = extract_patches(sample['image'], self.patch_shape)
-        labels = extract_patches(sample['label'], self.patch_shape)
+    def __call__(self, sample: dict):
+        images = extract_patches(sample["image"], self.patch_shape)
+        labels = extract_patches(sample["label"], self.patch_shape)
         shapes = [self.patch_shape for _ in range(len(images))]
 
-        sample = {
-            'images': images,
-            'labels': labels,
-            'shapes': shapes
-        }
+        sample = {"images": images, "labels": labels, "shapes": shapes}
 
         return sample
 
 
 def transform_to_several(transform: object):
     def patched_transform(samples: dict):
-        samples = pd.DataFrame({
-            'image': [image for image in samples['images']],
-            'label': [label for label in samples['labels']],
-            'shape': [shape for shape in samples['shapes']]
-        }).to_dict('record')
+        samples = pd.DataFrame(
+            {
+                "image": [image for image in samples["images"]],
+                "label": [label for label in samples["labels"]],
+                "shape": [shape for shape in samples["shapes"]],
+            }
+        ).to_dict("record")
 
         results = []
         for sample in samples:
             results.append(transform(sample))
 
-        if torch.is_tensor(results[0]['image']):
+        if torch.is_tensor(results[0]["image"]):
             stack = lambda x: torch.stack(x)
         else:
             stack = lambda x: np.stack(x)
@@ -329,9 +344,9 @@ def transform_to_several(transform: object):
         results = pd.DataFrame.from_dict(results)
 
         samples = {
-            'images': stack(results['image'].values.tolist()),
-            'labels': stack(results['label'].values.tolist()),
-            'shapes': stack(results['shape'].values.tolist())
+            "images": stack(results["image"].values.tolist()),
+            "labels": stack(results["label"].values.tolist()),
+            "shapes": stack(results["shape"].values.tolist()),
         }
         return samples
 
@@ -342,13 +357,17 @@ class SampleToTensor(object):
     """
     Convert ndarrays to Tensors for sample {image, label, shape}.
     """
-    def __call__(self,
-                 sample: dict):
-        image, label, shape = sample['image'], sample['label'], sample['shape']
 
-        sample.update({'image': F.to_tensor(image),
-                       'label': torch.from_numpy(label),
-                       'shape': torch.tensor(shape)})
+    def __call__(self, sample: dict):
+        image, label, shape = sample["image"], sample["label"], sample["shape"]
+
+        sample.update(
+            {
+                "image": F.to_tensor(image),
+                "label": torch.from_numpy(label),
+                "shape": torch.tensor(shape),
+            }
+        )
         return sample
 
 
@@ -356,12 +375,13 @@ class SampleNumpyToPIL(object):
     """
     Convert numpy array image to PIL image
     """
-    def __call__(self,
-                 sample: dict):
-        image, label = sample['image'], sample['label']
 
-        sample.update({'image': Image.fromarray(image),
-                       'label': Image.fromarray(label)})
+    def __call__(self, sample: dict):
+        image, label = sample["image"], sample["label"]
+
+        sample.update(
+            {"image": Image.fromarray(image), "label": Image.fromarray(label)}
+        )
         return sample
 
 
@@ -369,12 +389,11 @@ class SamplePILToNumpy(object):
     """
     Convert a PIL image to a numpy array
     """
-    def __call__(self,
-                 sample: dict):
-        image, label = sample['image'], sample['label']
 
-        sample.update(({'image': np.array(image),
-                        'label': np.array(label)}))
+    def __call__(self, sample: dict):
+        image, label = sample["image"], sample["label"]
+
+        sample.update(({"image": np.array(image), "label": np.array(label)}))
         return sample
 
 
@@ -390,14 +409,21 @@ def make_transforms(parameters: DataParams) -> transforms.Compose:
 
     # resize
     if parameters.data_augmentation_max_scaling > 1.0:
-        transform_list.append(RandomResize(scaling=parameters.data_augmentation_max_scaling,
-                                           output_size=parameters.input_resized_size))
+        transform_list.append(
+            RandomResize(
+                scaling=parameters.data_augmentation_max_scaling,
+                output_size=parameters.input_resized_size,
+            )
+        )
     else:
         transform_list.append(CustomResize(output_size=parameters.input_resized_size))
 
     if parameters.data_augmentation_max_rotation > 0:
-        transform_list.append(SampleRandomRotation(max_angle=parameters.data_augmentation_max_rotation,
-                                                   do_crop=False))
+        transform_list.append(
+            SampleRandomRotation(
+                max_angle=parameters.data_augmentation_max_rotation, do_crop=False
+            )
+        )
 
     if parameters.make_patches:
         raise NotImplementedError
@@ -413,7 +439,9 @@ def make_transforms(parameters: DataParams) -> transforms.Compose:
         transform_list.append(SampleRandomVerticalFlip())
 
     if parameters.data_augmentation_color:
-        transform_list.append(SampleColorJitter(brightness=1, contrast=1, saturation=1, hue=0.5))
+        transform_list.append(
+            SampleColorJitter(brightness=1, contrast=1, saturation=1, hue=0.5)
+        )
 
     transform_list.append(SamplePILToNumpy())
 
@@ -421,7 +449,9 @@ def make_transforms(parameters: DataParams) -> transforms.Compose:
     if parameters.prediction_type == PredictionType.CLASSIFICATION:
         transform_list.append(AssignLabelClassification(parameters.color_codes))
     elif parameters.prediction_type == PredictionType.MULTILABEL:
-        transform_list.append(AssignLabelMultilabel(parameters.color_codes, parameters.onehot_labels))
+        transform_list.append(
+            AssignLabelMultilabel(parameters.color_codes, parameters.onehot_labels)
+        )
 
     # to tensor
     transform_list.append(SampleToTensor())
@@ -432,17 +462,27 @@ def make_transforms(parameters: DataParams) -> transforms.Compose:
 def make_global_transforms(parameters: DataParams, eval: bool = False):
     transform_list = list()
 
-
     # resize
-    if not eval and parameters.data_augmentation_max_scaling > 1.0:
-        transform_list.append(RandomResize(scaling=parameters.data_augmentation_max_scaling,
-                                           output_size=parameters.input_resized_size))
+    if (
+        not eval
+        and parameters.data_augmentation
+        and parameters.data_augmentation_max_scaling > 1.0
+    ):
+        transform_list.append(
+            RandomResize(
+                scaling=parameters.data_augmentation_max_scaling,
+                output_size=parameters.input_resized_size,
+            )
+        )
     else:
         transform_list.append(CustomResize(output_size=parameters.input_resized_size))
 
     if not eval and parameters.data_augmentation_max_rotation > 0:
-        transform_list.append(SampleRandomRotation(max_angle=parameters.data_augmentation_max_rotation,
-                                                   do_crop=False))
+        transform_list.append(
+            SampleRandomRotation(
+                max_angle=parameters.data_augmentation_max_rotation, do_crop=False
+            )
+        )
 
     return transforms.Compose(transform_list)
 
@@ -460,7 +500,9 @@ def make_local_transforms(parameters: DataParams, eval: bool = False):
             transform_list.append(SampleRandomVerticalFlip())
 
         if parameters.data_augmentation_color:
-            transform_list.append(SampleColorJitter(brightness=1, contrast=1, saturation=1, hue=0.5))
+            transform_list.append(
+                SampleColorJitter(brightness=1, contrast=1, saturation=1, hue=0.5)
+            )
 
         transform_list.append(SamplePILToNumpy())
 
@@ -468,7 +510,9 @@ def make_local_transforms(parameters: DataParams, eval: bool = False):
     if parameters.prediction_type == PredictionType.CLASSIFICATION:
         transform_list.append(AssignLabelClassification(parameters.color_codes))
     elif parameters.prediction_type == PredictionType.MULTILABEL:
-        transform_list.append(AssignLabelMultilabel(parameters.color_codes, parameters.onehot_labels))
+        transform_list.append(
+            AssignLabelMultilabel(parameters.color_codes, parameters.onehot_labels)
+        )
 
     # to tensor
     transform_list.append(SampleToTensor())
@@ -498,7 +542,9 @@ def make_eval_transforms(parameters: DataParams) -> transforms.Compose:
     if parameters.prediction_type == PredictionType.CLASSIFICATION:
         transform_list.append(AssignLabelClassification(parameters.color_codes))
     elif parameters.prediction_type == PredictionType.MULTILABEL:
-        transform_list.append(AssignLabelMultilabel(parameters.color_codes, parameters.onehot_labels))
+        transform_list.append(
+            AssignLabelMultilabel(parameters.color_codes, parameters.onehot_labels)
+        )
     else:
         raise TypeError(f"Unsupported prediction type {parameters.prediction_type}")
 

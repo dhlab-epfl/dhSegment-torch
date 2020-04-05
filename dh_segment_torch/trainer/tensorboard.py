@@ -53,7 +53,7 @@ class TensorboardLogMetrics:
             elif isinstance(value, torch.Tensor) and value.ndimension() == 1:
                 for idx, val in enumerate(value):
                     self.writer.add_scalar(
-                        f"{self.prefix}name/{idx}", val.item(), iteration
+                        f"{self.prefix}{name}2/{idx}", val.item(), iteration
                     )
             if reset:
                 metric.reset()
