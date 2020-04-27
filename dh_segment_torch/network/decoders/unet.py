@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List, Iterable
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -28,10 +28,9 @@ class Conv2DNormalize(nn.Sequential):
 
 class UpsampleConcat(nn.Module):
     def __init__(
-        self, mode: str = "nearest", use_deconv: bool = False, x_channels: int = None
+        self, upscale_mode: str = "nearest", use_deconv: bool = False, x_channels: int = None
     ):
         super().__init__()
-        self.mode = mode
         if use_deconv:
             self.deconv = nn.ConvTranspose2d(
                 x_channels, x_channels, kernel_size=2, stride=2
@@ -39,11 +38,15 @@ class UpsampleConcat(nn.Module):
         else:
             self.deconv = nn.Identity()
 
+        self.upscale_params = dict(
+            mode=upscale_mode, align_corners=upscale_mode == "bilinear"
+        )
+
     def forward(self, x, x_skip):
         x = self.deconv(x)
         target_shape = x_skip.shape[-2:]
         x = F.interpolate(
-            x, target_shape, mode=self.mode, align_corners=False
+            x, target_shape, **self.upscale_params
         )  # TODO check align corners
         x = torch.cat([x, x_skip], dim=1)
         return x
