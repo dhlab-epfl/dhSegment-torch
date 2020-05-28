@@ -41,3 +41,12 @@ class TestParams(DhSegmentTestCase):
         assert params.pop("test") == "hello"
         params.assert_empty("dummy")
 
+    def test_read_jsonnet(self):
+        with pytest.raises(RuntimeError):
+            Params.from_file(self.FIXTURES_ROOT / "configs" / "resnet50_unet_bad.jsonnet")
+        params = Params.from_file(self.FIXTURES_ROOT / "configs" / "resnet50_unet.jsonnet")
+        assert len(params) == 3
+        assert params['encoder']['type'] == 'resnet50'
+        assert params['decoder']['type'] == 'unet'
+        assert params['decoder']['decoder_channels'] == [512, 256, 128, 64, 32]
+
