@@ -22,9 +22,9 @@ class Registrable(FromParams):
         def add_to_register(subclass: Type[T]):
             if name in register:
                 if exist_ok:
-                    logger.warning(f"{name} was already registered, but allowing it.")
+                    logger.warning(f"{name} was already registered in {cls.__name__}, but allowing it.")
                 else:
-                    raise RegistrableError(f"{name} was already registered.")
+                    raise RegistrableError(f"{name} was already registered in {cls.__name__}.")
             if constructor is None:
                 constructor_method = subclass.__init__
             elif inspect.ismethod(getattr(subclass, constructor, None)):
@@ -48,8 +48,20 @@ class Registrable(FromParams):
             return [default] + [i for i in available if i != default]
 
     @classmethod
-    def get(cls, key) -> Tuple[Type[T], Callable[..., T]]:
+    def get(cls, key: str) -> Tuple[Type[T], Callable[..., T]]:
         if key in Registrable._register[cls]:
+            registered_class, constructor = Registrable._register[cls][key]
+            # In some cases to make code more readable, some constructor are null,
+            # we set it to __init__ when we have the opportunity
+            if constructor is None:
+                Registrable._register[cls][key] = (registered_class, registered_class.__init__)
             return Registrable._register[cls][key]
         else:
             raise KeyError(f"Missing key {key} in class {cls.__name__}")
+
+    @classmethod
+    def get_constructor(cls, key: str) -> Callable[..., T]:
+        registered_class, constructor = cls.get(key)
+        if constructor.__name__ == '__init__':
+            constructor = registered_class
+        return constructor

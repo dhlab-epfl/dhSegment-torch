@@ -2,7 +2,8 @@ import copy
 import json
 import logging
 from collections.abc import MutableMapping
-from typing import Dict, Any, Iterable
+from pathlib import Path
+from typing import Dict, Any, Iterable, Union
 
 from dh_segment_torch.config import ConfigurationError
 
@@ -56,7 +57,7 @@ class Params(MutableMapping):
 
     def assert_empty(self, class_name: str) -> None:
         if self.params:
-            raise ConfigurationError(f"Could not exhaust all parameters for {class_name}")
+            raise ConfigurationError(f"Could not exhaust all parameters for {class_name}, still got {self.params}.")
 
     def __getitem__(self, item):
         if item in self.params:
@@ -77,13 +78,19 @@ class Params(MutableMapping):
         return len(self.params)
 
     @classmethod
-    def from_file(cls, file_path: str):
-        params = json.loads(evaluate_file(file_path))
+    def from_file(cls, file_path: Union[str, Path]):
+        params = json.loads(evaluate_file(str(file_path)))
         return cls(params)
 
-    def to_file(self, file_path: str):
-        with open(file_path, 'w') as outfile:
+    def to_file(self, file_path: Union[str, Path]):
+        with open(str(file_path), 'w') as outfile:
             json.dump(self.as_dict(), outfile, indent=4)
+
+    def __repr__(self):
+        return self.params.__repr__()
+
+    def __str__(self):
+        return self.params.__str__()
 
 
 def _force_value_to_params(value: Any):
