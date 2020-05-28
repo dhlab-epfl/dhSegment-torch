@@ -1,16 +1,18 @@
 #!/usr/bin/env python
-import cv2
+import logging
 import math
-from PIL import Image
+from typing import Tuple
+
+import cv2
 import numpy as np
 import pandas as pd
-from typing import Tuple
-import logging
 import torch
-from torchvision import transforms
 import torchvision.transforms.functional as F
+from PIL import Image
 from skimage.util import view_as_windows
-from ..params import DataParams, PredictionType
+from torchvision import transforms
+
+from dh_segment_torch.params import DataParams, PredictionType
 
 
 class AssignLabelClassification(object):

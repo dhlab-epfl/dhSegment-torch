@@ -1,6 +1,5 @@
 import os
 from abc import ABC
-from itertools import cycle
 from typing import List, Sequence, Iterator
 
 import numpy as np
@@ -10,7 +9,7 @@ import torchvision.transforms as tsfm
 from torch.utils.data.dataset import IterableDataset
 
 from .input_dataset import InputFolderDataset, InputListCSVDataset, load_sample
-from .transforms import SampleToPatches, transform_to_several
+from .transforms import SampleToPatches
 
 
 class PatchesDataset(IterableDataset, ABC):
@@ -44,7 +43,9 @@ class PatchesDataset(IterableDataset, ABC):
             shuffled_dataframe = self.dataframe
 
         for _ in range(self.repeat_dataset):
-            for samples in batch_items(shuffled_dataframe[["images", "labels"]].values, self.prefetch_shuffle):
+            for samples in batch_items(
+                shuffled_dataframe[["images", "labels"]].values, self.prefetch_shuffle
+            ):
                 samples = [
                     load_sample({"image": image, "label": label})
                     for image, label in samples
@@ -72,19 +73,26 @@ class PatchesDataset(IterableDataset, ABC):
                     indices = torch.randperm(len(samples["images"]))
                 else:
                     indices = range(len(samples["images"]))
-
-                for perms in batch_items(indices, self.batch_size):
-                    if self.drop_last:
-                        if len(perms) < self.batch_size:
-                            continue
-                    selection = {
-                        "images": samples["images"][perms],
-                        "labels": samples["labels"][perms],
-                        "shapes": samples["shapes"][perms],
-                    }
-                    if self.post_transform is not None:
-                        selection = transform_to_several(self.post_transform)(selection)
-                    yield selection
+                for idx in indices:
+                    yield self.post_transform(
+                        {
+                            "image": samples["images"][idx],
+                            "label": samples["labels"][idx],
+                            "shape": samples["shapes"][idx],
+                        }
+                    )
+                # for perms in batch_items(indices, self.batch_size):
+                #     if self.drop_last:
+                #         if len(perms) < self.batch_size:
+                #             continue
+                #     selection = {
+                #         "images": samples["images"][perms],
+                #         "labels": samples["labels"][perms],
+                #         "shapes": samples["shapes"][perms],
+                #     }
+                #     if self.post_transform is not None:
+                #         selection = transform_to_several(self.post_transform)(selection)
+                #     yield selection
                 del samples
 
 
@@ -168,4 +176,5 @@ def patches_worker_init_fn(worker_id):
     items_per_worker = dataset_size // num_workers
     start = worker_id * items_per_worker
     end = min(start + items_per_worker, dataset_size)
+    print(start, end)
     dataset.dataframe = dataset.dataframe.iloc[start:end]

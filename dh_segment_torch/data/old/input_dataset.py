@@ -117,7 +117,7 @@ class InputFolderDataset(InputDataset):
 
         input_data = list()
         for image_filename in image_files:
-            basename = os.path.basename(image_filename).split(".")[0]
+            basename = ".".join(os.path.basename(image_filename).split(".")[:-1])
             label_filename_candidates = glob(
                 os.path.join(self.labels_dir, basename + ".*")
             )

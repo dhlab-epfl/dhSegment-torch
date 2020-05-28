@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# coding: utf-8 
+# coding: utf-8
 
 __author__ = "maudehrmann, solivr"
 __license__ = "GPL"
@@ -7,35 +7,37 @@ __license__ = "GPL"
 import json
 import os
 import re
-from tqdm import tqdm
-import numpy as np
-from skimage import transform
 from collections import namedtuple
-from imageio import imsave, imread
-import requests
-from PIL import Image
 from itertools import filterfalse, chain
 from typing import List, Tuple, Dict
-import cv2
-from . import PAGE
 
+import cv2
+import numpy as np
+import requests
+from PIL import Image
+from imageio import imsave, imread
+from skimage import transform
+from tqdm import tqdm
+
+from dh_segment_torch.data.old import PAGE
 
 # To define before using the corresponding functions
 # iiif_password = os.environ["IIIF_PWD"]
-iiif_password = ''
+iiif_password = ""
 
 
 WorkingItem = namedtuple(
-    "WorkingItem", [
-        'collection',
-        'image_name',
-        'original_x',
-        'original_y',
-        'reduced_x',
-        'reduced_y',
-        'iiif',
-        'annotations'
-    ]
+    "WorkingItem",
+    [
+        "collection",
+        "image_name",
+        "original_x",
+        "original_y",
+        "reduced_x",
+        "reduced_y",
+        "iiif",
+        "annotations",
+    ],
 )
 WorkingItem.__doc__ = """
 A container for annotated images.
@@ -51,13 +53,7 @@ A container for annotated images.
 """
 
 
-VIAttribute = namedtuple(
-    "VIAttribute", [
-        'name',
-        'type',
-        'options'
-    ]
-)
+VIAttribute = namedtuple("VIAttribute", ["name", "type", "options"])
 VIAttribute.__doc__ = """
 A container for VIA attributes.
 
@@ -75,27 +71,26 @@ def parse_via_attributes(via_attributes: dict) -> List[VIAttribute]:
     :return: list of ``VIAttribute``
     """
 
-    if {'file', 'region'}.issubset(set(via_attributes.keys())):
-        via_attributes = via_attributes['region']
+    if {"file", "region"}.issubset(set(via_attributes.keys())):
+        via_attributes = via_attributes["region"]
 
     list_attributes = list()
     for k, v in via_attributes.items():
-        if v['type'] == 'text':
-            print('WARNING : Please do not use text type for attributes because it is more prone to errors/typos which '
-                  'can make the parsing fail. Use instead "checkbox", "dropdown" or "radio" with defined options.')
+        if v["type"] == "text":
+            print(
+                "WARNING : Please do not use text type for attributes because it is more prone to errors/typos which "
+                'can make the parsing fail. Use instead "checkbox", "dropdown" or "radio" with defined options.'
+            )
             options = None
         else:
-            options = list(v['options'].keys())
+            options = list(v["options"].keys())
 
-        list_attributes.append(VIAttribute(k,
-                                           v['type'],
-                                           options))
+        list_attributes.append(VIAttribute(k, v["type"], options))
 
     return list_attributes
 
 
-def get_annotations_per_file(via_dict: dict,
-                             name_file: str) -> dict:
+def get_annotations_per_file(via_dict: dict, name_file: str) -> dict:
     """
     From VIA json content, get annotations relative to the given `name_file`.
 
@@ -106,31 +101,37 @@ def get_annotations_per_file(via_dict: dict,
 
     # Check that the annotation_dict is a "via_project" file (project export),
     # or a "via_region" file (annotation export)
-    if '_via_img_metadata' in via_dict.keys():
-        annotation_dict = via_dict['_via_img_metadata']
+    if "_via_img_metadata" in via_dict.keys():
+        annotation_dict = via_dict["_via_img_metadata"]
     else:
         annotation_dict = via_dict
 
     #  If it looks like a iiif path add "-1"
-    if 'http' in name_file:
+    if "http" in name_file:
         key = name_file + "-1"
     else:
         # find the key that contains the name_file
-        list_keys = list(filterfalse(lambda x: name_file not in x, list(annotation_dict.keys())))
-        assert len(list_keys) == 1, "There is more than one key for the file '{} : \n{}'".format(name_file, list_keys)
+        list_keys = list(
+            filterfalse(lambda x: name_file not in x, list(annotation_dict.keys()))
+        )
+        assert (
+            len(list_keys) == 1
+        ), "There is more than one key for the file '{} : \n{}'".format(
+            name_file, list_keys
+        )
         key = list_keys[0]
 
     if key in annotation_dict.keys():
         myannotation = annotation_dict[key]
-        if name_file == myannotation['filename']:
-            return myannotation['regions']
+        if name_file == myannotation["filename"]:
+            return myannotation["regions"]
         else:
             return None
 
 
-def _compute_reduced_dimensions(x: int,
-                                y: int,
-                                target_h: int = 2000) -> Tuple[int, int]:
+def _compute_reduced_dimensions(
+    x: int, y: int, target_h: int = 2000
+) -> Tuple[int, int]:
     """
     Compute new dimensions with height set to `target_h`.
 
@@ -144,9 +145,9 @@ def _compute_reduced_dimensions(x: int,
     return target_h, target_w
 
 
-def _collect_working_items_from_local_images(via_annotations: dict,
-                                             images_dir: str,
-                                             collection_name: str) -> List[WorkingItem]:
+def _collect_working_items_from_local_images(
+    via_annotations: dict, images_dir: str, collection_name: str
+) -> List[WorkingItem]:
     """
     Given VIA annotation input, collect all info on `WorkingItem` object, when images come from local files
 
@@ -157,9 +158,9 @@ def _collect_working_items_from_local_images(via_annotations: dict,
     """
 
     def _formatting(name_id: str) -> str:
-        name_id = re.sub('.jpg\d*', '.jpg', name_id)
-        name_id = re.sub('.JPG\d*', '.JPG', name_id)
-        name_id = re.sub('.png\d*', '.png', name_id)
+        name_id = re.sub(".jpg\d*", ".jpg", name_id)
+        name_id = re.sub(".JPG\d*", ".JPG", name_id)
+        name_id = re.sub(".png\d*", ".png", name_id)
         return name_id
 
     def _get_image_shape_without_loading(filename: str) -> Tuple[int, int]:
@@ -176,26 +177,28 @@ def _collect_working_items_from_local_images(via_annotations: dict,
         absolute_filename = os.path.join(images_dir, filename)
         shape_image = _get_image_shape_without_loading(absolute_filename)
 
-        regions = v['regions']
+        regions = v["regions"]
 
         if regions:
-            wk_item = WorkingItem(collection=collection_name,
-                                  image_name=filename.split('.')[0],
-                                  original_x=shape_image[0],
-                                  original_y=shape_image[1],
-                                  reduced_x=None,
-                                  reduced_y=None,
-                                  iiif=None,
-                                  annotations=regions)
+            wk_item = WorkingItem(
+                collection=collection_name,
+                image_name=filename.split(".")[0],
+                original_x=shape_image[0],
+                original_y=shape_image[1],
+                reduced_x=None,
+                reduced_y=None,
+                iiif=None,
+                annotations=regions,
+            )
 
             working_items.append(wk_item)
 
     return working_items
 
 
-def _collect_working_items_from_iiif(via_annotations: dict,
-                                     collection_name: str,
-                                     iiif_user = 'my-team') -> dict:
+def _collect_working_items_from_iiif(
+    via_annotations: dict, collection_name: str, iiif_user="my-team"
+) -> dict:
     """
     Given VIA annotation input, collect all info on `WorkingItem` object, when the images come from IIIF urls
 
@@ -209,43 +212,47 @@ def _collect_working_items_from_iiif(via_annotations: dict,
     session = requests.Session()
 
     for key, v in tqdm(via_annotations.items()):
-        iiif_url = v['filename']
+        iiif_url = v["filename"]
 
-        image_name = os.path.basename(iiif_url.split('/full/full/')[0])
+        image_name = os.path.basename(iiif_url.split("/full/full/")[0])
 
         # get image dimensions
         iiif_json = iiif_url.replace("default.jpg", "info.json")
         resp_json = session.get(iiif_json, auth=(iiif_user, iiif_password))
         if resp_json.status_code == requests.codes.ok:
-            y = resp_json.json()['height']
-            x = resp_json.json()['width']
+            y = resp_json.json()["height"]
+            x = resp_json.json()["width"]
             # target_h, target_w = _compute_reduced_dimensions(x, y)
             target_h, target_w = None, None
         else:
             x, y, target_w, target_h = None, None, None, None
             resp_json.raise_for_status()
 
-        regions = v['regions']
+        regions = v["regions"]
 
         if regions:
-            wk_item = WorkingItem(collection=collection_name,
-                                  image_name=image_name.split('.')[0],
-                                  original_x=x,
-                                  original_y=y,
-                                  reduced_x=target_w,
-                                  reduced_y=target_h,
-                                  iiif=iiif_url,
-                                  annotations=regions)
+            wk_item = WorkingItem(
+                collection=collection_name,
+                image_name=image_name.split(".")[0],
+                original_x=x,
+                original_y=y,
+                reduced_x=target_w,
+                reduced_y=target_h,
+                iiif=iiif_url,
+                annotations=regions,
+            )
 
             working_items.append(wk_item)
 
     return working_items
 
 
-def collect_working_items(via_annotations: dict,
-                          collection_name: str,
-                          images_dir: str = None,
-                          via_version: int = 2) -> List[WorkingItem]:
+def collect_working_items(
+    via_annotations: dict,
+    collection_name: str,
+    images_dir: str = None,
+    via_version: int = 2,
+) -> List[WorkingItem]:
     """
     Given VIA annotation input, collect all info on `WorkingItem` object.
     This function will take care of separating images from local files and images from IIIF urls.
@@ -261,25 +268,28 @@ def collect_working_items(via_annotations: dict,
     if via_version == 1:
         for key, value in via_annotations_v2.items():
             list_regions = list()
-            for v_region in value['regions'].values():
+            for v_region in value["regions"].values():
                 list_regions.append(v_region)
-            via_annotations_v2[key]['regions'] = list_regions
+            via_annotations_v2[key]["regions"] = list_regions
 
-    local_annotations = {k: v for k, v in via_annotations_v2.items() if 'http' not in k}
-    url_annotations = {k: v for k, v in via_annotations_v2.items() if 'http' in k}
+    local_annotations = {k: v for k, v in via_annotations_v2.items() if "http" not in k}
+    url_annotations = {k: v for k, v in via_annotations_v2.items() if "http" in k}
 
     working_items = list()
     if local_annotations:
         assert images_dir is not None
-        working_items += _collect_working_items_from_local_images(local_annotations, images_dir, collection_name)
+        working_items += _collect_working_items_from_local_images(
+            local_annotations, images_dir, collection_name
+        )
     if url_annotations:
-        working_items += _collect_working_items_from_iiif(url_annotations, collection_name)
+        working_items += _collect_working_items_from_iiif(
+            url_annotations, collection_name
+        )
 
     return working_items
 
 
-def _scale_down_original(working_item,
-                         img_out_dir: str) -> None:
+def _scale_down_original(working_item, img_out_dir: str) -> None:
     """
     Copy and reduce original image files.
 
@@ -303,19 +313,19 @@ def _scale_down_original(working_item,
 
     outfile = os.path.join(image_set_dir, working_item.image_name + "_ds.png")
     if not os.path.isfile(outfile):
-        img = _getimage_from_iiif(working_item.iiif, 'epfl-team', iiif_password)
+        img = _getimage_from_iiif(working_item.iiif, "epfl-team", iiif_password)
         img_resized = transform.resize(
             img,
             [working_item.reduced_y, working_item.reduced_x],
             anti_aliasing=False,
-            preserve_range=True
+            preserve_range=True,
         )
         imsave(outfile, img_resized.astype(np.uint8))
 
 
-def load_annotation_data(via_data_filename: str,
-                         only_img_annotations: bool = False,
-                         via_version: int = 2) -> dict:
+def load_annotation_data(
+    via_data_filename: str, only_img_annotations: bool = False, via_version: int = 2
+) -> dict:
     """
     Load the content of via annotation files.
 
@@ -325,21 +335,22 @@ def load_annotation_data(via_data_filename: str,
     :return: the content of json file containing the region annotated
     """
 
-    with open(via_data_filename, 'r', encoding='utf8') as f:
+    with open(via_data_filename, "r", encoding="utf8") as f:
         content = json.load(f)
     if via_version == 2:
-        assert '_via_img_metadata' in content.keys(), "The file is not a valid VIA project export."
+        assert (
+            "_via_img_metadata" in content.keys()
+        ), "The file is not a valid VIA project export."
 
         if only_img_annotations:
-            return content['_via_img_metadata']
+            return content["_via_img_metadata"]
         else:
             return content
     else:
         return content
 
 
-def export_annotation_dict(annotation_dict: dict,
-                           filename: str) -> None:
+def export_annotation_dict(annotation_dict: dict, filename: str) -> None:
     """
     Export the annotations to json file.
 
@@ -347,12 +358,13 @@ def export_annotation_dict(annotation_dict: dict,
     :param filename: filename to export the data (json file)
     :return:
     """
-    with open(filename, 'w', encoding='utf8') as f:
+    with open(filename, "w", encoding="utf8") as f:
         json.dump(annotation_dict, f)
 
 
-def get_via_attributes(annotation_dict: dict,
-                       via_version: int = 2) -> List[VIAttribute]:
+def get_via_attributes(
+    annotation_dict: dict, via_version: int = 2
+) -> List[VIAttribute]:
     """
     Gets the attributes of the annotated data and returns a list of `VIAttribute`.
 
@@ -363,39 +375,45 @@ def get_via_attributes(annotation_dict: dict,
 
     if via_version == 1:
 
-        list_attributes = [list(region['region_attributes'].keys())
-                           for value in annotation_dict.values()
-                           for region in value['regions'].values()]
+        list_attributes = [
+            list(region["region_attributes"].keys())
+            for value in annotation_dict.values()
+            for region in value["regions"].values()
+        ]
 
         # Find options
         unique_attributes = list(np.unique(list(chain.from_iterable(list_attributes))))
 
         dict_labels = {rgn_att: list() for rgn_att in unique_attributes}
         for value in annotation_dict.values():
-            regions = value['regions']
+            regions = value["regions"]
             for region in regions.values():
-                for k, v in region['region_attributes'].items():
+                for k, v in region["region_attributes"].items():
                     dict_labels[k].append(v)
 
     elif via_version == 2:
 
-        if '_via_attributes' in annotation_dict.keys():  # If project_export is given
-            return parse_via_attributes(annotation_dict['_via_attributes'])
+        if "_via_attributes" in annotation_dict.keys():  # If project_export is given
+            return parse_via_attributes(annotation_dict["_via_attributes"])
 
         else:  # else if annotation_export is given
 
-            list_attributes = [list(region['region_attributes'].keys())
-                               for value in annotation_dict.values()
-                               for region in value['regions']]
+            list_attributes = [
+                list(region["region_attributes"].keys())
+                for value in annotation_dict.values()
+                for region in value["regions"]
+            ]
 
             # Find options
-            unique_attributes = list(np.unique(list(chain.from_iterable(list_attributes))))
+            unique_attributes = list(
+                np.unique(list(chain.from_iterable(list_attributes)))
+            )
 
             dict_labels = {rgn_att: list() for rgn_att in unique_attributes}
             for value in annotation_dict.values():
-                regions = value['regions']
+                regions = value["regions"]
                 for region in regions:
-                    for k, v in region['region_attributes'].items():
+                    for k, v in region["region_attributes"].items():
                         dict_labels[k].append(v)
 
     else:
@@ -406,23 +424,27 @@ def get_via_attributes(annotation_dict: dict,
     for attribute, options in dict_labels.items():
 
         if all(isinstance(opt, str) for opt in options):
-            viattribute_list.append(VIAttribute(name=attribute,
-                                                type=None,
-                                                options=list(np.unique(options))))
+            viattribute_list.append(
+                VIAttribute(name=attribute, type=None, options=list(np.unique(options)))
+            )
 
         elif all(isinstance(opt, dict) for opt in options):
-            viattribute_list.append(VIAttribute(name=attribute,
-                                                type=None,
-                                                options=list(np.unique(list(chain.from_iterable(options))))))
+            viattribute_list.append(
+                VIAttribute(
+                    name=attribute,
+                    type=None,
+                    options=list(np.unique(list(chain.from_iterable(options)))),
+                )
+            )
 
         else:
             raise NotImplementedError
     return viattribute_list
 
 
-def _draw_mask(via_region: dict,
-               mask: np.array,
-               contours_only: bool = False) -> np.array:
+def _draw_mask(
+    via_region: dict, mask: np.array, contours_only: bool = False
+) -> np.array:
     """
 
     :param via_region: region to draw (in VIA format)
@@ -431,56 +453,73 @@ def _draw_mask(via_region: dict,
     :return: the drawn mask
     """
 
-    shape_attributes_dict = via_region['shape_attributes']
+    shape_attributes_dict = via_region["shape_attributes"]
 
-    if shape_attributes_dict['name'] == 'rect':
-        x = shape_attributes_dict['x']
-        y = shape_attributes_dict['y']
-        w = shape_attributes_dict['width']
-        h = shape_attributes_dict['height']
+    if shape_attributes_dict["name"] == "rect":
+        x = shape_attributes_dict["x"]
+        y = shape_attributes_dict["y"]
+        w = shape_attributes_dict["width"]
+        h = shape_attributes_dict["height"]
 
-        contours = np.array([[x, y],
-                             [x + w, y],
-                             [x + w, y + h],
-                             [x, y + h]
-                             ]).reshape((-1, 1, 2))
+        contours = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]]).reshape(
+            (-1, 1, 2)
+        )
 
-        mask = cv2.polylines(mask, [contours], True, 255, thickness=15) if contours_only \
+        mask = (
+            cv2.polylines(mask, [contours], True, 255, thickness=15)
+            if contours_only
             else cv2.fillPoly(mask, [contours], 255)
+        )
 
-    elif shape_attributes_dict['name'] == 'polygon':
-        contours = np.stack([shape_attributes_dict['all_points_x'],
-                             shape_attributes_dict['all_points_y']], axis=1)[:, None, :]
+    elif shape_attributes_dict["name"] == "polygon":
+        contours = np.stack(
+            [
+                shape_attributes_dict["all_points_x"],
+                shape_attributes_dict["all_points_y"],
+            ],
+            axis=1,
+        )[:, None, :]
 
-        mask = cv2.polylines(mask, [contours], True, 255, thickness=15) if contours_only \
+        mask = (
+            cv2.polylines(mask, [contours], True, 255, thickness=15)
+            if contours_only
             else cv2.fillPoly(mask, [contours], 255)
+        )
 
-    elif shape_attributes_dict['name'] == 'circle':
-        center_point = (shape_attributes_dict['cx'], shape_attributes_dict['cy'])
-        radius = shape_attributes_dict['r']
+    elif shape_attributes_dict["name"] == "circle":
+        center_point = (shape_attributes_dict["cx"], shape_attributes_dict["cy"])
+        radius = shape_attributes_dict["r"]
 
-        mask = cv2.circle(mask, center_point, radius, 255, thickness=15) if contours_only \
+        mask = (
+            cv2.circle(mask, center_point, radius, 255, thickness=15)
+            if contours_only
             else cv2.circle(mask, center_point, radius, 255, thickness=-1)
+        )
 
-    elif shape_attributes_dict['name'] == 'polyline':
-        contours = np.stack([shape_attributes_dict['all_points_x'],
-                             shape_attributes_dict['all_points_y']], axis=1)[:, None, :]
+    elif shape_attributes_dict["name"] == "polyline":
+        contours = np.stack(
+            [
+                shape_attributes_dict["all_points_x"],
+                shape_attributes_dict["all_points_y"],
+            ],
+            axis=1,
+        )[:, None, :]
 
         mask = cv2.polylines(mask, [contours], False, 255, thickness=15)
 
     else:
         raise NotImplementedError(
-            'Mask annotation for shape of type "{}" has not been implemented yet'
-                .format(shape_attributes_dict['name']))
+            'Mask annotation for shape of type "{}" has not been implemented yet'.format(
+                shape_attributes_dict["name"]
+            )
+        )
 
     return mask
 
 
-def _write_mask(mask: np.ndarray,
-                masks_dir: str,
-                collection: str,
-                image_name: str,
-                label: str) -> None:
+def _write_mask(
+    mask: np.ndarray, masks_dir: str, collection: str, image_name: str, label: str
+) -> None:
     """
     Save a mask with filename containing 'label'.
 
@@ -495,16 +534,20 @@ def _write_mask(mask: np.ndarray,
     outdir = os.path.join(masks_dir, collection, image_name)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    label = label.strip(' \n').replace(" ", "_").lower() if label is not None else 'nolabel'
+    label = (
+        label.strip(" \n").replace(" ", "_").lower() if label is not None else "nolabel"
+    )
     outfile = os.path.join(outdir, image_name + "-mask-" + label + ".png")
     imsave(outfile, mask.astype(np.uint8))
 
 
-def create_masks(masks_dir: str,
-                 working_items: List[WorkingItem],
-                 via_attributes: List[VIAttribute],
-                 collection: str,
-                 contours_only: bool = False) -> dict:
+def create_masks(
+    masks_dir: str,
+    working_items: List[WorkingItem],
+    via_attributes: List[VIAttribute],
+    collection: str,
+    contours_only: bool = False,
+) -> dict:
     """
     For each annotation, create a corresponding binary mask and resize it (h = 2000). Only valid for VIA 2.0.
     Several annotations of the same class on the same image produce one image with several masks.
@@ -517,7 +560,9 @@ def create_masks(masks_dir: str,
     :return: annotation_summary, a dictionary containing a list of labels per image
     """
 
-    def resize_and_write_mask(mask_image: np.ndarray, working_item: WorkingItem, label_item: str) -> None:
+    def resize_and_write_mask(
+        mask_image: np.ndarray, working_item: WorkingItem, label_item: str
+    ) -> None:
         """
         Resize only if needed (if working_item.reduced != working_item.original)
 
@@ -528,18 +573,30 @@ def create_masks(masks_dir: str,
         """
 
         if not working_item.reduced_y and not working_item.reduced_x:
-            _write_mask(mask_image, masks_dir, collection, working_item.image_name, label_item)
+            _write_mask(
+                mask_image, masks_dir, collection, working_item.image_name, label_item
+            )
 
-        elif working_item.reduced_x != working_item.original_x and working_item.reduced_y != working_item.original_y:
-            mask_resized = transform.resize(mask_image,
-                                            [working_item.reduced_y, working_item.reduced_x],
-                                            anti_aliasing=False,
-                                            preserve_range=True,
-                                            order=0)
-            _write_mask(mask_resized, masks_dir, collection, working_item.image_name, label_item)
+        elif (
+            working_item.reduced_x != working_item.original_x
+            and working_item.reduced_y != working_item.original_y
+        ):
+            mask_resized = transform.resize(
+                mask_image,
+                [working_item.reduced_y, working_item.reduced_x],
+                anti_aliasing=False,
+                preserve_range=True,
+                order=0,
+            )
+            _write_mask(
+                mask_resized, masks_dir, collection, working_item.image_name, label_item
+            )
 
         else:
-            _write_mask(mask_image, masks_dir, collection, working_item.image_name, label_item)
+            _write_mask(
+                mask_image, masks_dir, collection, working_item.image_name, label_item
+            )
+
     # -------------------
 
     print("Creating masks in {}...".format(masks_dir))
@@ -560,12 +617,21 @@ def create_masks(masks_dir: str,
             for attribute in via_attributes:
                 for option in attribute.options:
                     # get annotations that have the current attribute
-                    selected_regions = list(filter(lambda r: attribute.name in r['region_attributes'].keys(),
-                                                   wi.annotations))
+                    selected_regions = list(
+                        filter(
+                            lambda r: attribute.name in r["region_attributes"].keys(),
+                            wi.annotations,
+                        )
+                    )
                     # get annotations that have the current attribute and option
                     if selected_regions:
-                        selected_regions = list(filter(lambda r: r['region_attributes'][attribute.name] == option,
-                                                       selected_regions))
+                        selected_regions = list(
+                            filter(
+                                lambda r: r["region_attributes"][attribute.name]
+                                == option,
+                                selected_regions,
+                            )
+                        )
                     else:
                         continue
 
@@ -577,7 +643,7 @@ def create_masks(masks_dir: str,
                         for sr in selected_regions:
                             mask = _draw_mask(sr, mask, contours_only)
 
-                        label = '{}-{}'.format(attribute.name, option).lower()
+                        label = "{}-{}".format(attribute.name, option).lower()
                         resize_and_write_mask(mask, wi, label)
                         # add to existing labels
                         labels.append(label)
@@ -585,7 +651,7 @@ def create_masks(masks_dir: str,
         # write summary: list of existing labels per image
         annotation_summary[wi.image_name] = labels
         outfile = os.path.join(masks_dir, collection, collection + "-classes.txt")
-        with open(outfile, 'a') as fh:
+        with open(outfile, "a") as fh:
             for a in annotation_summary:
                 fh.write(a + "\t" + str(annotation_summary[a]) + "\n")
 
@@ -602,36 +668,46 @@ def _get_coordinates_from_xywh(via_regions: List[dict]) -> List[np.array]:
     """
     list_coordinates_regions = list()
     for region in via_regions:
-        shape_attributes_dict = region['shape_attributes']
-        if shape_attributes_dict['name'] == 'rect':
-            x = shape_attributes_dict['x']
-            y = shape_attributes_dict['y']
-            w = shape_attributes_dict['width']
-            h = shape_attributes_dict['height']
+        shape_attributes_dict = region["shape_attributes"]
+        if shape_attributes_dict["name"] == "rect":
+            x = shape_attributes_dict["x"]
+            y = shape_attributes_dict["y"]
+            w = shape_attributes_dict["width"]
+            h = shape_attributes_dict["height"]
 
-            coordinates = np.array([[x, y],
-                                    [x + w, y],
-                                    [x + w, y + h],
-                                    [x, y + h]
-                                    ])
+            coordinates = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]])
             list_coordinates_regions.append(coordinates)
-        elif shape_attributes_dict['name'] == 'polygon':
-            coordinates = np.stack([shape_attributes_dict['all_points_x'],
-                                    shape_attributes_dict['all_points_y']], axis=1)
+        elif shape_attributes_dict["name"] == "polygon":
+            coordinates = np.stack(
+                [
+                    shape_attributes_dict["all_points_x"],
+                    shape_attributes_dict["all_points_y"],
+                ],
+                axis=1,
+            )
             list_coordinates_regions.append(coordinates)
-        elif shape_attributes_dict['name'] == 'polyline':
-            coordinates = np.stack([shape_attributes_dict['all_points_x'],
-                                    shape_attributes_dict['all_points_y']], axis=1)
+        elif shape_attributes_dict["name"] == "polyline":
+            coordinates = np.stack(
+                [
+                    shape_attributes_dict["all_points_x"],
+                    shape_attributes_dict["all_points_y"],
+                ],
+                axis=1,
+            )
             list_coordinates_regions.append(coordinates)
         else:
             raise NotImplementedError(
-                "This method has not been implemenetd yet for {}".format(shape_attributes_dict['name']))
+                "This method has not been implemenetd yet for {}".format(
+                    shape_attributes_dict["name"]
+                )
+            )
 
     return list_coordinates_regions
 
 
 # EXPORT
 # ------
+
 
 def _get_xywh_from_coordinates(coordinates: np.array) -> Tuple[int, int, int, int]:
     """
@@ -649,9 +725,9 @@ def _get_xywh_from_coordinates(coordinates: np.array) -> Tuple[int, int, int, in
     return x, y, w, h
 
 
-def create_via_region_from_coordinates(coordinates: np.array,
-                                       region_attributes: dict,
-                                       type_region: str) -> dict:
+def create_via_region_from_coordinates(
+    coordinates: np.array, region_attributes: dict, type_region: str
+) -> dict:
     """
     Formats coordinates to a VIA region (dict).
 
@@ -660,36 +736,37 @@ def create_via_region_from_coordinates(coordinates: np.array,
     :param type_region: via region annotation type ('rect', 'polygon')
     :return: a region in VIA style (dict/json)
     """
-    assert type_region in ['rect', 'polygon', 'circle']
+    assert type_region in ["rect", "polygon", "circle"]
 
-    if type_region == 'rect':
+    if type_region == "rect":
         x, y, w, h = _get_xywh_from_coordinates(coordinates)
         shape_atributes = {
-            'name': 'rect',
-            'height': int(h),
-            'width': int(w),
-            'x': int(x),
-            'y': int(y)
+            "name": "rect",
+            "height": int(h),
+            "width": int(w),
+            "x": int(x),
+            "y": int(y),
         }
-    elif type_region == 'polygon':
+    elif type_region == "polygon":
         points_x = list(coordinates[:, 0])
         points_y = list(coordinates[:, 1])
 
         shape_atributes = {
-            'name': 'polygon',
-            'all_points_x': [int(p) for p in points_x],
-            'all_points_y': [int(p) for p in points_y],
+            "name": "polygon",
+            "all_points_x": [int(p) for p in points_x],
+            "all_points_y": [int(p) for p in points_y],
         }
-    elif type_region == 'circle':
-        raise NotImplementedError('The type {} is not supported for the export.'.format(type))
+    elif type_region == "circle":
+        raise NotImplementedError(
+            "The type {} is not supported for the export.".format(type)
+        )
 
-    return {'region_attributes': region_attributes,
-            'shape_attributes': shape_atributes}
+    return {"region_attributes": region_attributes, "shape_attributes": shape_atributes}
 
 
-def create_via_annotation_single_image(img_filename: str,
-                                       via_regions: List[dict],
-                                       file_attributes: dict = None) -> Dict[str, dict]:
+def create_via_annotation_single_image(
+    img_filename: str, via_regions: List[dict], file_attributes: dict = None
+) -> Dict[str, dict]:
     """
     Returns a dictionary item {key: annotation} in VIA format to further export to .json file
 
@@ -698,20 +775,20 @@ def create_via_annotation_single_image(img_filename: str,
     :param file_attributes: file attributes (usually None)
     :return: dictionary item with key and annotations in VIA format
     """
-    if 'http' in img_filename:
+    if "http" in img_filename:
         basename = img_filename
         file_size = -1
     else:
         basename = os.path.basename(img_filename)
         file_size = os.path.getsize(img_filename)
 
-    via_key = '{}{}'.format(basename, file_size)
+    via_key = "{}{}".format(basename, file_size)
 
     via_annotation = {
-        'file_attributes': file_attributes if file_attributes is not None else dict(),
-        'filename': basename,
-        'size': file_size,
-        'regions': via_regions
+        "file_attributes": file_attributes if file_attributes is not None else dict(),
+        "filename": basename,
+        "size": file_size,
+        "regions": via_regions,
     }
 
     return {via_key: via_annotation}
@@ -720,8 +797,10 @@ def create_via_annotation_single_image(img_filename: str,
 # PAGE CONVERSION
 # ---------------
 
-def convert_via_region_page_text_region(working_item: WorkingItem,
-                                        structure_label: str) -> PAGE.Page:
+
+def convert_via_region_page_text_region(
+    working_item: WorkingItem, structure_label: str
+) -> PAGE.Page:
     """
 
     :param working_item:
@@ -733,13 +812,18 @@ def convert_via_region_page_text_region(working_item: WorkingItem,
 
     region_coordinates = _get_coordinates_from_xywh(working_item.annotations)
 
-    page = PAGE.Page(image_filename=working_item.image_name + 'jpg',
-                     image_width=working_item.original_x,
-                     image_height=working_item.original_y,
-                     graphic_regions=[
-                         PAGE.TextRegion(coords=PAGE.Point.array_to_point(coords),
-                                         custom_attribute='structure{{type:{};}}'.format(structure_label))
-                         for coords in region_coordinates])
+    page = PAGE.Page(
+        image_filename=working_item.image_name + "jpg",
+        image_width=working_item.original_x,
+        image_height=working_item.original_y,
+        graphic_regions=[
+            PAGE.TextRegion(
+                coords=PAGE.Point.array_to_point(coords),
+                custom_attribute="structure{{type:{};}}".format(structure_label),
+            )
+            for coords in region_coordinates
+        ],
+    )
     return page
 
 

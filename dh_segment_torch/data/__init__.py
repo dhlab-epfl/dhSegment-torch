@@ -132,10 +132,9 @@ VGG Image Annotator helpers
 #     'json_serialize'
 # ]
 
-#__all__ = _INPUT  # + _PAGE_OBJECTS + _PAGE_FN
+# __all__ = _INPUT  # + _PAGE_OBJECTS + _PAGE_FN
 
 # from .input import *
 # from .input_utils import *
 # from . import PAGE
 # from . import via
-
