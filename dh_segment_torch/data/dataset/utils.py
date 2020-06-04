@@ -27,16 +27,16 @@ def collate_fn(examples):
     images = []
     masks = []
     shapes_out = []
-    for example, padding in zip(examples, paddings):
 
+    for example, padding in zip(examples, paddings):
         image, label, shape = example["image"], example["label"], example["shape"]
         images.append(F.pad(image, padding))
         masks.append(F.pad(label, padding))
         shapes_out.append(shape)
 
     return {
-        "images": torch.stack(images, dim=0),
-        "labels": torch.stack(masks, dim=0),
+        "input": torch.stack(images, dim=0),
+        "target": torch.stack(masks, dim=0),
         "shapes": torch.stack(shapes_out, dim=0),
     }
 

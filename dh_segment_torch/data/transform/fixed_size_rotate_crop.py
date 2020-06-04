@@ -3,7 +3,7 @@ import cv2
 
 from dh_segment_torch.data.transform import Transform
 from dh_segment_torch.data.transform.albumentation import Rotate
-from dh_segment_torch.data.transforms_album.rotate_no_crop import (
+from dh_segment_torch.data.old.transforms_album.rotate_no_crop import (
     get_rotated_size,
     rotate_no_crop,
     keypoint_rotate_no_crop,

@@ -7,12 +7,11 @@ from albumentations import (
     HueSaturationValue,
 )
 
-from dh_segment_torch.data.transforms_album.assign_labels import (
+from dh_segment_torch.data.old.transforms_album.assign_labels import (
     AssignLabelClassification,
-    AssignLabelMultilabel,
     AssignLabel, AssignOneHot)
-from dh_segment_torch.data.transforms_album.fixed_size_resize import FixedSizeResize
-from dh_segment_torch.data.transforms_album.fixed_size_rotate_crop import (
+from dh_segment_torch.data.old.transforms_album.fixed_size_resize import FixedSizeResize
+from dh_segment_torch.data.old.transforms_album.fixed_size_rotate_crop import (
     FixedSizeRotateCrop,
 )
 from dh_segment_torch.params import DataParams, PredictionType

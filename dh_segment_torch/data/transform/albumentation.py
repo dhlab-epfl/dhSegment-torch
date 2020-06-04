@@ -16,6 +16,12 @@ class Compose(composition.Compose, Transform):
         super().__init__(transforms=transforms, additional_targets=additional_targets, p=p)
 
 
+@Transform.register("oneof")
+class OneOf(composition.OneOf, Transform):
+    def __init__(self, transforms: List[Transform], p: float = 0.5):
+        super().__init__(transforms=transforms, p=p)
+
+
 @Transform.register("blur")
 class Blur(transforms.Blur, Transform):
     def __init__(self, blur_limit: Union[int, Tuple[int, int]] = 7, always_apply: bool = False, p: float = 0.5):

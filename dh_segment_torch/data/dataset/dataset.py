@@ -3,13 +3,11 @@ import mimetypes
 import os
 from abc import ABC
 from glob import glob
-from typing import List, Optional, Union, Dict, Any
+from typing import List, Optional, Dict, Any
 
 import cv2
-import numpy as np
 import pandas as pd
 import torch
-import torch.nn.functional as F
 from torchvision.transforms.functional import to_tensor
 
 from dh_segment_torch.config.registrable import Registrable
@@ -84,7 +82,7 @@ def load_sample(sample: dict) -> dict:
     return sample
 
 
-def sample_to_tensor(sample: Dict[str, Any], add_shapes: bool = True):
+def sample_to_tensor(sample: Dict[str, Any]):
     image, label = sample["image"], sample["label"]
 
     # If we have multilabel, we need to transpose
@@ -95,13 +93,9 @@ def sample_to_tensor(sample: Dict[str, Any], add_shapes: bool = True):
         {
             "image": to_tensor(image),
             "label": torch.from_numpy(label),
+            "shape": torch.tensor(image.shape[:2]),
         }
     )
-
-    if add_shapes:
-        sample.update({
-            "shape": torch.tensor(image.shape[:2]),
-        })
     return sample
 
 

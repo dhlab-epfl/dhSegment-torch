@@ -13,15 +13,22 @@ from dh_segment_torch.data.dataset.dataset import (
     load_data_from_folder,
 )
 from dh_segment_torch.data.transform.albumentation import Compose
+from dh_segment_torch.data.transform.assign_labels import Assign
 
 
 class ImageDataset(Dataset):
-    def __init__(self, data: pd.DataFrame, base_dir: Optional[str] = None, compose_transform: Compose = None, add_shapes: bool = True):
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        base_dir: Optional[str] = None,
+        compose: Compose = None,
+        assign_transform: Assign = None,
+    ):
         super().__init__(data, base_dir)
-        self.compose_transform = compose_transform
-        if self.compose_transform:
-            self.compose_transform.add_targets({"label": "mask"})
-        self.add_shapes = add_shapes
+        self.compose = compose
+        if self.compose:
+            self.compose.add_targets({"label": "mask"})
+        self.assign_transform = assign_transform
 
     def __len__(self):
         return self.num_images
@@ -37,24 +44,46 @@ class ImageDataset(Dataset):
 
         sample = load_sample(sample)
 
-        if self.compose_transform:
-            sample = self.compose_transform(**sample)
-        return sample_to_tensor(sample, self.add_shapes)
+        if self.compose:
+            sample = self.compose(**sample)
+        if self.assign_transform:
+            label = sample["label"]
+            sample.update({"label": self.assign_transform.apply(label)})
+        return sample_to_tensor(sample)
 
     @classmethod
-    def from_csv(cls, csv_filename: Union[str, Path], base_dir: Union[str, Path] = None, compose_transform: Compose = None, add_shapes: bool = True):
+    def from_csv(
+        cls,
+        csv_filename: Union[str, Path],
+        base_dir: Union[str, Path] = None,
+        compose: Compose = None,
+        assign_transform: Assign = None,
+    ):
         data = load_data_from_csv(str(csv_filename))
-        return cls(data, str(base_dir), compose_transform, add_shapes)
+        return cls(data, str(base_dir), compose, assign_transform)
 
     @classmethod
-    def from_csv_list(cls, csv_list: List[Union[str, Path]], base_dir: Union[str, Path] = None, compose_transform: Compose = None, add_shapes: bool = True):
+    def from_csv_list(
+        cls,
+        csv_list: List[Union[str, Path]],
+        base_dir: Union[str, Path] = None,
+        compose: Compose = None,
+        assign_transform: Assign = None,
+    ):
         data = load_data_from_csv_list([str(csv) for csv in csv_list])
-        return cls(data, str(base_dir), compose_transform, add_shapes)
+        return cls(data, str(base_dir), compose, assign_transform)
 
     @classmethod
-    def from_folder(cls, folder: Union[str, Path], compose_transform: Compose = None, add_shapes: bool = True):
+    def from_folder(
+        cls,
+        folder: Union[str, Path],
+        compose: Compose = None,
+        assign_transform: Assign = None,
+    ):
         data = load_data_from_folder(str(folder))
-        return cls(data, compose_transform=compose_transform, add_shapes=add_shapes)
+        return cls(
+            data, compose=compose, assign_transform=assign_transform
+        )
 
 
 Dataset.register("image_dataframe")(ImageDataset)
