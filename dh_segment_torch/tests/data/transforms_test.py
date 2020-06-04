@@ -21,9 +21,7 @@ class SegmentationModelTest(DhSegmentTestCase):
         param = {
             'type': 'compose',
             'transforms': [
-                {
-                    'type': 'blur'
-                },
+                'blur',
                 {
                     'type': 'horizontal_flip',
                     'always_apply': True

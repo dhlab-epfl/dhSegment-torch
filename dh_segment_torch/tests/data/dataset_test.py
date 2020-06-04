@@ -1,9 +1,10 @@
 import cv2
+import torch
+from torch.utils.data import IterableDataset, Dataset
 import pytest
-from torchvision.transforms.functional import to_tensor
 
-from dh_segment_torch.config import ConfigurationError
 from dh_segment_torch.config.params import Params
+from dh_segment_torch.data.dataset import PatchesDataset, ImageDataset
 from dh_segment_torch.data.dataset.dataset import Dataset
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
@@ -17,6 +18,8 @@ class DatasetTest(DhSegmentTestCase):
         }
 
         dataset = Dataset.from_params(Params(params))
+        assert isinstance(dataset, Dataset)
+        assert isinstance(dataset, ImageDataset)
         assert len(dataset) == 10
         assert dataset.num_images == 10
         sample = dataset[0]
@@ -32,12 +35,14 @@ class DatasetTest(DhSegmentTestCase):
         }
 
         dataset = Dataset.from_params(Params(params))
+        assert isinstance(dataset, IterableDataset)
+        assert isinstance(dataset, PatchesDataset)
         assert dataset.num_images == 15
         for sample in dataset:
             break
         assert "image" in sample
         assert "label" in sample
-        assert "shape" not in sample
+        assert "shape" in sample
         assert sample["image"].shape[1] == patches_size
 
     def test_transform_dataset(self):
@@ -50,23 +55,22 @@ class DatasetTest(DhSegmentTestCase):
                 / "image_001.png"
             )
         )
-        first_image_tensor = to_tensor(first_image)
 
         params = {
             "type": "image_csv",
             "csv_filename": self.FIXTURES_ROOT / "dataset" / "multiclass" / "train.csv",
             "base_dir": self.FIXTURES_ROOT / "dataset" / "multiclass",
-            "compose_transform": {
+            "compose": {
                 "transforms": [
                     {"type": "fixed_size_resize", "output_size": 1e5},
                     "gaussian_blur",
-                    "flip",
-                    {
-                        "type": "assign_label_classification",
-                        "colors_array": [[0, 0, 0], [255, 0, 0], [0, 0, 255]],
-                    },
+                    "flip"
                 ]
             },
+            'assign_transform': {
+                        "type": "assign_label",
+                        "colors_array": [[0, 0, 0], [255, 0, 0], [0, 0, 255]],
+                    },
         }
 
         dataset = Dataset.from_params(Params(params))
@@ -78,14 +82,15 @@ class DatasetTest(DhSegmentTestCase):
 
         assert sample["label"].unique().numpy().tolist() == [0, 1, 2]
 
-        with pytest.raises(ConfigurationError):
+        with pytest.raises(TypeError):
             params = {
                 "type": "image_csv",
-                "csv_filename": self.FIXTURES_ROOT / "dataset" / "multiclass" / "train.csv",
+                "csv_filename": self.FIXTURES_ROOT
+                / "dataset"
+                / "multiclass"
+                / "train.csv",
                 "base_dir": self.FIXTURES_ROOT / "dataset" / "multiclass",
-                "compose_transform": {
-                    "blur"
-                },
+                "compose": {"blur"},
             }
 
             Dataset.from_params(Params(params))
@@ -97,22 +102,19 @@ class DatasetTest(DhSegmentTestCase):
             "csv_filename": self.FIXTURES_ROOT / "dataset" / "multiclass" / "train.csv",
             "base_dir": self.FIXTURES_ROOT / "dataset" / "multiclass",
             "patches_size": patches_size,
-            "add_shapes": True,
-            "pre_compose_transform": {
-                "transforms": [
-                    {"type": "fixed_size_resize", "output_size": 1e5},
-                ]
+            "pre_patches_compose": {
+                "transforms": [{"type": "fixed_size_resize", "output_size": 1e5},]
             },
-            "post_compose_transform": {
+            "post_patches_compose": {
                 "transforms": [
                     "gaussian_blur",
                     "flip",
-                    {
-                        "type": "assign_label_classification",
-                        "colors_array": [[0, 0, 0], [255, 0, 0], [0, 0, 255]],
-                    },
                 ]
             },
+            'assign_transform': {
+                        "type": "assign_label",
+                        "colors_array": [[0, 0, 0], [255, 0, 0], [0, 0, 255]],
+                    },
         }
 
         dataset = Dataset.from_params(Params(params))
@@ -122,29 +124,28 @@ class DatasetTest(DhSegmentTestCase):
         assert "label" in sample
         assert "shape" in sample
 
-
     def test_assign_multilabel(self):
         params = {
             "type": "image_csv",
             "csv_filename": self.FIXTURES_ROOT / "dataset" / "multilabel" / "train.csv",
             "base_dir": self.FIXTURES_ROOT / "dataset" / "multilabel",
-            "compose_transform": {
+            "compose": {
                 "transforms": [
                     {"type": "fixed_size_resize", "output_size": 1e5},
                     {"type": "gaussian_blur"},
-                    {"type": "flip"},
-                    {
-                        "type": "assign_label_multilabel",
-                        "colors_array": [
-                            [0, 0, 0],
-                            [255, 0, 0],
-                            [0, 0, 255],
-                            [128, 0, 128],
-                        ],
-                        "onehot_label_array": [[0, 0], [1, 0], [0, 1], [1, 1]],
-                    },
                 ]
             },
+            'assign_transform':
+                {
+                    "type": "assign_multilabel",
+                    "colors_array": [
+                        [0, 0, 0],
+                        [255, 0, 0],
+                        [0, 0, 255],
+                        [128, 0, 128],
+                    ],
+                    "onehot_label_array": [[0, 0], [1, 0], [0, 1], [1, 1]],
+                },
         }
 
         dataset = Dataset.from_params(Params(params))

@@ -15,12 +15,12 @@ class Decoder(torch.nn.Module, Registrable):
         self,
             encoder_channels: List[int],
             decoder_channels: List[int],
-            n_classes: int,
+            num_classes: int,
     ):
         super().__init__()
         self.encoder_channels = encoder_channels
         self.decoder_channels = decoder_channels
-        self.n_classes = n_classes
+        self.n_classes = num_classes
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError

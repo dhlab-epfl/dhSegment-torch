@@ -24,13 +24,13 @@ class SegmentationModelTest(DhSegmentTestCase):
                 "decoder": {
                     "type": "pan",
                     "decoder_channels_size": num_channels,
-                    "n_classes": n_classes,
                     "normalization": {"type": "batch_renorm_2d"},
                     "activation": {"type": "leaky_relu", "inplace": True},
                     "gau_activation": {"type": "swish"},
                     "upscale_mode": "nearest",
                 },
                 "loss": {"type": "dice"},
+                "num_classes": n_classes,
             }
         )
         x = torch.zeros((2, 3, 128, 128)).normal_()

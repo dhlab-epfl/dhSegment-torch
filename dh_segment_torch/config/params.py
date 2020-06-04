@@ -96,6 +96,6 @@ class Params(MutableMapping):
 def _force_value_to_params(value: Any):
     if isinstance(value, dict):
         value = Params(value)
-    elif isinstance(value, list):
+    elif isinstance(value, list) or isinstance(value, set):
         value = [_force_value_to_params(v) for v in value]
     return value

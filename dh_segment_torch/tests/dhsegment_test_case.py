@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from unittest import TestCase
 
-TEST_DIR = tempfile.mkdtemp(prefix="dhsegment_tests")
+TEMPORARY_DIR = tempfile.mkdtemp(prefix="dhsegment_tests")
 
 
 class DhSegmentTestCase(TestCase):
@@ -14,9 +14,9 @@ class DhSegmentTestCase(TestCase):
     FIXTURES_ROOT = TESTS_ROOT / "fixtures"
 
     def setUp(self):
-        self.TEST_DIR = pathlib.Path(TEST_DIR)
+        self.TEMPORARY_DIR = pathlib.Path(TEMPORARY_DIR)
 
-        os.makedirs(self.TEST_DIR, exist_ok=True)
+        os.makedirs(self.TEMPORARY_DIR, exist_ok=True)
 
     def tearDown(self):
-        shutil.rmtree(self.TEST_DIR)
+        shutil.rmtree(self.TEMPORARY_DIR)

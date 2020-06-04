@@ -93,6 +93,7 @@ def pop_construct_param(param_name: str, param: inspect.Parameter, params: Param
                 "lead to unexpected results"
             )
     optional = param.default != param.empty
+    # params = normalize_params(params)
     popped_params = (
         params.pop(param_name, param.default)
         if optional
@@ -102,8 +103,8 @@ def pop_construct_param(param_name: str, param: inspect.Parameter, params: Param
     if popped_params is None:
         param_type = infer_type(param)
         origin, _ = get_origin_args(param_type)
-        if origin == Lazy:
-            return Lazy(lambda **kwargs: None)
+        # if origin == Lazy:
+        #     return Lazy(lambda **kwargs: None)
         return None
 
     return construct_param(param_name, param, popped_params, **extras)
@@ -188,6 +189,8 @@ def construct_param(
             raise TypeError(f"Expected {param_name} to be a sequence.")
         new_tuple = []
         for i, (value_class, value_params) in enumerate(zip(args, params)):
+            if value_class == Ellipsis:
+                value_class = prev_value_class
             value_class_as_param = inspect.Parameter(
                 "dummy", kind=inspect.Parameter.VAR_KEYWORD, annotation=value_class
             )
@@ -196,6 +199,7 @@ def construct_param(
                     f"{param_name}.{i}", value_class_as_param, value_params, **extras
                 )
             )
+            prev_value_class = value_class
         return tuple(new_tuple)
     elif origin in {Set, set} and len(args) == 1 and can_construct(args[0]):
         if not isinstance(params, collections.abc.Set) and not isinstance(

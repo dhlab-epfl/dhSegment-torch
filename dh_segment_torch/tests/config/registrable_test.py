@@ -52,4 +52,6 @@ class TestRegistrable(DhSegmentTestCase):
         assert base_class.get("dummy")[0] != Dummy
         assert base_class.get("dummy")[0] == Dummy2
 
+        assert base_class.get_type(Dummy2) == 'dummy'
+
         del Registrable._register[base_class]["dummy"]

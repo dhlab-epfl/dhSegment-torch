@@ -26,7 +26,7 @@ class PanTest(DhSegmentTestCase):
                 "type": "pan",
                 "encoder_channels": channels,
                 "decoder_channels_size": num_channels,
-                "n_classes": n_classes,
+                "num_classes": n_classes,
             }
         )
         decoder = Decoder.from_params(params)
@@ -56,7 +56,7 @@ class PanTest(DhSegmentTestCase):
                 "type": "pan",
                 "encoder_channels": channels,
                 "decoder_channels_size": num_channels,
-                "n_classes": n_classes,
+                "num_classes": n_classes,
                 "normalization": {"type": "batch_renorm_2d"},
                 "activation": {"type": "leaky_relu", "inplace": True},
                 "gau_activation": {"type": "swish"},

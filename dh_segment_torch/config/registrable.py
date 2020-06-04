@@ -60,6 +60,14 @@ class Registrable(FromParams):
             raise KeyError(f"Missing key {key} in class {cls.__name__}")
 
     @classmethod
+    def get_type(cls, key: Type[T]):
+        reversed_register = {type_class: type_str for (type_str, (type_class, _)) in Registrable._register[cls].items()}
+        if key in reversed_register:
+            return reversed_register[key]
+        else:
+            raise KeyError(f"Could not find type {key} for class {cls.__name__}")
+
+    @classmethod
     def get_constructor(cls, key: str) -> Callable[..., T]:
         registered_class, constructor = cls.get(key)
         if constructor.__name__ == '__init__':

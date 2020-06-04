@@ -6,9 +6,9 @@ import torch.nn.functional as F
 
 from dh_segment_torch.models.decoders.decoder import Decoder
 from dh_segment_torch.nn.activations import Activation
-from dh_segment_torch.nn.normalizations import Normalization, BatchRenorm2dDropNormalization
+from dh_segment_torch.nn.normalizations import Normalization, BatchNorm2dDropNormalization
 
-default_normalization = BatchRenorm2dDropNormalization(momentum=1 - 0.999)
+default_normalization = BatchNorm2dDropNormalization(momentum=1 - 0.999)
 default_activation = Activation.get_constructor("relu")(inplace=True)
 
 @Decoder.register("pan")
@@ -21,13 +21,13 @@ class PanDecoder(Decoder):
         self,
         encoder_channels: List[int],
         decoder_channels_size: int,
-        n_classes: int,
+        num_classes: int,
         normalization: Normalization = default_normalization,
         gau_activation: Activation = default_activation,
         activation: Activation = default_activation,
         upscale_mode: str = "bilinear",
     ):
-        super().__init__(encoder_channels, [decoder_channels_size] * 4, n_classes)
+        super().__init__(encoder_channels, [decoder_channels_size] * 4, num_classes)
 
         self.upscale_params = dict(
             mode=upscale_mode,
@@ -71,7 +71,7 @@ class PanDecoder(Decoder):
 
         self.logits = Conv2DNormalizeActivate(
             decoder_channels_size,
-            n_classes,
+            num_classes,
             kernel_size=1,
             normalization=normalization,
             activation=activation,

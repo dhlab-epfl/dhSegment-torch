@@ -1,16 +1,27 @@
 import torch
 from torch.nn import Parameter, init
+import torch.nn.functional as F
 
 
 class BatchRenorm(torch.nn.Module):
-    def __init__(self, num_features: int, eps: float = 1e-5, momentum: float = 0.1, affine: bool = True):
+    def __init__(
+        self,
+        num_features: int,
+        eps: float = 1e-5,
+        momentum: float = 0.1,
+        affine: bool = True,
+    ):
         super().__init__()
         self.eps = eps
         self.momentum = momentum
         self.affine = affine
 
-        self.weight = Parameter(torch.tensor(num_features, dtype=torch.float), requires_grad=True)
-        self.bias = Parameter(torch.tensor(num_features, dtype=torch.float), requires_grad=True)
+        self.weight = Parameter(
+            torch.tensor(num_features, dtype=torch.float), requires_grad=True
+        )
+        self.bias = Parameter(
+            torch.tensor(num_features, dtype=torch.float), requires_grad=True
+        )
 
         self.register_buffer("running_mean", torch.zeros(num_features))
         self.register_buffer("running_std", torch.ones(num_features))
@@ -31,23 +42,37 @@ class BatchRenorm(torch.nn.Module):
     def _check_input_dim(self, input):
         raise NotImplementedError
 
-    def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict,
-                              missing_keys, unexpected_keys, error_msgs):
-        num_batches_tracked_key = prefix + 'num_batches_tracked'
+    def _load_from_state_dict(
+        self,
+        state_dict,
+        prefix,
+        local_metadata,
+        strict,
+        missing_keys,
+        unexpected_keys,
+        error_msgs,
+    ):
+        num_batches_tracked_key = prefix + "num_batches_tracked"
         if num_batches_tracked_key not in state_dict:
             state_dict[num_batches_tracked_key] = torch.tensor(0, dtype=torch.long)
 
         super(BatchRenorm, self)._load_from_state_dict(
-            state_dict, prefix, local_metadata, strict,
-            missing_keys, unexpected_keys, error_msgs)
+            state_dict,
+            prefix,
+            local_metadata,
+            strict,
+            missing_keys,
+            unexpected_keys,
+            error_msgs,
+        )
 
     @property
     def rmax(self) -> int:
-        return (2 / 35000 * self.num_batches_tracked + 25/35).clamp_(1.0, 3.0)
+        return (2 / 35000 * self.num_batches_tracked + 25 / 35).clamp_(1.0, 3.0)
 
     @property
     def dmax(self) -> int:
-        return (5 / 20000 * self.num_batches_tracked - 25/20).clamp_(0.0, 5.0)
+        return (5 / 20000 * self.num_batches_tracked - 25 / 20).clamp_(0.0, 5.0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         self._check_input_dim(x)
@@ -62,16 +87,34 @@ class BatchRenorm(torch.nn.Module):
             batch_mean = x.mean(dims, keepdim=True)
             batch_std = x.std(dims, unbiased=False, keepdim=True) + self.eps
 
-            r = (batch_std.detach() / self.running_std.view_as(batch_std)).clamp_(1 / self.rmax, self.rmax)
+            r = (batch_std.detach() / self.running_std.view_as(batch_std)).clamp_(
+                1 / self.rmax, self.rmax
+            )
 
-            d = ((batch_mean.detach() - self.running_mean.view_as(batch_std)) / self.running_std.view_as(batch_std)).clamp_(-self.dmax, self.dmax)
+            d = (
+                (batch_mean.detach() - self.running_mean.view_as(batch_std))
+                / self.running_std.view_as(batch_std)
+            ).clamp_(-self.dmax, self.dmax)
 
             x = (x - batch_mean) / batch_std * r + d
 
-            self.running_mean += exponential_average_factor * (batch_mean.detach().view_as(self.running_mean) - self.running_mean)
-            self.running_std += exponential_average_factor * (batch_std.detach().view_as(self.running_std) - self.running_std)
+            self.running_mean += exponential_average_factor * (
+                batch_mean.detach().view_as(self.running_mean) - self.running_mean
+            )
+            self.running_std += exponential_average_factor * (
+                batch_std.detach().view_as(self.running_std) - self.running_std
+            )
         else:
-            return (x - self.running_mean) / self.running_std
+            return F.batch_norm(
+                x,
+                self.running_mean,
+                self.running_std,
+                self.weight,
+                self.bias,
+                self.training,
+                self.momentum,
+                self.eps,
+            )
 
         if self.affine:
             x = self.weight * x + self.bias

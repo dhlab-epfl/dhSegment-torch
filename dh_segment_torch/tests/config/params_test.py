@@ -11,7 +11,7 @@ class TestParams(DhSegmentTestCase):
         params = Params(config_dict)
         assert params.as_dict() == config_dict
 
-        write_path = self.TEST_DIR / "dummy_config.json"
+        write_path = self.TEMPORARY_DIR / "dummy_config.json"
         params.to_file(str(write_path))
 
         params2 = Params.from_file(str(write_path))

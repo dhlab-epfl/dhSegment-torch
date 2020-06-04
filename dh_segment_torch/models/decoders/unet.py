@@ -15,13 +15,13 @@ class UnetDecoder(Decoder):
         self,
         encoder_channels: List[int],
         decoder_channels: List[int],
-        n_classes: int,
+        num_classes: int,
         use_deconvolutions: bool = False,
         max_channels: Optional[int] = None,
         normalization: Normalization = None,
         activation: Activation = None
     ):
-        super().__init__(encoder_channels, decoder_channels, n_classes)
+        super().__init__(encoder_channels, decoder_channels, num_classes)
 
         self.use_deconvolutions = use_deconvolutions
 
@@ -62,7 +62,7 @@ class UnetDecoder(Decoder):
 
             prev_channels = dec_channels
 
-        self.logits = Conv2DNormalize(prev_channels, n_classes, 1)
+        self.logits = Conv2DNormalize(prev_channels, num_classes, 1)
 
     def forward(self, *features_maps):
         features_maps = list(reversed(features_maps))

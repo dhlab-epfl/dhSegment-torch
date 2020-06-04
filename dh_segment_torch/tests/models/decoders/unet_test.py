@@ -19,7 +19,7 @@ class UnetTest(DhSegmentTestCase):
                 "type": "unet",
                 "encoder_channels": channels,
                 "decoder_channels": list(reversed(channels)),
-                "n_classes": n_classes,
+                "num_classes": n_classes,
             }
         )
         decoder = Decoder.from_params(params)
@@ -41,7 +41,7 @@ class UnetTest(DhSegmentTestCase):
                 "type": "unet",
                 "encoder_channels": channels,
                 "decoder_channels": list(reversed(channels)),
-                "n_classes": n_classes,
+                "num_classes": n_classes,
                 'use_deconvolutions': True,
                 "max_channels": max_channels,
                 "normalization": {"type": "group_norm", "num_groups": 2},

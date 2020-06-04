@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import Union, Dict, List, Set
+from typing import Union, Dict, List, Set, Tuple, Any
 
 import pytest
 
@@ -284,3 +284,12 @@ class FromParamsTest(DhSegmentTestCase):
         assert dataset.transforms[1].x == 5
         assert isinstance(dataset.transforms[2], MultiplyByX)
         assert dataset.transforms[2].x == 2
+
+    def test_union_str_list_str(self):
+        class A(FromParams):
+            def __init__(self, x: List[Tuple[Union[str, List[str]], Dict[str, Any]]]):
+                self.x = x
+
+        a = A.from_params(Params({'x': [['test', {}]]}))
+        # print(a.x)
+        # 1/0
