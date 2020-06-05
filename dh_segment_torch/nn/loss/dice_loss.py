@@ -20,8 +20,8 @@ class Dice(torch.nn.Module):
 
     def reduce_dice(self, stack):
         if stack.ndim == 4:
-            intersection = stack[:, 0].squeeze()
-            union = stack[:, 1].squeeze()
+            intersection = stack[:, 0].squeeze(1)
+            union = stack[:, 1].squeeze(1)
             dims = (1, 2)
         else:
             intersection = stack[0]

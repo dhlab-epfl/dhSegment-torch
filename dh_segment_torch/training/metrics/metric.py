@@ -1,4 +1,4 @@
-from typing import Optional, Union, Dict, List, Callable
+from typing import Optional, Union, Dict, List, Callable, NewType
 
 import torch
 from logging import Logger
@@ -13,6 +13,7 @@ from dh_segment_torch.utils.ops import detach_and_move_tensors
 
 logger = Logger(__name__)
 
+MetricType = NewType("Metric", Union[float, List[float], Dict[str, float], Dict[str, List[float]]])
 
 class Metric(Registrable):
     def __init__(
@@ -73,7 +74,7 @@ class Metric(Registrable):
 
     def get_metric_value(
         self, reset: bool = False
-    ) -> Union[float, List[float], Dict[str, float], Dict[str, List[float]]]:
+    ) -> MetricType:
         raise NotImplementedError
 
     def _reset_if_needed(self, reset: bool = False):
@@ -139,7 +140,7 @@ class MultilabelConfusionMetric(Metric):
             + self.multilabel_confusion_matrix[..., 1, 1]
         )
 
-    def _reduce_metric(self, metric) -> Union[float, Dict[str, float]]:
+    def _reduce_metric(self, metric) -> MetricType:
         weights = None
         if self.average == "weighted":
             weights = self.support

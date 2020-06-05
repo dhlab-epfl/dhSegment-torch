@@ -6,7 +6,7 @@ from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.utils.ops import make_params_groups
 
 
-class Optimizer(Registrable):
+class Optimizer(torch.optim.Optimizer, Registrable):
     default_implementation = "adam"
 
 

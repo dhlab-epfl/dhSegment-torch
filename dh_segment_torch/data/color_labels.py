@@ -12,31 +12,33 @@ class ColorLabels(Registrable):
     default_implementation = "labels_list"
     def __init__(
         self,
-        colors_labels: List[Tuple[int, int, int]],
-        one_hot_labels: Optional[List[List[int]]] = None,
-        label_names: Optional[List[str]] = None,
+        colors: List[Tuple[int, int, int]],
+        one_hot_encoding: Optional[List[List[int]]] = None,
+        labels: Optional[List[str]] = None,
     ):
-        self.color_labels = colors_labels
-        self.one_hot_labels = one_hot_labels
-        self.label_names = label_names
+        self.colors = colors
+        self.one_hot_encoding = one_hot_encoding
+        self.labels = labels
 
-        if one_hot_labels:
-            assert len(one_hot_labels) == len(colors_labels)
-            if label_names:
-                assert len(label_names) == len(one_hot_labels[0])
-        elif label_names:
-            assert len(label_names) == colors_labels
+        if labels:
+            if one_hot_encoding:
+                new_names = []
+                for line in np.array(one_hot_encoding).astype(bool):
+                    new_names.append("+".join(np.array(labels)[line]))
+                new_names[0] = 'background'
+                self.labels = new_names
+            assert len(self.labels) == len(colors)
 
     @property
     def multilabel(self):
-        return self.one_hot_labels is not None
+        return self.one_hot_encoding is not None
 
     @property
     def num_classes(self):
-        if self.one_hot_labels:
-            return len(self.one_hot_labels[0])
+        if self.one_hot_encoding:
+            return len(self.one_hot_encoding[0])
         else:
-            return len(self.color_labels)
+            return len(self.colors)
 
     @classmethod
     def from_labels_text_file(cls, label_text_file: Union[str, Path]):
@@ -50,36 +52,36 @@ class ColorLabels(Registrable):
                 "Text label file did not contain enough information to be colors."
             )
 
-        colors_labels = [parse_and_validate_color(color) for color in labels_classes[:, :3]]
+        colors = [parse_and_validate_color(color) for color in labels_classes[:, :3]]
 
         if labels_classes.shape[1] == 3:
-            return cls(colors_labels)
+            return cls(colors)
         else:
-            one_hot_labels = [parse_validate_one_hot(one_hot) for one_hot in labels_classes[:, 3:]]
-            return cls(colors_labels, one_hot_labels)
+            one_hot_encoding = [parse_validate_one_hot(one_hot) for one_hot in labels_classes[:, 3:]]
+            return cls(colors, one_hot_encoding)
 
     @classmethod
-    def from_list_of_labels(
-        cls, labels: List[Dict[str, Any]], label_names: Optional[List[str]] = None
+    def from_list_of_color_labels(
+        cls, color_labels: List[Dict[str, Any]], labels: Optional[List[str]] = None
     ):
-        color_labels: List[Tuple[int, int, int]] = []
-        one_hot_labels: Optional[List[List[int]]] = None
-        label_names: Optional[List[str]] = label_names
+        colors: List[Tuple[int, int, int]] = []
+        one_hot_encoding: Optional[List[List[int]]] = None
+        labels: Optional[List[str]] = labels
 
         has_one_hot = None
         has_labels = None
         one_hot_size = None
 
-        for label in labels:
+        for label in color_labels:
             if "color" not in label:
                 raise ValueError("Need at least a color to define a label.")
             color = parse_and_validate_color(label["color"])
-            color_labels.append(color)
+            colors.append(color)
 
             if "one_hot" in label:
                 if has_one_hot is None:
                     has_one_hot = True
-                    one_hot_labels = []
+                    one_hot_encoding = []
                 one_hot = parse_validate_one_hot(label["one_hot"])
 
                 if one_hot_size is None:
@@ -89,24 +91,24 @@ class ColorLabels(Registrable):
                 if one_hot_size != len(one_hot):
                     raise ValueError("Some labels have different one hot sizes.")
 
-                one_hot_labels.append(one_hot)
+                one_hot_encoding.append(one_hot)
             else:
                 has_one_hot = False
 
-            if "name" in label:
+            if "label" in label:
                 if has_labels is None:
                     has_labels = True
-                    label_names = []
+                    labels = []
                 if not has_labels:
                     raise ValueError("Some labels have a name, others not.")
-                label_names.append(label["name"])
+                labels.append(label["label"])
             else:
                 has_labels = False
 
-        return cls(color_labels, one_hot_labels, label_names)
+        return cls(colors, one_hot_encoding, labels)
 
 
-ColorLabels.register("labels_list", "from_list_of_labels")(ColorLabels)
+ColorLabels.register("labels_list", "from_list_of_color_labels")(ColorLabels)
 ColorLabels.register("txt", "from_labels_text_file")(ColorLabels)
 
 

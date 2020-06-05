@@ -70,12 +70,15 @@ class L1Regularizer(Regularizer):
         )
 
     def get_penalty(self) -> torch.Tensor:
-        penalty = 0.0
+        penalty = None
         for param_group in self.param_groups:
             params = param_group["params"]
             alpha = param_group["alpha"]
             for param in params:
-                penalty = penalty + alpha * torch.sum(torch.abs(param))
+                if penalty is None:
+                    penalty = alpha * torch.sum(torch.abs(param))
+                else:
+                    penalty += alpha * torch.sum(torch.abs(param))
         return penalty
 
 
@@ -92,10 +95,13 @@ class L2Regularizer(Regularizer):
         )
 
     def get_penalty(self) -> torch.Tensor:
-        penalty = 0.0
+        penalty = None
         for param_group in self.param_groups:
             params = param_group["params"]
             alpha = param_group["alpha"]
             for param in params:
-                penalty = penalty + alpha * torch.sum(torch.pow(param, 2))
+                if penalty is None:
+                    penalty = alpha * torch.sum(torch.pow(param, 2))
+                else:
+                    penalty += alpha * torch.sum(torch.pow(param, 2))
         return penalty

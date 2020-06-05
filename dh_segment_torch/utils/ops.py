@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from itertools import islice
 from typing import Iterable, List, Tuple, Union, Dict, Any, Optional, TypeVar, Sequence, Iterator
 
@@ -71,5 +72,25 @@ def batch_items(items: Iterable[T], batch_size: int = 1) -> Iterator[T]:
             break
 
 
-def move_batch(batch: Dict[str, torch.Tensor], device: str, non_blocking: bool = True):
-    return {k: t.to(device, non_blocking=True) for k, t in batch.items()}
+def move_batch(batch: Dict[str, torch.Tensor], device: str, non_blocking: bool = True) -> Dict[str, torch.Tensor]:
+    return {k: t.to(device, non_blocking=non_blocking) for k, t in batch.items()}
+
+
+def move_and_detach_batch(batch: Dict[str, torch.Tensor], device: str, non_blocking: bool = True) -> Dict[str, torch.Tensor]:
+    return {k: t.to(device, non_blocking=non_blocking).detach() for k, t in batch.items()}
+
+
+def join_not_none(*items: Optional[str], join_str: str = "_"):
+    return join_str.join([item for item in items if item and len(item) > 0])
+
+
+def format_time(timestamp: float) -> str:
+    timestamp = datetime.fromtimestamp(timestamp)
+    return (
+        f"{timestamp.year:04d}-{timestamp.month:02d}-{timestamp.day:02d}"
+        f"{timestamp.hour:02d}-{timestamp.minute:02d}-{timestamp.second:02d}"
+    )
+
+
+def should_run(iteration: int, every: int):
+    return iteration >= every and iteration % every == 0

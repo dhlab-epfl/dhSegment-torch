@@ -2,6 +2,7 @@ from math import inf
 from typing import Any, Dict
 
 from dh_segment_torch.config.registrable import Registrable
+from dh_segment_torch.training.metrics.metric import MetricType
 
 
 class MetricTracker(Registrable):
@@ -37,10 +38,13 @@ class MetricTracker(Registrable):
             self.best = -inf
             self.last_value = -inf
 
-    def update(self, metrics: Dict[str, Any]):
-        if self.metric_name not in metrics:
+    def update(self, metrics: Dict[str, MetricType], losses: Dict[str, float]):
+        if self.metric_name in metrics:
+            curr_value = metrics[self.metric_name]
+        elif self.metric_name in losses:
+            curr_value = losses[self.metric_name]
+        else:
             raise ValueError(f"Metric {self.metric_name} is not in metrics dict.")
-        curr_value = metrics[self.metric_name]
         if self._is_best(curr_value):
             self.best = curr_value
             self.is_last_best = True

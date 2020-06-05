@@ -44,6 +44,24 @@ class Scheduler(Registrable):
     def get_lr(self):
         return self.scheduler.get_lr()
 
+
+class ConstantLR(lr_scheduler._LRScheduler):
+    def __init__(self, optimizer, last_epoch=-1):
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self):
+        return [group["lr"] for group in self.optimizer.param_groups]
+
+
+@Scheduler.register("constant")
+class ConstantScheduler(Scheduler):
+    def __init__(
+        self, optimizer: Optimizer, last_epochs: int = -1, step_duration: int = 1
+    ):
+        scheduler = ConstantLR(optimizer, last_epochs)
+        super().__init__(scheduler, step_duration)
+
+
 @Scheduler.register("step")
 class StepScheduler(Scheduler):
     def __init__(
@@ -136,17 +154,16 @@ class ReduceOnPlateauScheduler(Scheduler):
         )
         super().__init__(scheduler, step_duration)
 
-        self._last_lr = [group['lr'] for group in optimizer.param_groups]
+        self._last_lr = [group["lr"] for group in optimizer.param_groups]
 
     def step(self, metric: float = None):
         self._step_count += 1
         if self._step_count % self.step_duration == 0:
             self.scheduler.step(metric)
-        self._last_lr = [group['lr'] for group in self.scheduler.optimizer.param_groups]
+        self._last_lr = [group["lr"] for group in self.scheduler.optimizer.param_groups]
 
     def get_last_lr(self):
         return self._last_lr
-
 
 
 @Scheduler.register("cyclic")
@@ -270,7 +287,7 @@ class ConcatScheduler(Scheduler):
     @property
     def current_scheduler(self) -> Scheduler:
 
-        return self.schedulers[bisect_right(self.duration_steps, self._step_count-1)]
+        return self.schedulers[bisect_right(self.duration_steps, self._step_count - 1)]
 
     def state_dict(self):
         return {

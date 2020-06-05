@@ -1,6 +1,5 @@
 import os
 import time
-from datetime import datetime
 from typing import Optional, List, Tuple, Dict, Any
 
 import torch
@@ -9,6 +8,7 @@ import logging
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.training.metrics.metric_tracker import MetricTracker
+from dh_segment_torch.utils.ops import join_not_none, format_time
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class Checkpoint(Registrable):
             return
         save_path = os.path.join(
             self.checkpoint_dir,
-            join_not_none([self.prefix, "checkpoint", suffix, ".pth"]),
+            join_not_none(self.prefix, "checkpoint", suffix, ".pth"),
         )
         torch.save(save_dict, save_path)
         if permanent:
@@ -212,15 +212,3 @@ class BestCheckpoint(Checkpoint):
 
     def state_dict(self):
         return {k: v for k, v in self.__dict__.items() if k != "tracker"}
-
-
-def join_not_none(items: List[Optional[str]], join_str: str = "_"):
-    return join_str.join([item for item in items if item and len(item) > 0])
-
-
-def format_time(timestamp: float) -> str:
-    timestamp = datetime.fromtimestamp(timestamp)
-    return (
-        f"{timestamp.year:04d}-{timestamp.month:02d}-{timestamp.day:02d}"
-        f"{timestamp.hour:02d}-{timestamp.minute:02d}-{timestamp.second:02d}"
-    )

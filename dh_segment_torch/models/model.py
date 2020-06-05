@@ -9,7 +9,7 @@ from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.models.decoders.decoder import Decoder
 from dh_segment_torch.models.encoders.encoder import Encoder
 from dh_segment_torch.nn.losses import Loss, BCEWithLogitsLoss, CrossEntropyLoss
-from dh_segment_torch.training.metrics.metric import Metric
+from dh_segment_torch.training.metrics.metric import Metric, MetricType
 
 
 class Model(Registrable, nn.Module):
@@ -21,10 +21,14 @@ class Model(Registrable, nn.Module):
     def update_metrics(self, *inputs):
         raise NotImplementedError
 
-    def get_metric(self, metric: str, reset: bool = False) -> Any:
+    def get_metric(
+        self, metric: str, reset: bool = False
+    ) -> MetricType:
         raise NotImplementedError
 
-    def get_metrics(self, reset: bool = False) -> Dict[str, Any]:
+    def get_metrics(
+        self, reset: bool = False
+    ) -> Dict[str, MetricType]:
         raise NotImplementedError
 
     def get_available_metrics(self) -> Set[str]:
@@ -76,10 +80,14 @@ class SegmentationModel(Model):
         for metric in self.metrics.values():
             metric(target, logits, shapes)
 
-    def get_metric(self, metric: str, reset: bool = False) -> Any:
+    def get_metric(
+        self, metric: str, reset: bool = False
+    ) -> MetricType:
         return self.metrics[metric].get_metric_value(reset)
 
-    def get_metrics(self, reset: bool = False) -> Dict[str, Any]:
+    def get_metrics(
+        self, reset: bool = False
+    ) -> Dict[str, MetricType]:
         return {
             metric_str: metric.get_metric_value(reset)
             for metric_str, metric in self.metrics.items()
@@ -121,17 +129,19 @@ class SegmentationModel(Model):
         else:
             metrics_list = metrics
 
-        metrics_built = [metric.construct(
+        metrics_built = [
+            metric.construct(
                 num_classes=num_classes,
                 ignore_padding=ignore_padding,
                 multilabel=multilabel,
                 margin=margin,
-            ) for metric in metrics_list]
+            )
+            for metric in metrics_list
+        ]
 
         if metric_names is None:
             metric_names = [Metric.get_type(type(metric)) for metric in metrics_built]
         metrics = dict(zip(metric_names, metrics_built))
-
 
         if loss:
             loss = loss.construct(ignore_padding=ignore_padding, margin=margin)
