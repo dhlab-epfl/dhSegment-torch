@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, List, Union, Dict, Tuple
+from typing import Optional, List, Union, Dict, Tuple, Any
 
 import torch
 from torch.utils import data
@@ -9,10 +9,11 @@ from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.color_labels import ColorLabels
 from dh_segment_torch.data.data_loader import DataLoader
-from dh_segment_torch.data.dataset import PatchesDataset
-from dh_segment_torch.data.dataset.dataset import Dataset
-from dh_segment_torch.data.transform import AssignMultilabel, AssignLabel
+from dh_segment_torch.data.datasets import PatchesDataset
+from dh_segment_torch.data.dataset import Dataset
+from dh_segment_torch.data.transforms import AssignMultilabel, AssignLabel
 from dh_segment_torch.models.model import Model
+from dh_segment_torch.nn.initializers import InitializerApplier
 from dh_segment_torch.training.checkpoint import BestCheckpoint, IterationCheckpoint
 from dh_segment_torch.training.checkpoint import Checkpoint
 from dh_segment_torch.training.early_stopping import EarlyStopping
@@ -79,7 +80,7 @@ class Trainer(Registrable):
 
     def train(self):
 
-        pbar = tqdm(range(self.num_epochs), desc=f"")
+        pbar = tqdm(range(self.num_epochs), desc="epoch 0: loss=???")
         for epochs in batch_items(
             range(1, self.num_epochs + 1), self.evaluate_every_epoch
         ):
@@ -97,7 +98,7 @@ class Trainer(Registrable):
                 break
 
     def train_epoch(self):
-        pbar = tqdm(desc=f"", leave=False)
+        pbar = tqdm(desc=f"iter=0: loss=???", leave=False)
         train_loss = 0.0
         train_reg_loss = 0.0
         iterations_this_epoch = 0
@@ -135,6 +136,7 @@ class Trainer(Registrable):
                     batch,
                     result["logits"],
                     self.lr_scheduler,
+                    self.optimizer,
                     prefix="train",
                 )
 
@@ -254,6 +256,7 @@ class Trainer(Registrable):
         val_loader: Optional[Lazy[DataLoader]] = None,
         lr_scheduler: Optional[Lazy[Scheduler]] = None,
         regularizer: Optional[Lazy[Regularizer]] = None,
+        initializer: Optional[InitializerApplier] = None,
         early_stopping: Optional[Lazy[EarlyStopping]] = None,
         train_checkpoint: Optional[Lazy[Checkpoint]] = None,
         val_checkpoint: Optional[Lazy[BestCheckpoint]] = None,  # TODO check if can do
@@ -271,6 +274,8 @@ class Trainer(Registrable):
         model_out_dir: str = "./model",
         track_train_metrics: bool = False,
         device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
+        exp_name: str = "dhSegment_experiment",
+        config: Optional[Dict[str, Any]] = None
     ):
 
         if color_labels.multilabel:
@@ -327,8 +332,11 @@ class Trainer(Registrable):
         )
 
         parameters = [
-            tuple([n, p]) for n, p in model.named_parameters() if p.requires_grad
+            (n, p) for n, p in model.named_parameters() if p.requires_grad
         ]
+
+        if initializer:
+            initializer.apply(parameters)
 
         if optimizer:
             optimizer = optimizer.construct(model_params=parameters)
@@ -399,6 +407,8 @@ class Trainer(Registrable):
                         color_labels=color_labels,
                         ignore_padding=ignore_padding,
                         margin=training_margin,
+                        exp_name=exp_name,
+                        config=config
                     )
                 )
         else:

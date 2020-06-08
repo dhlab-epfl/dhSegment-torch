@@ -3,7 +3,7 @@ from typing import Union, Tuple, Optional, List, Dict
 from albumentations.augmentations import transforms
 from albumentations.core import composition
 
-from dh_segment_torch.data.transform.transform import Transform
+from dh_segment_torch.data.transform import Transform
 
 """
 Wrapper around all albumentation Transforms and Compose

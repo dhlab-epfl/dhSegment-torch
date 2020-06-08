@@ -9,7 +9,7 @@ from albumentations.augmentations.functional import (
 )
 
 from dh_segment_torch.data.transform import Transform
-from dh_segment_torch.data.transform.albumentation import Rotate
+from dh_segment_torch.data.transforms.albumentation import Rotate
 
 
 @Transform.register("rotate_no_crop")

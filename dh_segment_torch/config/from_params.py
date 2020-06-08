@@ -102,6 +102,7 @@ def pop_construct_param(
         params.pop(param_name, param.default) if optional else params.pop(param_name)
     )
 
+    # TODO find cornercase when needed
     if popped_params is None:
         param_type = infer_type(param)
         origin, _ = get_origin_args(param_type)
@@ -218,7 +219,7 @@ def construct_param(
 
         new_set = set()
 
-        for i, value_params in enumerate(params):
+        for i, value_params in enumerate(iterate_not_string(params)):
             new_set.add(
                 construct_param(
                     f"{param_name}.{i}", value_class_as_param, value_params, **extras
@@ -239,7 +240,7 @@ def construct_param(
 
         new_list = []
 
-        for i, value_params in enumerate(params):
+        for i, value_params in enumerate(iterate_not_string(params)):
             new_list.append(
                 construct_param(
                     f"{param_name}.{i}", value_class_as_param, value_params, **extras

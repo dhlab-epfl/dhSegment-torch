@@ -12,9 +12,9 @@ from dh_segment_torch.utils.ops import cut_with_padding
 class WandbLogger(Logger):
     def __init__(
         self,
-        project_name: str,
         color_labels: ColorLabels,
-        config: Optional[Dict[str, Any]] = None,
+        # project_name: Optional[str] = None,
+        # config: Optional[Dict[str, Any]] = None,
         log_every: int = 200,
         log_images_every: int = 500,
         probas_threshold: float = 0.5,
@@ -22,6 +22,8 @@ class WandbLogger(Logger):
         ignore_padding: bool = False,
         margin: int = 0,
         names_separator: str = "/",
+        exp_name: str = "",
+        config: Optional[Dict[str, Any]] = None
     ):
         super().__init__(
             color_labels,
@@ -36,8 +38,7 @@ class WandbLogger(Logger):
         import wandb
 
         self.wandb = wandb
-
-        self.wandb.init(project=project_name, config=config)
+        self.wandb.init(project=exp_name, config=config)
 
     def log_scalar(self, scalar: float, iteration: int, name: str):
         self.wandb.log({name: scalar}, commit=False, step=iteration)

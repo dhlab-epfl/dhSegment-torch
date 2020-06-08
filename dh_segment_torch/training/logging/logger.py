@@ -1,11 +1,12 @@
 from collections.abc import Sequence, Mapping
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 
 import torch
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.color_labels import ColorLabels
 from dh_segment_torch.training.metrics.metric import MetricType
+from dh_segment_torch.training.optimizers import Optimizer
 from dh_segment_torch.training.schedulers import Scheduler
 from dh_segment_torch.utils.ops import (
     move_and_detach_batch,
@@ -26,6 +27,8 @@ class Logger(Registrable):
         ignore_padding: bool = False,
         margin: int = 0,
         names_separator: str = "/",
+        exp_name: str = "",
+        config: Optional[Dict[str, Any]] = None
     ):
         self.color_labels = color_labels
         self.log_every = log_every
@@ -48,6 +51,7 @@ class Logger(Registrable):
         batch: Optional[Dict[str, torch.Tensor]] = None,
         logits: Optional[torch.Tensor] = None,
         scheduler: Optional[Scheduler] = None,
+        optimizer: Optional[Optimizer] = None,
         prefix: str = "",
         ignore_iters: bool = False,
     ):
@@ -56,7 +60,12 @@ class Logger(Registrable):
                 self.log_scalars(metrics, iteration, self._join(prefix, "metrics"))
             if scheduler:
                 lrs = scheduler.get_last_lr()
-                self.log_scalars({"learning_rate": lrs}, iteration, prefix)
+                if optimizer and optimizer.param_groups_names and 0 < len(lrs) == len(optimizer.param_groups_names)+1:
+                    param_groups_names = optimizer.param_groups_names + ['default']
+                    for group_name, lr in zip(param_groups_names, lrs):
+                        self.log_scalar(lr, iteration, name=self._join(prefix, "learning_rate", group_name))
+                else:
+                    self.log_scalars({"learning_rate": lrs}, iteration, prefix)
             if losses:
                 self.log_scalars(losses, iteration, prefix)
 

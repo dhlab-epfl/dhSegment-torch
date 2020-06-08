@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional, Dict, Any
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -21,6 +21,8 @@ class TensorboardLogger(Logger):
         ignore_padding: bool = False,
         margin: int = 0,
         names_separator: str = "/",
+        exp_name: str = "",
+        config: Optional[Dict[str, Any]] = None
     ):
         super().__init__(
             color_labels,

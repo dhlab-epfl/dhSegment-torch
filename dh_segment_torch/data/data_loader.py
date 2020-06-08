@@ -4,7 +4,7 @@ from typing import Callable, Optional
 from torch.utils import data
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.data.dataset.utils import collate_fn
+from dh_segment_torch.data.datasets.utils import collate_fn
 
 
 class DataLoader(data.DataLoader, Registrable):

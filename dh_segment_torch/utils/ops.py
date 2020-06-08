@@ -1,19 +1,19 @@
-import re
 from datetime import datetime
 from itertools import islice
 from typing import (
     Iterable,
     List,
-    Tuple,
     Union,
     Dict,
-    Any,
     Optional,
     TypeVar,
     Iterator,
 )
 
+
 import torch
+
+T = TypeVar("T")
 
 
 def cut_with_padding(
@@ -33,43 +33,6 @@ def detach_and_move_tensors(
         else tensor
         for tensor in tensors
     )
-
-
-def make_params_groups(
-    model_params: List[Tuple[str, torch.nn.Parameter]],
-    param_groups: List[Tuple[Union[str, List[str]], Dict[str, Any]]] = None,
-) -> Union[List[torch.nn.Parameter], List[Dict[str, Any]]]:
-    if param_groups is None:
-        new_params_groups: List[torch.nn.Parameter] = [
-            param for _, param in model_params
-        ]
-    else:
-        new_params_groups: List[Dict[str, Any]] = [
-            {"params": list()} for _ in range(len(param_groups) + 1)
-        ]
-        for param_name, param in model_params:
-            matched_group_index = -1
-            matched_kwargs = {}
-            for group_index, (regexes, kwargs) in enumerate(param_groups):
-                if isinstance(regexes, str):
-                    regexes = [regexes]
-                for regex in regexes:
-                    if re.search(regex, param_name):
-                        if (
-                            matched_group_index != -1
-                            and matched_group_index != group_index
-                        ):
-                            raise ValueError(
-                                f"Parameter {param_name} was matched in two groups"
-                            )
-                        matched_group_index = group_index
-                        matched_kwargs = kwargs
-            new_params_groups[matched_group_index]["params"].append(param)
-            new_params_groups[matched_group_index].update(**matched_kwargs)
-    return new_params_groups
-
-
-T = TypeVar("T")
 
 
 def batch_items(items: Iterable[T], batch_size: int = 1) -> Iterator[T]:
@@ -110,3 +73,13 @@ def format_time(timestamp: float) -> str:
 
 def should_run(iteration: int, every: int):
     return iteration >= every and iteration % every == 0
+
+
+def normalize_dict(dict_: Union[Dict[str, T], List[T]]) -> Dict[str, T]:
+    if not isinstance(dict_, Dict):
+        dict_ = list_to_index_dict(dict_)
+    return dict_
+
+
+def list_to_index_dict(list_: Iterable[T]) -> Dict[str, T]:
+    return {str(idx): item for idx, item in enumerate(list_)}

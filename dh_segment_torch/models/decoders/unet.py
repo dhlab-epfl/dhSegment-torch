@@ -79,7 +79,7 @@ class UnetDecoder(Decoder):
         return x
 
 
-class Conv2DNormalize(nn.Sequential):
+class Conv2DNormalize(nn.Module):
     def __init__(
         self,
         in_channels,
@@ -91,12 +91,13 @@ class Conv2DNormalize(nn.Sequential):
     ):
         super().__init__()
         padding = (kernel_size - 1) // 2
-        super(Conv2DNormalize, self).__init__(
-            nn.Conv2d(
+        self.conv2d = nn.Conv2d(
                 in_channels, out_channels, kernel_size, stride, padding, groups=groups
-            ),
-            normalization(out_channels),
-        )
+            )
+        self.normalization = normalization(out_channels)
+
+    def forward(self, x: torch.Tensor):
+        return self.normalization(self.conv2d(x))
 
 
 class UpsampleConcat(nn.Module):

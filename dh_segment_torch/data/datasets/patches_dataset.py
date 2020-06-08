@@ -9,7 +9,7 @@ from skimage.util import view_as_windows
 from torch.utils.data import IterableDataset
 from torch.utils.data.dataloader import get_worker_info
 
-from dh_segment_torch.data.dataset.dataset import (
+from dh_segment_torch.data.dataset import (
     Dataset,
     load_sample,
     sample_to_tensor,
@@ -17,8 +17,8 @@ from dh_segment_torch.data.dataset.dataset import (
     load_data_from_csv_list,
     load_data_from_folder,
 )
-from dh_segment_torch.data.transform.albumentation import Compose
-from dh_segment_torch.data.transform.assign_labels import Assign
+from dh_segment_torch.data.transforms.albumentation import Compose
+from dh_segment_torch.data.transforms.assign_labels import Assign
 from dh_segment_torch.utils.ops import batch_items
 
 

@@ -46,13 +46,13 @@ class OptimizerTest(DhSegmentTestCase):
         lr_encoder = 0.0001
 
         params = {
-            "param_groups": [
-                ["encoder", {"lr": lr_encoder}],
-                [
-                    ["decoder.logits.0.weight", "decoder.logits.0.bias"],
-                    {"lr": lr_logits},
-                ],
-            ],
+            "param_groups": {
+                "encoder": {"params": {"lr": lr_encoder}},
+                "decoder_logits": {
+                    "regexes": ["decoder.logits.0.weight", "decoder.logits.0.bias"],
+                    "params": {"lr": lr_logits},
+                },
+            },
             "lr": lr_decoder,
         }
 

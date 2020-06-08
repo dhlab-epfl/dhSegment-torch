@@ -1,9 +1,10 @@
-from typing import Union, Dict, List, Any, Tuple
+from typing import Union, Dict, List, Any, Tuple, Optional
 
 import torch
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.utils.ops import make_params_groups
+from dh_segment_torch.training.param_group import ParamGroup, make_params_groups, normalize_param_groups, \
+    check_param_groups
 
 
 class Regularizer(Registrable):
@@ -11,50 +12,24 @@ class Regularizer(Registrable):
         self,
         params: Union[List[torch.nn.Parameter], List[Dict[str, Any]]],
         defaults: Dict[str, Any],
+        param_groups_names: Optional[List[str]] = None,
     ):
         self.defaults = defaults
-        self.param_groups = []
 
         param_groups = params
         if len(param_groups) == 0:
             raise ValueError("Cannot regularized an empty params list")
         if isinstance(param_groups[0], torch.nn.Parameter):
             param_groups = [{"params": param_groups}]
-        for param_group in param_groups:
-            self.add_param_group(param_group)
+
+        self.param_groups = check_param_groups(param_groups, defaults)
+        if param_groups_names:
+            assert len(param_groups_names)+1 == len(params)
+            self.param_groups_names = param_groups_names
 
     def get_penalty(self):
         raise NotImplementedError
 
-    def add_param_group(self, param_group: Dict[str, Any]):
-        assert isinstance(param_group, dict)
-
-        params = param_group["params"]
-        if isinstance(params, torch.Tensor):
-            param_group["params"] = [params]
-        elif isinstance(params, set):
-            raise TypeError("Params should not be a set")
-        else:
-            param_group["params"] = list(params)
-
-        for param in param_group["params"]:
-            if not isinstance(param, torch.Tensor):
-                raise TypeError("Regularizer can only regularized tensors")
-
-            if not param.is_leaf:
-                raise ValueError("Can't optimize a non-leaf Tensor")
-
-        for name, default in self.defaults.items():
-            param_group.setdefault(name, default)
-
-        param_set = set()
-        for group in self.param_groups:
-            param_set.update(set(group["params"]))
-
-        if not param_set.isdisjoint(set(param_group["params"])):
-            raise ValueError("Some parameters appear in more than one parameter group")
-
-        self.param_groups.append(param_group)
 
 
 @Regularizer.register("l1")
@@ -62,11 +37,14 @@ class L1Regularizer(Regularizer):
     def __init__(
         self,
         model_params: List[Tuple[str, torch.nn.Parameter]],
-        param_groups: List[Tuple[Union[str, List[str]], Dict[str, Any]]] = None,
+        param_groups: Optional[Union[Dict[str, ParamGroup], List[ParamGroup]]] = None,
         alpha: float = 0.01,
     ):
+        param_groups = normalize_param_groups(param_groups)
         super().__init__(
-            make_params_groups(model_params, param_groups), {"alpha": alpha}
+            make_params_groups(model_params, param_groups),
+            {"alpha": alpha},
+            list(param_groups.keys()),
         )
 
     def get_penalty(self) -> torch.Tensor:
@@ -87,11 +65,14 @@ class L2Regularizer(Regularizer):
     def __init__(
         self,
         model_params: List[Tuple[str, torch.nn.Parameter]],
-        param_groups: List[Tuple[Union[str, List[str]], Dict[str, Any]]] = None,
+        param_groups: Optional[Union[Dict[str, ParamGroup], List[ParamGroup]]] = None,
         alpha: float = 0.01,
     ):
+        param_groups = normalize_param_groups(param_groups)
         super().__init__(
-            make_params_groups(model_params, param_groups), {"alpha": alpha}
+            make_params_groups(model_params, param_groups),
+            {"alpha": alpha},
+            list(param_groups.keys()),
         )
 
     def get_penalty(self) -> torch.Tensor:
