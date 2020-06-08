@@ -23,8 +23,9 @@ class ImageDataset(Dataset):
         base_dir: Optional[str] = None,
         compose: Compose = None,
         assign_transform: Assign = None,
+        repeat_dataset: int = 1,
     ):
-        super().__init__(data, base_dir)
+        super().__init__(data, base_dir, repeat_dataset)
         self.compose = compose
         if self.compose:
             self.compose.add_targets({"label": "mask"})
@@ -58,9 +59,10 @@ class ImageDataset(Dataset):
         base_dir: Union[str, Path] = None,
         compose: Compose = None,
         assign_transform: Assign = None,
+        repeat_dataset: int = 1,
     ):
         data = load_data_from_csv(str(csv_filename))
-        return cls(data, str(base_dir), compose, assign_transform)
+        return cls(data, str(base_dir), compose, assign_transform, repeat_dataset)
 
     @classmethod
     def from_csv_list(
@@ -69,9 +71,10 @@ class ImageDataset(Dataset):
         base_dir: Union[str, Path] = None,
         compose: Compose = None,
         assign_transform: Assign = None,
+        repeat_dataset: int = 1,
     ):
         data = load_data_from_csv_list([str(csv) for csv in csv_list])
-        return cls(data, str(base_dir), compose, assign_transform)
+        return cls(data, str(base_dir), compose, assign_transform, repeat_dataset)
 
     @classmethod
     def from_folder(
@@ -79,9 +82,15 @@ class ImageDataset(Dataset):
         folder: Union[str, Path],
         compose: Compose = None,
         assign_transform: Assign = None,
+        repeat_dataset: int = 1,
     ):
         data = load_data_from_folder(str(folder))
-        return cls(data, compose=compose, assign_transform=assign_transform)
+        return cls(
+            data,
+            compose=compose,
+            assign_transform=assign_transform,
+            repeat_dataset=repeat_dataset,
+        )
 
 
 Dataset.register("image_dataframe")(ImageDataset)

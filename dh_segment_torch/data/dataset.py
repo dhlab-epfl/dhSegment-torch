@@ -14,15 +14,23 @@ from dh_segment_torch.config.registrable import Registrable
 
 mimetypes.init()
 
-mimetypes.init()
-
 
 class Dataset(torch.utils.data.Dataset, Registrable, ABC):
-    def __init__(self, data: pd.DataFrame, base_dir: Optional[str] = None):
+    def __init__(
+        self,
+        data: pd.DataFrame,
+        base_dir: Optional[str] = None,
+        repeat_dataset: int = 1,
+    ):
         self.data = data.applymap(lambda path: path.strip())
         if base_dir is not None:
             self.data = self.data.applymap(lambda path: os.path.join(base_dir, path))
         self.check_filenames_exist()
+        if repeat_dataset < 1:
+            raise ValueError(
+                f"Repeat dataset cannot be smaller than 1, got {repeat_dataset}"
+            )
+        self.data = self.data.loc[self.data.index.repeat(repeat_dataset)].copy()
 
     @property
     def num_images(self):

@@ -42,11 +42,7 @@ class PatchesDataset(IterableDataset, Dataset):
         repeat_dataset: int = 1,
         offsets_augment: bool = False,
     ):
-        if repeat_dataset < 1:
-            raise ValueError("Repeat dataset cannot be smaller than 1")
-
-        data = data.loc[data.index.repeat(repeat_dataset)].copy()
-        super().__init__(data, base_dir)
+        super().__init__(data, base_dir, repeat_dataset)
 
         self.pre_patches_compose = pre_patches_compose
         self.post_patches_compose = post_patches_compose
