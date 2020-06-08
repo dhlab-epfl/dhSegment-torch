@@ -102,7 +102,7 @@ class AdamWOptimizer(torch.optim.AdamW, Optimizer):
 
 
 @Optimizer.register("sparse_adam")
-class AdamWOptimizer(torch.optim.SparseAdam, Optimizer):
+class SparseAdamOptimizer(torch.optim.SparseAdam, Optimizer):
     def __init__(
         self,
         model_params: List[Tuple[str, torch.nn.Parameter]],
