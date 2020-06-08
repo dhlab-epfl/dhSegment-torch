@@ -296,13 +296,13 @@ class Trainer(Registrable):
             train_loader = train_loader.construct(
                 dataset=train_dataset,
                 batch_size=batch_size,
-                num_workers=num_data_workers,
+                num_workers=min(num_data_workers, train_dataset.num_images),
             )
         else:
             train_loader = DataLoader(
                 dataset=train_dataset,
                 batch_size=batch_size,
-                num_workers=num_data_workers,
+                num_workers=min(num_data_workers, train_dataset.num_images),
                 shuffle=True and not is_patches,
             )
 
@@ -312,13 +312,13 @@ class Trainer(Registrable):
                 val_loader = val_loader.construct(
                     dataset=train_dataset,
                     batch_size=batch_size,
-                    num_workers=num_data_workers,
+                    num_workers=min(num_data_workers, val_dataset.num_images),
                 )
             else:
                 val_loader = DataLoader(
                     dataset=train_dataset,
                     batch_size=batch_size,
-                    num_workers=num_data_workers,
+                    num_workers=min(num_data_workers, val_dataset.num_images),
                     shuffle=False,
                 )
 
