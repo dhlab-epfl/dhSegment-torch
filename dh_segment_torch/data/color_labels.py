@@ -19,6 +19,7 @@ class ColorLabels(Registrable):
         self.colors = colors
         self.one_hot_encoding = one_hot_encoding
         self.labels = labels
+        self.one_hot_labels = None
 
         if labels:
             if one_hot_encoding:
@@ -26,8 +27,9 @@ class ColorLabels(Registrable):
                 for line in np.array(one_hot_encoding).astype(bool):
                     new_names.append("+".join(np.array(labels)[line]))
                 new_names[0] = 'background'
-                self.labels = new_names
-            assert len(self.labels) == len(colors)
+                self.one_hot_labels = new_names
+                assert len(self.one_hot_labels) == len(colors)
+            assert len(self.labels) == self.num_classes
 
     @property
     def multilabel(self):
@@ -41,7 +43,7 @@ class ColorLabels(Registrable):
             return len(self.colors)
 
     @classmethod
-    def from_labels_text_file(cls, label_text_file: Union[str, Path]):
+    def from_labels_text_file(cls, label_text_file: Union[str, Path], labels: Optional[List[str]] = None):
         label_text_file = str(label_text_file)
         if not os.path.exists(label_text_file):
             raise FileNotFoundError(label_text_file)
@@ -58,7 +60,7 @@ class ColorLabels(Registrable):
             return cls(colors)
         else:
             one_hot_encoding = [parse_validate_one_hot(one_hot) for one_hot in labels_classes[:, 3:]]
-            return cls(colors, one_hot_encoding)
+            return cls(colors, one_hot_encoding, labels)
 
     @classmethod
     def from_list_of_color_labels(

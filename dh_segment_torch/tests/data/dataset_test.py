@@ -80,7 +80,7 @@ class DatasetTest(DhSegmentTestCase):
         assert "label" in sample
         assert "shape" in sample
 
-        assert sample["label"].unique().numpy().tolist() == [0, 1, 2]
+        assert len(set(sample["label"].unique().numpy().tolist()).difference([0, 1, 2])) == 0
 
         with pytest.raises(TypeError):
             params = {

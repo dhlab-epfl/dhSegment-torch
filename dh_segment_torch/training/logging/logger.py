@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Sequence, Mapping
 from typing import Dict, Optional, Union, List
 
 import torch
@@ -73,6 +73,9 @@ class Logger(Registrable):
                     continue
                 for idx, item in enumerate(scalar):
                     self.log_scalar(item, iteration, self._join(prefix, name, str(idx)))
+            elif isinstance(scalar, Mapping):
+                for item_name, item in scalar.items():
+                    self.log_scalar(item, iteration, self._join(prefix, name, item_name))
             else:
                 self.log_scalar(scalar, iteration, self._join(prefix, name))
 

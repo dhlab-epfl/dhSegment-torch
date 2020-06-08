@@ -30,7 +30,7 @@ class TrainerTest(DhSegmentTestCase):
                     "decoder": {'decoder_channels': [512, 256, 128, 64, 32]}
                     # "loss": {"type": "dice"},
                 },
-                'metrics': ['iou', 'precision'],
+                'metrics': ['iou', ('iou_class', {'type': 'iou', 'average': None}), 'precision'],
                 'val_dataset': {
                     "type": "image_csv",
                     "csv_filename": self.FIXTURES_ROOT
@@ -42,12 +42,12 @@ class TrainerTest(DhSegmentTestCase):
                 'lr_scheduler': {"type": "exponential", "gamma": 0.95},
                 'early_stopping': {'patience': 20},
                 'model_out_dir': str(self.TEMPORARY_DIR / "model"),
-                'num_epochs': 20,
+                'num_epochs': 2,
                 'evaluate_every_epoch': 1
             }
         )
 
         trainer = Trainer.from_params(params)
         trainer.train()
-        1/0
+        # 1/0
 

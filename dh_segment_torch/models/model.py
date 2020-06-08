@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Dict, Optional, Union, List, Any, Set
+from typing import Dict, Optional, Union, List, Any, Set, Tuple
 
 import torch
 import torch.nn as nn
@@ -21,14 +21,10 @@ class Model(Registrable, nn.Module):
     def update_metrics(self, *inputs):
         raise NotImplementedError
 
-    def get_metric(
-        self, metric: str, reset: bool = False
-    ) -> MetricType:
+    def get_metric(self, metric: str, reset: bool = False) -> MetricType:
         raise NotImplementedError
 
-    def get_metrics(
-        self, reset: bool = False
-    ) -> Dict[str, MetricType]:
+    def get_metrics(self, reset: bool = False) -> Dict[str, MetricType]:
         raise NotImplementedError
 
     def get_available_metrics(self) -> Set[str]:
@@ -80,14 +76,10 @@ class SegmentationModel(Model):
         for metric in self.metrics.values():
             metric(target, logits, shapes)
 
-    def get_metric(
-        self, metric: str, reset: bool = False
-    ) -> MetricType:
+    def get_metric(self, metric: str, reset: bool = False) -> MetricType:
         return self.metrics[metric].get_metric_value(reset)
 
-    def get_metrics(
-        self, reset: bool = False
-    ) -> Dict[str, MetricType]:
+    def get_metrics(self, reset: bool = False) -> Dict[str, MetricType]:
         return {
             metric_str: metric.get_metric_value(reset)
             for metric_str, metric in self.metrics.items()
@@ -108,9 +100,14 @@ class SegmentationModel(Model):
         num_classes: int,
         loss: Optional[Lazy[Loss]] = None,
         metrics: Optional[
-            Union[Dict[str, Lazy[Metric]], List[Lazy[Metric]], Lazy[Metric]]
+            Union[
+                Dict[str, Lazy[Metric]],
+                List[Union[Tuple[str, Lazy[Metric]], Lazy[Metric]]],
+                Lazy[Metric],
+            ]
         ] = None,
         multilabel: bool = False,
+        classes_labels: Optional[List[str]] = None,
         ignore_padding: bool = False,
         margin: int = 0,
     ):
@@ -123,24 +120,51 @@ class SegmentationModel(Model):
         metric_names = None
         if isinstance(metrics, Lazy):
             metrics_list = [metrics]
+            metric_names = [None]
         elif isinstance(metrics, Dict):
             metrics_list = list(metrics.values())
             metric_names = metrics.keys()
+        elif isinstance(metrics, List):
+            metrics_list = []
+            metric_names = []
+            for metric in metrics:
+                if isinstance(metric, Tuple):
+                    if len(metric) != 2 or not isinstance(metric[0], str):
+                        raise ValueError(
+                            "Expected metric tuple to be of size 2 with a first item a string"
+                        )
+                    metric_names.append(metric[0])
+                    metrics_list.append(metric[1])
+                else:
+                    metric_names.append(None)
+                    metrics_list.append(metric)
         else:
-            metrics_list = metrics
+            raise ValueError(
+                "Expected metrics to be either a metric, a dict of metrics or a list of metrics"
+            )
 
         metrics_built = [
             metric.construct(
                 num_classes=num_classes,
                 ignore_padding=ignore_padding,
                 multilabel=multilabel,
+                classes_labels=classes_labels,
                 margin=margin,
             )
             for metric in metrics_list
         ]
+        assert len(metric_names) == len(metrics_built)
+        metric_names = [
+            Metric.get_type(type(metric)) if metric_name is None else metric_name
+            for metric_name, metric in zip(metric_names, metrics_built)
+        ]
 
-        if metric_names is None:
-            metric_names = [Metric.get_type(type(metric)) for metric in metrics_built]
+        if len(metric_names) != len(set(metric_names)):
+            raise ValueError(
+                "Expected each metric to have an unique name,"
+                f"got {len(metric_names)-len(set(metric_names))} duplicate(s)."
+            )
+
         metrics = dict(zip(metric_names, metrics_built))
 
         if loss:

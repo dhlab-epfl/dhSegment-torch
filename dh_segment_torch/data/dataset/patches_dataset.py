@@ -309,7 +309,7 @@ def extract_patches(
 
     patch_h, patch_w = patch_shape
 
-    stride_h, stride_w = normalize_overlap(overlap)
+    stride_h, stride_w = normalize_overlap(overlap, patch_shape)
 
     window_shape = (
         (patch_h, patch_w, image.shape[2]) if image.ndim == 3 else (patch_h, patch_w)
@@ -324,12 +324,12 @@ def normalize_overlap(overlap: Union[
             Optional[int],
             Optional[float],
             Tuple[Optional[Union[float, int]], Optional[Union[float, int]]],
-        ], patch_shape: int) -> Tuple[int, int]:
+        ], patch_shape: Tuple[int, int]) -> Tuple[int, int]:
 
     if isinstance(overlap, Tuple):
-        return normalize_single_overlap(overlap[0], patch_shape), normalize_single_overlap(overlap[1], patch_shape)
+        return normalize_single_overlap(overlap[0], patch_shape[0]), normalize_single_overlap(overlap[1], patch_shape[1])
     else:
-        overlap = normalize_single_overlap(overlap, patch_shape)
+        overlap = normalize_single_overlap(overlap, patch_shape[0])
         return overlap, overlap
 
 

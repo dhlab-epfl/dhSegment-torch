@@ -1,14 +1,14 @@
-from typing import Optional, Union, Dict, List, Callable, NewType
+from logging import Logger
+from typing import Optional, Union, Dict, List, NewType
 
 import torch
-from logging import Logger
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.trainer.utils import cut_with_padding
 from dh_segment_torch.training.metrics.utils import (
     batch_multilabel_confusion_matrix,
     nanaverage,
 )
+from dh_segment_torch.utils.ops import cut_with_padding
 from dh_segment_torch.utils.ops import detach_and_move_tensors
 
 logger = Logger(__name__)

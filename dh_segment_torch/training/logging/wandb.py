@@ -86,11 +86,10 @@ class WandbLogger(Logger):
                 pred = pred.numpy().astype(np.uint8)
                 mask_dict["prediction"] = {
                     "mask_data": pred,
-                    "class_labels": dict(enumerate(self.color_labels.labels))
-                    if self.color_labels.labels
-                    else dict(enumerate([str(x) for x in range(self.color_labels.num_classes)])),
+                    "class_labels": dict(enumerate(self.color_labels.one_hot_labels))
+                    if self.color_labels.one_hot_labels
+                    else dict(enumerate([str(x) for x in range(self.colors)])),
                 }
-
 
             if gts is not None:
                 gt = gts[idx]
@@ -99,11 +98,11 @@ class WandbLogger(Logger):
                 gt = gt.numpy().astype(np.uint8)
                 mask_dict["ground_truth"] = {
                     "mask_data": gt,
-                    "class_labels": dict(enumerate(self.color_labels.labels))
-                    if self.color_labels.labels
-                    else dict(enumerate([str(x) for x in range(self.color_labels.num_classes)])),
+                    "class_labels": dict(enumerate(self.color_labels.one_hot_labels))
+                    if self.color_labels.one_hot_labels
+                    else dict(enumerate([str(x) for x in range(self.colors)])),
                 }
             if len(mask_dict) == 0:
                 mask_dict = None
             all_images.append(self.wandb.Image(image, masks=mask_dict))
-        self.wandb.log({"images": all_images}, commit=False, step=iteration)
+        self.wandb.log({self._join(prefix, "images"): all_images}, commit=False, step=iteration)

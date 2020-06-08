@@ -188,7 +188,8 @@ def construct_param(
         if not isinstance(params, collections.abc.Sequence):
             raise TypeError(f"Expected {param_name} to be a sequence.")
         new_tuple = []
-        for i, (value_class, value_params) in enumerate(zip(args, params)):
+        prev_value_class = None
+        for i, (value_class, value_params) in enumerate(zip(args, iterate_not_string(params))):
             if value_class == Ellipsis:
                 value_class = prev_value_class
             value_class_as_param = inspect.Parameter(
@@ -374,3 +375,10 @@ def get_origin_args(type_: type):
 
 def has_from_params(type_: Type) -> bool:
     return hasattr(type_, "from_params")
+
+
+def iterate_not_string(iterable: Any):
+    if isinstance(iterable, str):
+        raise ValueError("We do not want to iterate on strings.")
+    for item in iterable:
+        yield item

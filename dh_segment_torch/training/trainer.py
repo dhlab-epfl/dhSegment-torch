@@ -243,7 +243,11 @@ class Trainer(Registrable):
         model: Lazy[Model],
         optimizer: Optional[Lazy[Optimizer]] = None,
         metrics: Optional[
-            Union[Dict[str, Lazy[Metric]], List[Lazy[Metric]], Lazy[Metric]]
+            Union[
+                Dict[str, Lazy[Metric]],
+                List[Union[Tuple[str, Lazy[Metric]], Lazy[Metric]]],
+                Lazy[Metric],
+            ]
         ] = None,
         train_loader: Optional[Lazy[DataLoader]] = None,
         val_dataset: Optional[Lazy[Dataset]] = None,
@@ -317,6 +321,7 @@ class Trainer(Registrable):
             num_classes=color_labels.num_classes,
             metrics=metrics,
             multilabel=color_labels.multilabel,
+            classes_labels=color_labels.labels,
             ignore_padding=ignore_padding,
             margin=training_margin,
         )

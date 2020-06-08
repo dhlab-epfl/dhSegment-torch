@@ -1,4 +1,1 @@
-from .decoders import *
-from .encoders import *
-from .model import SegmentationModel
-from .utils import *
+from dh_segment_torch.models.model import SegmentationModel
