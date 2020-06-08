@@ -6,9 +6,8 @@ from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
 
 class ResnetTest(DhSegmentTestCase):
-
     def test_encoders_from_params(self):
-        resnet_encoders = ['resnet50', 'resnet34', 'resnet18']
+        resnet_encoders = ["resnet50", "resnet34", "resnet18"]
         available_encoders = Encoder.get_available()
         for encoder in resnet_encoders:
             assert encoder in available_encoders
@@ -34,11 +33,15 @@ class ResnetTest(DhSegmentTestCase):
         assert encoder.layer4[-1].conv1.in_channels == 512
         encoder.forward(x)
 
-        params = Params({"type": "resnet50",
-                         "blocks": 3,
-                         "pretrained": False,
-                        "replace_stride_with_dilation": [False, True, True],
-                         "normalization": {"type": "identity"}})
+        params = Params(
+            {
+                "type": "resnet50",
+                "blocks": 3,
+                "pretrained": False,
+                "replace_stride_with_dilation": [False, True, True],
+                "normalization": {"type": "identity"},
+            }
+        )
         encoder = Encoder.from_params(params)
         assert isinstance(encoder.layer4[0].bn1, torch.nn.Identity)
         assert encoder.layer4[1].conv2.dilation == (4, 4)

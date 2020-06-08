@@ -5,8 +5,8 @@ from typing import Union, Tuple, Dict, Optional, List
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import IterableDataset
 from skimage.util import view_as_windows
+from torch.utils.data import IterableDataset
 from torch.utils.data.dataloader import get_worker_info
 
 from dh_segment_torch.data.dataset.dataset import (
@@ -267,11 +267,11 @@ Dataset.register("patches_folder", "from_folder")(PatchesDataset)
 def sample_to_patche_samples(
     sample: Dict[str, np.ndarray],
     patch_shape: Tuple[int, int],
-    overlap:  Union[
-            Optional[int],
-            Optional[float],
-            Tuple[Optional[Union[float, int]], Optional[Union[float, int]]],
-        ] = None,
+    overlap: Union[
+        Optional[int],
+        Optional[float],
+        Tuple[Optional[Union[float, int]], Optional[Union[float, int]]],
+    ] = None,
     offset_augment: bool = False,
 ):
 
@@ -298,11 +298,11 @@ def sample_to_patche_samples(
 def extract_patches(
     image: np.ndarray,
     patch_shape: Tuple[int, int] = (300, 300),
-        overlap: Union[
-            Optional[int],
-            Optional[float],
-            Tuple[Optional[Union[float, int]], Optional[Union[float, int]]],
-        ] = None
+    overlap: Union[
+        Optional[int],
+        Optional[float],
+        Tuple[Optional[Union[float, int]], Optional[Union[float, int]]],
+    ] = None,
 ):
     if len(image.shape) > 3:
         raise ValueError("Expected single image")
@@ -320,20 +320,28 @@ def extract_patches(
     return patches
 
 
-def normalize_overlap(overlap: Union[
-            Optional[int],
-            Optional[float],
-            Tuple[Optional[Union[float, int]], Optional[Union[float, int]]],
-        ], patch_shape: Tuple[int, int]) -> Tuple[int, int]:
+def normalize_overlap(
+    overlap: Union[
+        Optional[int],
+        Optional[float],
+        Tuple[Optional[Union[float, int]], Optional[Union[float, int]]],
+    ],
+    patch_shape: Tuple[int, int],
+) -> Tuple[int, int]:
 
     if isinstance(overlap, Tuple):
-        return normalize_single_overlap(overlap[0], patch_shape[0]), normalize_single_overlap(overlap[1], patch_shape[1])
+        return (
+            normalize_single_overlap(overlap[0], patch_shape[0]),
+            normalize_single_overlap(overlap[1], patch_shape[1]),
+        )
     else:
         overlap = normalize_single_overlap(overlap, patch_shape[0])
         return overlap, overlap
 
 
-def normalize_single_overlap(overlap: Optional[Union[int, float]], patch_shape: int) -> int:
+def normalize_single_overlap(
+    overlap: Optional[Union[int, float]], patch_shape: int
+) -> int:
     if overlap is None:
         return patch_shape // 2
     elif isinstance(overlap, int):

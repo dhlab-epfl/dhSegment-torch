@@ -6,10 +6,14 @@ import torch.nn.functional as F
 
 from dh_segment_torch.models.decoders.decoder import Decoder
 from dh_segment_torch.nn.activations import Activation
-from dh_segment_torch.nn.normalizations import Normalization, BatchNorm2dDropNormalization
+from dh_segment_torch.nn.normalizations import (
+    Normalization,
+    BatchNorm2dDropNormalization,
+)
 
 default_normalization = BatchNorm2dDropNormalization(momentum=1 - 0.999)
 default_activation = Activation.get_constructor("relu")(inplace=True)
+
 
 @Decoder.register("pan")
 class PanDecoder(Decoder):

@@ -10,9 +10,7 @@ class OptimizerTest(DhSegmentTestCase):
             Params(
                 {
                     "encoder": {},
-                    "decoder": {
-                        "decoder_channels": [512, 256, 128, 64, 32],
-                    },
+                    "decoder": {"decoder_channels": [512, 256, 128, 64, 32],},
                     "num_classes": 4,
                 }
             )
@@ -50,16 +48,19 @@ class OptimizerTest(DhSegmentTestCase):
         params = {
             "param_groups": [
                 ["encoder", {"lr": lr_encoder}],
-                [["decoder.logits.0.weight", 'decoder.logits.0.bias'], {"lr": lr_logits}],
+                [
+                    ["decoder.logits.0.weight", "decoder.logits.0.bias"],
+                    {"lr": lr_logits},
+                ],
             ],
             "lr": lr_decoder,
         }
 
         opt = Optimizer.from_params(Params(params), model_params=named_parameters)
 
-        assert opt.state_dict()['param_groups'][0]['lr'] == lr_encoder
-        assert len(opt.state_dict()['param_groups'][0]['params']) == 161
-        assert opt.state_dict()['param_groups'][2]['lr'] == lr_decoder
-        assert len(opt.state_dict()['param_groups'][2]['params']) == 20
-        assert opt.state_dict()['param_groups'][1]['lr'] == lr_logits
-        assert len(opt.state_dict()['param_groups'][1]['params']) == 2
+        assert opt.state_dict()["param_groups"][0]["lr"] == lr_encoder
+        assert len(opt.state_dict()["param_groups"][0]["params"]) == 161
+        assert opt.state_dict()["param_groups"][2]["lr"] == lr_decoder
+        assert len(opt.state_dict()["param_groups"][2]["params"]) == 20
+        assert opt.state_dict()["param_groups"][1]["lr"] == lr_logits
+        assert len(opt.state_dict()["param_groups"][1]["params"]) == 2

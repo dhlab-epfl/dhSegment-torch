@@ -45,6 +45,3 @@ class DataLoader(data.DataLoader, Registrable):
 
 
 DataLoader.register("default")(DataLoader)
-
-
-

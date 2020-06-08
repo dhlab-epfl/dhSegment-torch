@@ -41,7 +41,9 @@ class FromParams:
 
         if is_base_registrable(cls):
             if Registrable._register.get(cls) is None:
-                raise ConfigurationError("Tried to construct an abstract registrable class that has nothing registered.")
+                raise ConfigurationError(
+                    "Tried to construct an abstract registrable class that has nothing registered."
+                )
             class_as_registrable = cast(Type[Registrable], cls)
             choices = class_as_registrable.get_available()
 
@@ -82,7 +84,9 @@ def create_kwargs(
     return kwargs
 
 
-def pop_construct_param(param_name: str, param: inspect.Parameter, params: Params, **extras):
+def pop_construct_param(
+    param_name: str, param: inspect.Parameter, params: Params, **extras
+):
     if param_name in extras:
         if param_name not in params:
             return extras[param_name]
@@ -95,9 +99,7 @@ def pop_construct_param(param_name: str, param: inspect.Parameter, params: Param
     optional = param.default != param.empty
     # params = normalize_params(params)
     popped_params = (
-        params.pop(param_name, param.default)
-        if optional
-        else params.pop(param_name)
+        params.pop(param_name, param.default) if optional else params.pop(param_name)
     )
 
     if popped_params is None:
@@ -189,7 +191,9 @@ def construct_param(
             raise TypeError(f"Expected {param_name} to be a sequence.")
         new_tuple = []
         prev_value_class = None
-        for i, (value_class, value_params) in enumerate(zip(args, iterate_not_string(params))):
+        for i, (value_class, value_params) in enumerate(
+            zip(args, iterate_not_string(params))
+        ):
             if value_class == Ellipsis:
                 value_class = prev_value_class
             value_class_as_param = inspect.Parameter(

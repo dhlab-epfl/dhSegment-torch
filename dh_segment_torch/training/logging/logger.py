@@ -1,5 +1,5 @@
 from collections.abc import Sequence, Mapping
-from typing import Dict, Optional, Union, List
+from typing import Dict, Optional
 
 import torch
 
@@ -7,7 +7,12 @@ from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.color_labels import ColorLabels
 from dh_segment_torch.training.metrics.metric import MetricType
 from dh_segment_torch.training.schedulers import Scheduler
-from dh_segment_torch.utils.ops import move_and_detach_batch, join_not_none, should_run, cut_with_padding
+from dh_segment_torch.utils.ops import (
+    move_and_detach_batch,
+    join_not_none,
+    should_run,
+    cut_with_padding,
+)
 
 
 class Logger(Registrable):
@@ -20,7 +25,7 @@ class Logger(Registrable):
         max_images_to_log: int = 4,
         ignore_padding: bool = False,
         margin: int = 0,
-        names_separator: str = "/"
+        names_separator: str = "/",
     ):
         self.color_labels = color_labels
         self.log_every = log_every
@@ -44,7 +49,7 @@ class Logger(Registrable):
         logits: Optional[torch.Tensor] = None,
         scheduler: Optional[Scheduler] = None,
         prefix: str = "",
-        ignore_iters: bool = False
+        ignore_iters: bool = False,
     ):
         if ignore_iters or should_run(iteration, self.log_every):
             if metrics:
@@ -61,7 +66,6 @@ class Logger(Registrable):
             batch = move_and_detach_batch(batch, "cpu", non_blocking=True)
             self.log_batch(batch, iteration, prefix)
 
-
     def log_scalars(
         self, scalars: Dict[str, MetricType], iteration: int, prefix: str = "",
     ):
@@ -75,7 +79,9 @@ class Logger(Registrable):
                     self.log_scalar(item, iteration, self._join(prefix, name, str(idx)))
             elif isinstance(scalar, Mapping):
                 for item_name, item in scalar.items():
-                    self.log_scalar(item, iteration, self._join(prefix, name, item_name))
+                    self.log_scalar(
+                        item, iteration, self._join(prefix, name, item_name)
+                    )
             else:
                 self.log_scalar(scalar, iteration, self._join(prefix, name))
 
@@ -90,9 +96,11 @@ class Logger(Registrable):
             torch.randperm(batch_size)[: self.max_images_to_log]
         )
 
-        shapes = batch['shapes'][indices_sel] if 'shapes' in batch else None
+        shapes = batch["shapes"][indices_sel] if "shapes" in batch else None
 
-        self.log_images(batch['input'][indices_sel], iteration, self._join(prefix, "image"), shapes)
+        self.log_images(
+            batch["input"][indices_sel], iteration, self._join(prefix, "image"), shapes
+        )
 
         if "logits" in batch:
             logits = batch["logits"][indices_sel]
@@ -105,13 +113,19 @@ class Logger(Registrable):
             self.log_masks(indices, iteration, self._join(prefix, "mask_pred"), shapes)
 
         if "target" in batch:
-            indices = batch['target'][indices_sel]
+            indices = batch["target"][indices_sel]
 
             if self.color_labels.multilabel:
                 indices = self._one_hot_to_indices(indices)
             self.log_masks(indices, iteration, self._join(prefix, "mask_gt"), shapes)
 
-    def log_images(self, images: torch.Tensor, iteration: int, prefix: str, shapes: Optional[torch.Tensor] = None):
+    def log_images(
+        self,
+        images: torch.Tensor,
+        iteration: int,
+        prefix: str,
+        shapes: Optional[torch.Tensor] = None,
+    ):
         if len(images) == 1:
             self.log_image(images[0], iteration, prefix)
             return
@@ -121,7 +135,13 @@ class Logger(Registrable):
                 image = cut_with_padding(image, shapes[idx], margin=self.margin)
             self.log_image(image, iteration, self._join(prefix, str(idx)))
 
-    def log_masks(self, masks: torch.Tensor, iteration: int, prefix: str, shapes: Optional[torch.Tensor] = None):
+    def log_masks(
+        self,
+        masks: torch.Tensor,
+        iteration: int,
+        prefix: str,
+        shapes: Optional[torch.Tensor] = None,
+    ):
         if len(masks) == 1:
             self.log_mask(masks[0], iteration, prefix)
             return
@@ -141,7 +161,9 @@ class Logger(Registrable):
         one_hot_encoding = torch.tensor(
             self.color_labels.one_hot_encoding, dtype=torch.long
         ).permute(1, 0)[None, :, :, None, None]
-        return torch.abs(one_hot[:, :, None] - one_hot_encoding).sum(dim=1).argmin(dim=1)
-    
+        return (
+            torch.abs(one_hot[:, :, None] - one_hot_encoding).sum(dim=1).argmin(dim=1)
+        )
+
     def _join(self, *items):
         return join_not_none(*items, join_str=self.names_separator)

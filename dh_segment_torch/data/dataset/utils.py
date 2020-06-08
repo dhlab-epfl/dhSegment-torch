@@ -40,6 +40,7 @@ def collate_fn(examples):
         "shapes": torch.stack(shapes_out, dim=0),
     }
 
+
 def patches_worker_init_fn(worker_id):
     worker_info = torch.utils.data.get_worker_info()
     dataset = worker_info.dataset

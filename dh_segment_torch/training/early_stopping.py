@@ -5,12 +5,10 @@ from dh_segment_torch.training.metrics.metric_tracker import MetricTracker
 
 
 class EarlyStopping(Registrable):
-    default_implementation = 'default'
+    default_implementation = "default"
 
     def __init__(
-        self,
-        tracker: MetricTracker,
-        patience: Optional[int] = None,
+        self, tracker: MetricTracker, patience: Optional[int] = None,
     ):
         self.tracker = tracker
 
@@ -22,7 +20,7 @@ class EarlyStopping(Registrable):
     def should_terminate(self):
         if self.patience is None:
             return False
-        
+
         self.num_epochs += 1
 
         if self.tracker.is_last_best:

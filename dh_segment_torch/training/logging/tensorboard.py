@@ -1,7 +1,6 @@
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union
 
-import cv2
 import torch
 from torch.utils.tensorboard import SummaryWriter
 

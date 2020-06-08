@@ -81,9 +81,7 @@ class ImageDataset(Dataset):
         assign_transform: Assign = None,
     ):
         data = load_data_from_folder(str(folder))
-        return cls(
-            data, compose=compose, assign_transform=assign_transform
-        )
+        return cls(data, compose=compose, assign_transform=assign_transform)
 
 
 Dataset.register("image_dataframe")(ImageDataset)

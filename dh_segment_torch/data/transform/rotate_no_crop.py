@@ -11,6 +11,7 @@ from albumentations.augmentations.functional import (
 from dh_segment_torch.data.transform import Transform
 from dh_segment_torch.data.transform.albumentation import Rotate
 
+
 @Transform.register("rotate_no_crop")
 class RotateNoCrop(Rotate):
     def apply(self, img, angle=0, interpolation=cv2.INTER_LINEAR, **params):

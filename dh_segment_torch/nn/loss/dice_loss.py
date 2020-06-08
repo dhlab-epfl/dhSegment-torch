@@ -9,7 +9,7 @@ class Dice(torch.nn.Module):
 
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         probs = torch.sigmoid(input)
-        intersection = target*probs
+        intersection = target * probs
         union = target + probs
 
         stack = torch.stack([intersection.sum(1), union.sum(1)], 1)
@@ -27,4 +27,11 @@ class Dice(torch.nn.Module):
             intersection = stack[0]
             union = stack[1]
             dims = (0, 1)
-        return (1 - (2 * (intersection.sum(dims) + self.smooth) / (union.sum(dims) + self.smooth))).mean()
+        return (
+            1
+            - (
+                2
+                * (intersection.sum(dims) + self.smooth)
+                / (union.sum(dims) + self.smooth)
+            )
+        ).mean()

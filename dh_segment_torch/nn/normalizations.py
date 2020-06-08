@@ -67,26 +67,17 @@ class BatchNorm2dDropNormalization(Normalization):
 @Normalization.register("batch_renorm_2d")
 class BatchRenorm2dNormalization(Normalization):
     def __init__(
-        self,
-        eps: float = 1e-05,
-        momentum: float = 0.1,
-        affine: bool = True,
+        self, eps: float = 1e-05, momentum: float = 0.1, affine: bool = True,
     ):
         super().__init__(
-            batch_renorm.BatchRenorm2d,
-            eps=eps,
-            momentum=momentum,
-            affine=affine,
+            batch_renorm.BatchRenorm2d, eps=eps, momentum=momentum, affine=affine,
         )
 
 
 @Normalization.register("batch_renorm_2d_drop")
 class BatchRenorm2dDropNormalization(Normalization):
     def __init__(
-        self,
-        eps: float = 1e-05,
-        momentum: float = 0.1,
-        affine: bool = True,
+        self, eps: float = 1e-05, momentum: float = 0.1, affine: bool = True,
     ):
         super().__init__(
             batch_norm_drop.BatchRenorm2dDrop,
@@ -106,6 +97,3 @@ class GroupNormNormalization(Normalization):
     def __call__(self, num_features: int, **kwargs):
         kwargs.update(self._kwargs)
         return self._torch_normalizer(num_channels=num_features, **kwargs)
-
-
-

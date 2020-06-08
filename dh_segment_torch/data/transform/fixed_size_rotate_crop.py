@@ -9,6 +9,7 @@ from dh_segment_torch.data.transform.rotate_no_crop import (
     keypoint_rotate_no_crop,
 )
 
+
 @Transform.register("fixed_size_rotate_crop")
 class FixedSizeRotateCrop(Rotate):
     def apply(self, img, angle=0, interpolation=cv2.INTER_LINEAR, **params):

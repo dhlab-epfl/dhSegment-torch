@@ -1,8 +1,8 @@
 from typing import Union
 
+import albumentations.augmentations.functional as F
 import cv2
 import numpy as np
-import albumentations.augmentations.functional as F
 from albumentations.core.transforms_interface import DualTransform
 
 from dh_segment_torch.data.transform import Transform

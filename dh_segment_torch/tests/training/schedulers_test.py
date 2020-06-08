@@ -1,6 +1,5 @@
-import torch
-
 import numpy as np
+import torch
 
 from dh_segment_torch.config.params import Params
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
@@ -127,7 +126,7 @@ class OptimizerTest(DhSegmentTestCase):
                     "min_lr": 1e-3,
                 },
             ],
-            "durations": [10, ],
+            "durations": [10,],
         }
         sched = Scheduler.from_params(Params(sched_params), optimizer=opt)
 
@@ -152,7 +151,9 @@ class OptimizerTest(DhSegmentTestCase):
         sched.step(0.4)
         assert np.allclose(sched.get_last_lr()[0], start_lr * gamma_plateau)
         sched.step(0.3)
-        assert np.allclose(sched.get_last_lr()[0], max(1e-3, start_lr * gamma_plateau ** 2))
+        assert np.allclose(
+            sched.get_last_lr()[0], max(1e-3, start_lr * gamma_plateau ** 2)
+        )
 
     def test_warmup_lr(self):
         named_parameters = [("x", torch.nn.Parameter())]
@@ -167,11 +168,10 @@ class OptimizerTest(DhSegmentTestCase):
         gamma_exp = 0.95
         sched_params = {
             "type": "warmup",
-            "scheduler":
-                {"type": "exponential", "gamma": gamma_exp},
+            "scheduler": {"type": "exponential", "gamma": gamma_exp},
             "warmup_start_value": warmup_start,
-            'warmup_end_value': warmup_end,
-            'warmup_duration': warmup_duration
+            "warmup_end_value": warmup_end,
+            "warmup_duration": warmup_duration,
         }
         sched = Scheduler.from_params(Params(sched_params), optimizer=opt)
         assert np.allclose(sched.get_last_lr()[0], warmup_start)
@@ -183,4 +183,6 @@ class OptimizerTest(DhSegmentTestCase):
         for i in range(50):
             opt.step()
             sched.step()
-            assert np.allclose(sched.get_last_lr()[0], warmup_end * gamma_exp ** (i + 1))
+            assert np.allclose(
+                sched.get_last_lr()[0], warmup_end * gamma_exp ** (i + 1)
+            )

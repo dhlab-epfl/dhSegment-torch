@@ -1,5 +1,5 @@
 from math import inf
-from typing import Any, Dict
+from typing import Dict
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.training.metrics.metric import MetricType
@@ -9,15 +9,14 @@ class MetricTracker(Registrable):
     default_implementation = "default"
 
     def __init__(
-        self,
-        metric_name: str,
-        threshold: float = 1e-5,
-        threshold_mode: str = "abs",
+        self, metric_name: str, threshold: float = 1e-5, threshold_mode: str = "abs",
     ):
-        if metric_name[0] not in {'-', '+'}:
-            raise ValueError("Expected metric name to start by - or +"
-                             "to indicate if it should be maximized or minimized")
-        self.mode = 'min' if metric_name[0] == '-' else 'max'
+        if metric_name[0] not in {"-", "+"}:
+            raise ValueError(
+                "Expected metric name to start by - or +"
+                "to indicate if it should be maximized or minimized"
+            )
+        self.mode = "min" if metric_name[0] == "-" else "max"
         self.metric_name = metric_name[1:]
 
         self.threshold = threshold

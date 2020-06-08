@@ -76,7 +76,7 @@ class WandbLogger(Logger):
             image = images[idx]
             if self.ignore_padding:
                 image = cut_with_padding(image, shape, self.margin)
-            image = (image.permute(1, 2, 0)*255).numpy().astype(np.uint8)
+            image = (image.permute(1, 2, 0) * 255).numpy().astype(np.uint8)
 
             mask_dict = {}
             if preds is not None:
@@ -105,4 +105,6 @@ class WandbLogger(Logger):
             if len(mask_dict) == 0:
                 mask_dict = None
             all_images.append(self.wandb.Image(image, masks=mask_dict))
-        self.wandb.log({self._join(prefix, "images"): all_images}, commit=False, step=iteration)
+        self.wandb.log(
+            {self._join(prefix, "images"): all_images}, commit=False, step=iteration
+        )

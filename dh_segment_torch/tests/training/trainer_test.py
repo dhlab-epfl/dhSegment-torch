@@ -27,11 +27,15 @@ class TrainerTest(DhSegmentTestCase):
                 },
                 "model": {
                     "encoder": "resnet50",
-                    "decoder": {'decoder_channels': [512, 256, 128, 64, 32]}
+                    "decoder": {"decoder_channels": [512, 256, 128, 64, 32]}
                     # "loss": {"type": "dice"},
                 },
-                'metrics': ['iou', ('iou_class', {'type': 'iou', 'average': None}), 'precision'],
-                'val_dataset': {
+                "metrics": [
+                    "iou",
+                    ("iou_class", {"type": "iou", "average": None}),
+                    "precision",
+                ],
+                "val_dataset": {
                     "type": "image_csv",
                     "csv_filename": self.FIXTURES_ROOT
                     / "dataset"
@@ -39,15 +43,14 @@ class TrainerTest(DhSegmentTestCase):
                     / "test.csv",
                     "base_dir": self.FIXTURES_ROOT / "dataset" / "multiclass",
                 },
-                'lr_scheduler': {"type": "exponential", "gamma": 0.95},
-                'early_stopping': {'patience': 20},
-                'model_out_dir': str(self.TEMPORARY_DIR / "model"),
-                'num_epochs': 2,
-                'evaluate_every_epoch': 1
+                "lr_scheduler": {"type": "exponential", "gamma": 0.95},
+                "early_stopping": {"patience": 20},
+                "model_out_dir": str(self.TEMPORARY_DIR / "model"),
+                "num_epochs": 2,
+                "evaluate_every_epoch": 1,
             }
         )
 
         trainer = Trainer.from_params(params)
         trainer.train()
         # 1/0
-

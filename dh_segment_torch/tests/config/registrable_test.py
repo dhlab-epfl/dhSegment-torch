@@ -1,9 +1,6 @@
-from abc import ABC, abstractmethod
-from typing import List, Dict, Union
-
 import pytest
 
-from dh_segment_torch.config import ConfigurationError, RegistrableError
+from dh_segment_torch.config import RegistrableError
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
@@ -42,6 +39,7 @@ class TestRegistrable(DhSegmentTestCase):
         base_class.default_implementation = default
 
         with pytest.raises(RegistrableError):
+
             @base_class.register("dummy")
             class Dummy2(base_class):
                 pass
@@ -49,9 +47,10 @@ class TestRegistrable(DhSegmentTestCase):
         @base_class.register("dummy", exist_ok=True)
         class Dummy2(base_class):
             pass
+
         assert base_class.get("dummy")[0] != Dummy
         assert base_class.get("dummy")[0] == Dummy2
 
-        assert base_class.get_type(Dummy2) == 'dummy'
+        assert base_class.get_type(Dummy2) == "dummy"
 
         del Registrable._register[base_class]["dummy"]

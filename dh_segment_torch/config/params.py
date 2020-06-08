@@ -3,20 +3,25 @@ import json
 import logging
 from collections.abc import MutableMapping
 from pathlib import Path
-from typing import Dict, Any, Iterable, Union
+from typing import Dict, Any, Union
 
 from dh_segment_torch.config import ConfigurationError
 
 try:
     from _jsonnet import evaluate_file, evaluate_snippet
 except ImportError:
+
     def evaluate_file(filename: str, **kwargs):
-        logger.warning(f"error loading _jsonnet (not supported on Windows). Loading the file as normal json")
-        with open(filename, 'r') as infile:
+        logger.warning(
+            f"error loading _jsonnet (not supported on Windows). Loading the file as normal json"
+        )
+        with open(filename, "r") as infile:
             return infile.read()
 
     def evaluate_snippet(filename: str, expr: str, **kwargs):
-        logger.warning(f"error loading _jsonnet (not supported on Windows). Loading the file as normal json")
+        logger.warning(
+            f"error loading _jsonnet (not supported on Windows). Loading the file as normal json"
+        )
         return expr
 
 
@@ -57,7 +62,9 @@ class Params(MutableMapping):
 
     def assert_empty(self, class_name: str) -> None:
         if self.params:
-            raise ConfigurationError(f"Could not exhaust all parameters for {class_name}, still got {self.params}.")
+            raise ConfigurationError(
+                f"Could not exhaust all parameters for {class_name}, still got {self.params}."
+            )
 
     def __getitem__(self, item):
         if item in self.params:
@@ -83,7 +90,7 @@ class Params(MutableMapping):
         return cls(params)
 
     def to_file(self, file_path: Union[str, Path]):
-        with open(str(file_path), 'w') as outfile:
+        with open(str(file_path), "w") as outfile:
             json.dump(self.as_dict(), outfile, indent=4)
 
     def __repr__(self):

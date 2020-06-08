@@ -1,6 +1,6 @@
 import torch
-from torch.nn import Parameter, init
 import torch.nn.functional as F
+from torch.nn import Parameter, init
 
 
 class BatchRenorm(torch.nn.Module):

@@ -1,10 +1,10 @@
+import logging
 import os
 import time
 from typing import Optional, List, Tuple, Dict, Any
 
-import torch
 import numpy as np
-import logging
+import torch
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.training.metrics.metric_tracker import MetricTracker
@@ -70,7 +70,10 @@ class Checkpoint(Registrable):
             return
         # Do not save twice the same checkpoint
 
-        if len(self.saved_checkpoints) > 0 and (np.array([v for v, _ in self.saved_checkpoints]) - value).min() < 1e-6:
+        if (
+            len(self.saved_checkpoints) > 0
+            and (np.array([v for v, _ in self.saved_checkpoints]) - value).min() < 1e-6
+        ):
             return
         save_path = os.path.join(
             self.checkpoint_dir,

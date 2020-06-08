@@ -1,9 +1,9 @@
+import logging
 from typing import Optional, List, Union, Dict, Tuple
 
 import torch
 from torch.utils import data
 from tqdm import tqdm
-import logging
 
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.config.registrable import Registrable
@@ -13,11 +13,11 @@ from dh_segment_torch.data.dataset import PatchesDataset
 from dh_segment_torch.data.dataset.dataset import Dataset
 from dh_segment_torch.data.transform import AssignMultilabel, AssignLabel
 from dh_segment_torch.models.model import Model
+from dh_segment_torch.training.checkpoint import BestCheckpoint, IterationCheckpoint
 from dh_segment_torch.training.checkpoint import Checkpoint
 from dh_segment_torch.training.early_stopping import EarlyStopping
 from dh_segment_torch.training.logging.logger import Logger
 from dh_segment_torch.training.metrics.metric import Metric, MetricType
-from dh_segment_torch.training.checkpoint import BestCheckpoint, IterationCheckpoint
 from dh_segment_torch.training.metrics.metric_tracker import MetricTracker
 from dh_segment_torch.training.optimizers import Optimizer, AdamOptimizer
 from dh_segment_torch.training.regularizers import Regularizer

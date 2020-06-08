@@ -1,7 +1,17 @@
 import re
 from datetime import datetime
 from itertools import islice
-from typing import Iterable, List, Tuple, Union, Dict, Any, Optional, TypeVar, Sequence, Iterator
+from typing import (
+    Iterable,
+    List,
+    Tuple,
+    Union,
+    Dict,
+    Any,
+    Optional,
+    TypeVar,
+    Iterator,
+)
 
 import torch
 
@@ -10,7 +20,7 @@ def cut_with_padding(
     input_tensor: torch.Tensor, shape: torch.Tensor, margin: int = 0
 ) -> torch.Tensor:
     return input_tensor[
-        ..., margin: shape[0].item() - margin, margin: shape[1].item() - margin
+        ..., margin : shape[0].item() - margin, margin : shape[1].item() - margin
     ]
 
 
@@ -72,12 +82,18 @@ def batch_items(items: Iterable[T], batch_size: int = 1) -> Iterator[T]:
             break
 
 
-def move_batch(batch: Dict[str, torch.Tensor], device: str, non_blocking: bool = True) -> Dict[str, torch.Tensor]:
+def move_batch(
+    batch: Dict[str, torch.Tensor], device: str, non_blocking: bool = True
+) -> Dict[str, torch.Tensor]:
     return {k: t.to(device, non_blocking=non_blocking) for k, t in batch.items()}
 
 
-def move_and_detach_batch(batch: Dict[str, torch.Tensor], device: str, non_blocking: bool = True) -> Dict[str, torch.Tensor]:
-    return {k: t.to(device, non_blocking=non_blocking).detach() for k, t in batch.items()}
+def move_and_detach_batch(
+    batch: Dict[str, torch.Tensor], device: str, non_blocking: bool = True
+) -> Dict[str, torch.Tensor]:
+    return {
+        k: t.to(device, non_blocking=non_blocking).detach() for k, t in batch.items()
+    }
 
 
 def join_not_none(*items: Optional[str], join_str: str = "_"):

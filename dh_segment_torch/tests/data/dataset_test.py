@@ -1,7 +1,6 @@
 import cv2
-import torch
-from torch.utils.data import IterableDataset, Dataset
 import pytest
+from torch.utils.data import IterableDataset, Dataset
 
 from dh_segment_torch.config.params import Params
 from dh_segment_torch.data.dataset import PatchesDataset, ImageDataset
@@ -64,13 +63,13 @@ class DatasetTest(DhSegmentTestCase):
                 "transforms": [
                     {"type": "fixed_size_resize", "output_size": 1e5},
                     "gaussian_blur",
-                    "flip"
+                    "flip",
                 ]
             },
-            'assign_transform': {
-                        "type": "assign_label",
-                        "colors_array": [[0, 0, 0], [255, 0, 0], [0, 0, 255]],
-                    },
+            "assign_transform": {
+                "type": "assign_label",
+                "colors_array": [[0, 0, 0], [255, 0, 0], [0, 0, 255]],
+            },
         }
 
         dataset = Dataset.from_params(Params(params))
@@ -80,7 +79,10 @@ class DatasetTest(DhSegmentTestCase):
         assert "label" in sample
         assert "shape" in sample
 
-        assert len(set(sample["label"].unique().numpy().tolist()).difference([0, 1, 2])) == 0
+        assert (
+            len(set(sample["label"].unique().numpy().tolist()).difference([0, 1, 2]))
+            == 0
+        )
 
         with pytest.raises(TypeError):
             params = {
@@ -105,16 +107,11 @@ class DatasetTest(DhSegmentTestCase):
             "pre_patches_compose": {
                 "transforms": [{"type": "fixed_size_resize", "output_size": 1e5},]
             },
-            "post_patches_compose": {
-                "transforms": [
-                    "gaussian_blur",
-                    "flip",
-                ]
+            "post_patches_compose": {"transforms": ["gaussian_blur", "flip",]},
+            "assign_transform": {
+                "type": "assign_label",
+                "colors_array": [[0, 0, 0], [255, 0, 0], [0, 0, 255]],
             },
-            'assign_transform': {
-                        "type": "assign_label",
-                        "colors_array": [[0, 0, 0], [255, 0, 0], [0, 0, 255]],
-                    },
         }
 
         dataset = Dataset.from_params(Params(params))
@@ -135,17 +132,11 @@ class DatasetTest(DhSegmentTestCase):
                     {"type": "gaussian_blur"},
                 ]
             },
-            'assign_transform':
-                {
-                    "type": "assign_multilabel",
-                    "colors_array": [
-                        [0, 0, 0],
-                        [255, 0, 0],
-                        [0, 0, 255],
-                        [128, 0, 128],
-                    ],
-                    "onehot_label_array": [[0, 0], [1, 0], [0, 1], [1, 1]],
-                },
+            "assign_transform": {
+                "type": "assign_multilabel",
+                "colors_array": [[0, 0, 0], [255, 0, 0], [0, 0, 255], [128, 0, 128],],
+                "onehot_label_array": [[0, 0], [1, 0], [0, 1], [1, 1]],
+            },
         }
 
         dataset = Dataset.from_params(Params(params))

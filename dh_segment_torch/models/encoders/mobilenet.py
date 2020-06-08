@@ -19,7 +19,6 @@ pretrained_settings_mobilenet_v2 = frozendict(
 
 
 class MobileNetV2Encoder(Encoder, MobileNetV2):
-
     def __init__(
         self,
         output_dims: List[int],

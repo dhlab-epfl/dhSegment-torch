@@ -68,5 +68,5 @@ class PanTest(DhSegmentTestCase):
 
         assert isinstance(decoder.gau3.process_low[2], BatchRenorm2d)
         assert isinstance(decoder.gau3.process_low[1], torch.nn.LeakyReLU)
-        assert decoder.gau3.process_high[1][1]._get_name() == 'Swish'
+        assert decoder.gau3.process_high[1][1]._get_name() == "Swish"
         decoder.forward(*xs)

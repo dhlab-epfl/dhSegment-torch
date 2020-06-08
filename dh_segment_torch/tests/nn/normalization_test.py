@@ -17,9 +17,9 @@ class NormalizationTest(DhSegmentTestCase):
         x = torch.zeros((2, in_features, 4, 4)).normal_()
         for norm in all_norms:
             cls, constructor = Normalization.get(norm)
-            if constructor.__name__ == '__init__':
+            if constructor.__name__ == "__init__":
                 constructor = cls
-            if norm == 'group_norm':
+            if norm == "group_norm":
                 with pytest.raises(TypeError):
                     normalizer = constructor()(in_features)
                 normalizer = constructor(num_groups=2)(in_features)

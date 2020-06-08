@@ -13,18 +13,14 @@ class ActivationTest(DhSegmentTestCase):
         x = torch.zeros((2, in_features, 4, 4)).normal_()
         for activation_name in all_activations:
             kwargs = {}
-            if activation_name == 'threshold':
-                kwargs = {'threshold': 2, 'value': 5}
+            if activation_name == "threshold":
+                kwargs = {"threshold": 2, "value": 5}
             activation = Activation.get_constructor(activation_name)(**kwargs)
 
             activation(x)
 
     def test_none_default_args(self):
-        params = {
-            'type': 'hardtanh',
-            'min_val': 'a'
-        }
+        params = {"type": "hardtanh", "min_val": "a"}
 
         with pytest.raises(TypeError):
             Activation.from_params(Params(params))
-

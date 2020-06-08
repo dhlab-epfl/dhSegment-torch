@@ -24,10 +24,13 @@ class ResNetEncoder(Encoder, ResNet):
         pretrained: bool = False,
         progress: bool = False,
     ):
-        ResNet.__init__(self, block,
+        ResNet.__init__(
+            self,
+            block,
             layers,
             norm_layer=normalization,
-            replace_stride_with_dilation=replace_stride_with_dilation)
+            replace_stride_with_dilation=replace_stride_with_dilation,
+        )
         Encoder.__init__(self, output_dims, pretrained_settings, pretrained, progress)
         self.blocks = blocks
 

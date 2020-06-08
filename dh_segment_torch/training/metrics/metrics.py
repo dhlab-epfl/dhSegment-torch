@@ -1,6 +1,10 @@
 from typing import List, Optional, Union, Dict
 
-from dh_segment_torch.training.metrics.metric import Metric, MultilabelConfusionMetric, logger
+from dh_segment_torch.training.metrics.metric import (
+    Metric,
+    MultilabelConfusionMetric,
+    logger,
+)
 
 
 @Metric.register("iou")

@@ -24,10 +24,7 @@ class TestParams(DhSegmentTestCase):
             params.pop("test")
 
     def test_pop_nested_param(self):
-        config_dict = {"model": {
-            "type": "test",
-            "other_param": 1
-        }}
+        config_dict = {"model": {"type": "test", "other_param": 1}}
 
         params = Params(config_dict)
 
@@ -43,10 +40,13 @@ class TestParams(DhSegmentTestCase):
 
     def test_read_jsonnet(self):
         with pytest.raises(RuntimeError):
-            Params.from_file(self.FIXTURES_ROOT / "configs" / "resnet50_unet_bad.jsonnet")
-        params = Params.from_file(self.FIXTURES_ROOT / "configs" / "resnet50_unet.jsonnet")
+            Params.from_file(
+                self.FIXTURES_ROOT / "configs" / "resnet50_unet_bad.jsonnet"
+            )
+        params = Params.from_file(
+            self.FIXTURES_ROOT / "configs" / "resnet50_unet.jsonnet"
+        )
         assert len(params) == 3
-        assert params['encoder']['type'] == 'resnet50'
-        assert params['decoder']['type'] == 'unet'
-        assert params['decoder']['decoder_channels'] == [512, 256, 128, 64, 32]
-
+        assert params["encoder"]["type"] == "resnet50"
+        assert params["decoder"]["type"] == "unet"
+        assert params["decoder"]["decoder_channels"] == [512, 256, 128, 64, 32]

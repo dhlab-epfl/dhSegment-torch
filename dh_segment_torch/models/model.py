@@ -1,5 +1,4 @@
-from collections.abc import Iterable
-from typing import Dict, Optional, Union, List, Any, Set, Tuple
+from typing import Dict, Optional, Union, List, Set, Tuple
 
 import torch
 import torch.nn as nn

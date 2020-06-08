@@ -10,6 +10,7 @@ from dh_segment_torch.config.registrable import Registrable
 
 class ColorLabels(Registrable):
     default_implementation = "labels_list"
+
     def __init__(
         self,
         colors: List[Tuple[int, int, int]],
@@ -26,7 +27,7 @@ class ColorLabels(Registrable):
                 new_names = []
                 for line in np.array(one_hot_encoding).astype(bool):
                     new_names.append("+".join(np.array(labels)[line]))
-                new_names[0] = 'background'
+                new_names[0] = "background"
                 self.one_hot_labels = new_names
                 assert len(self.one_hot_labels) == len(colors)
             assert len(self.labels) == self.num_classes
@@ -43,7 +44,9 @@ class ColorLabels(Registrable):
             return len(self.colors)
 
     @classmethod
-    def from_labels_text_file(cls, label_text_file: Union[str, Path], labels: Optional[List[str]] = None):
+    def from_labels_text_file(
+        cls, label_text_file: Union[str, Path], labels: Optional[List[str]] = None
+    ):
         label_text_file = str(label_text_file)
         if not os.path.exists(label_text_file):
             raise FileNotFoundError(label_text_file)
@@ -59,7 +62,9 @@ class ColorLabels(Registrable):
         if labels_classes.shape[1] == 3:
             return cls(colors)
         else:
-            one_hot_encoding = [parse_validate_one_hot(one_hot) for one_hot in labels_classes[:, 3:]]
+            one_hot_encoding = [
+                parse_validate_one_hot(one_hot) for one_hot in labels_classes[:, 3:]
+            ]
             return cls(colors, one_hot_encoding, labels)
 
     @classmethod
@@ -116,7 +121,7 @@ ColorLabels.register("txt", "from_labels_text_file")(ColorLabels)
 
 def hex_to_rgb(hex: str) -> Tuple[int, ...]:
     hex = hex.lstrip("#")
-    return tuple(int(hex[i: i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(hex[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def parse_and_validate_color(color) -> Tuple[int, int, int]:

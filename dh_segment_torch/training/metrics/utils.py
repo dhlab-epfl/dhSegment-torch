@@ -1,7 +1,7 @@
 from typing import Tuple, Optional
 
-import torch
 import numpy as np
+import torch
 
 
 def batch_multilabel_confusion_matrix(

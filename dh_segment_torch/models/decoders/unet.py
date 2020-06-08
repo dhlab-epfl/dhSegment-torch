@@ -19,7 +19,7 @@ class UnetDecoder(Decoder):
         use_deconvolutions: bool = False,
         max_channels: Optional[int] = None,
         normalization: Normalization = None,
-        activation: Activation = None
+        activation: Activation = None,
     ):
         super().__init__(encoder_channels, decoder_channels, num_classes)
 
@@ -27,7 +27,9 @@ class UnetDecoder(Decoder):
 
         # TODO add value to default config batch_norm_decay = 0.999
         if normalization is None:
-            normalization = Normalization.get_constructor("batch_norm_2d_drop")(momentum=1-0.999)
+            normalization = Normalization.get_constructor("batch_norm_2d_drop")(
+                momentum=1 - 0.999
+            )
 
         if activation is None:
             activation = Activation.get_constructor("relu")(inplace=True)
@@ -99,7 +101,10 @@ class Conv2DNormalize(nn.Sequential):
 
 class UpsampleConcat(nn.Module):
     def __init__(
-        self, upscale_mode: str = "nearest", use_deconv: bool = False, x_channels: int = None
+        self,
+        upscale_mode: str = "nearest",
+        use_deconv: bool = False,
+        x_channels: int = None,
     ):
         super().__init__()
         if use_deconv:

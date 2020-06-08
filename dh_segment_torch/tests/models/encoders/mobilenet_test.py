@@ -6,9 +6,8 @@ from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
 
 class MobileNetTest(DhSegmentTestCase):
-
     def test_encoders_from_params(self):
-        mobilenet_encoders = ['mobilenetv2']
+        mobilenet_encoders = ["mobilenetv2"]
         available_encoders = Encoder.get_available()
         for encoder in mobilenet_encoders:
             assert encoder in available_encoders

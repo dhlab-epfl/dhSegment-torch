@@ -15,7 +15,8 @@ from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 class RegistrableNoFromParams(Registrable):
     pass
 
-class CustomHashable():
+
+class CustomHashable:
     def __init__(self, x: int):
         self.x = x
 
@@ -23,13 +24,13 @@ class CustomHashable():
         return hash(self.x)
 
     def __eq__(self, other):
-        if not isinstance(other, type(self)): return NotImplemented
+        if not isinstance(other, type(self)):
+            return NotImplemented
         return self.x == other.x
 
 
-Registrable._register[RegistrableNoFromParams] = {
-    "custom_hash": (CustomHashable, None)
-}
+Registrable._register[RegistrableNoFromParams] = {"custom_hash": (CustomHashable, None)}
+
 
 class Transform(Registrable, ABC):
     default_implementation = "mult_by_2_add_5"
@@ -75,7 +76,9 @@ Transform.register("mult_by_2_add_5", "multiplyby2add5")(MultiplyByXAddY)
 class Dataset(Registrable):
     default_implementation = "default"
 
-    def __init__(self, data_path: Union[str, int], transforms: Dict[Union[str, int], Transform]):
+    def __init__(
+        self, data_path: Union[str, int], transforms: Dict[Union[str, int], Transform]
+    ):
         self.data_path = data_path
         self.transforms = transforms
 
@@ -102,7 +105,9 @@ class Dataset(Registrable):
         return cls(data_path, dict(enumerate(transforms)))
 
     @classmethod
-    def from_set_param(cls, data_path: str, transform: Transform, set_arg: Set[RegistrableNoFromParams]):
+    def from_set_param(
+        cls, data_path: str, transform: Transform, set_arg: Set[RegistrableNoFromParams]
+    ):
         class_constructed = cls(data_path, {0: transform})
         class_constructed.set_arg = set_arg
         return class_constructed
@@ -174,10 +179,9 @@ class FromParamsTest(DhSegmentTestCase):
         config_dict = deepcopy(base_config_dict)
         dataset = Dataset.from_params(Params(config_dict))
 
-        assert dataset.data_path == './'
+        assert dataset.data_path == "./"
         assert len(dataset.transforms) == 2
-        assert dataset.transforms['t2'].y == 5
-
+        assert dataset.transforms["t2"].y == 5
 
         # We now test with a list of transforms
 
@@ -189,16 +193,16 @@ class FromParamsTest(DhSegmentTestCase):
 
         config_dict = deepcopy(base_config_dict)
         config_dict["transforms"] = list(config_dict["transforms"].values())
-        config_dict['type'] = "from_transforms_list"
+        config_dict["type"] = "from_transforms_list"
         dataset = Dataset.from_params(Params(config_dict))
 
-        assert dataset.data_path == './'
+        assert dataset.data_path == "./"
         assert len(dataset.transforms) == 2
         assert dataset.transforms[1].y == 5
 
         with pytest.raises(TypeError):
             config_dict = deepcopy(base_config_dict)
-            config_dict['type'] = "from_transforms_list"
+            config_dict["type"] = "from_transforms_list"
             Dataset.from_params(Params(config_dict))
 
         # With tuples
@@ -210,16 +214,16 @@ class FromParamsTest(DhSegmentTestCase):
 
         config_dict = deepcopy(base_config_dict)
         config_dict["transforms"] = tuple(config_dict["transforms"].values())
-        config_dict['type'] = "from_transforms_tuple"
+        config_dict["type"] = "from_transforms_tuple"
         dataset = Dataset.from_params(Params(config_dict))
 
-        assert dataset.data_path == './'
+        assert dataset.data_path == "./"
         assert len(dataset.transforms) == 2
         assert dataset.transforms[1].y == 5
 
         with pytest.raises(TypeError):
             config_dict = deepcopy(base_config_dict)
-            config_dict['type'] = "from_transforms_tuple"
+            config_dict["type"] = "from_transforms_tuple"
             Dataset.from_params(Params(config_dict))
 
         # With set
@@ -230,23 +234,23 @@ class FromParamsTest(DhSegmentTestCase):
             Dataset.from_params(Params(config_dict))
 
         config_dict = deepcopy(base_config_dict)
-        config_dict['type'] = "from_set_param"
+        config_dict["type"] = "from_set_param"
         config_dict["transform"] = list(config_dict["transforms"].values())[0]
-        del config_dict['transforms']
-        config_dict['set_arg'] = [{"x": 1}, {"x": 2}]
+        del config_dict["transforms"]
+        config_dict["set_arg"] = [{"x": 1}, {"x": 2}]
         dataset = Dataset.from_params(Params(config_dict))
 
-        assert dataset.data_path == './'
+        assert dataset.data_path == "./"
         assert len(dataset.transforms) == 1
         assert dataset.transforms[0].x == 4
         assert len(dataset.set_arg) == 2
 
         with pytest.raises(TypeError):
             config_dict = deepcopy(base_config_dict)
-            config_dict['type'] = "from_set_param"
+            config_dict["type"] = "from_set_param"
             config_dict["transform"] = list(config_dict["transforms"].values())[0]
-            del config_dict['transforms']
-            config_dict['set_arg'] = {'k1':{"x": 1}, 'k2': {"x": 2}}
+            del config_dict["transforms"]
+            config_dict["set_arg"] = {"k1": {"x": 1}, "k2": {"x": 2}}
             Dataset.from_params(Params(config_dict))
 
     def test_lazy(self):
@@ -273,7 +277,11 @@ class FromParamsTest(DhSegmentTestCase):
         params = {
             "type": "from_transforms_list",
             "data_path": "./",
-            "transforms": ["mult_by_2_add_5", {"type": "mult_by_x", "x": 5}, "mult_by_2"]
+            "transforms": [
+                "mult_by_2_add_5",
+                {"type": "mult_by_x", "x": 5},
+                "mult_by_2",
+            ],
         }
 
         dataset = Dataset.from_params(Params(params))
@@ -290,6 +298,6 @@ class FromParamsTest(DhSegmentTestCase):
             def __init__(self, x: List[Tuple[Union[str, List[str]], Dict[str, Any]]]):
                 self.x = x
 
-        a = A.from_params(Params({'x': [['test', {}]]}))
+        a = A.from_params(Params({"x": [["test", {}]]}))
         # print(a.x)
         # 1/0

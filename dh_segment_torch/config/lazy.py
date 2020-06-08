@@ -1,4 +1,3 @@
-import inspect
 from typing import TypeVar, Generic, Callable, Optional
 
 T = TypeVar("T")

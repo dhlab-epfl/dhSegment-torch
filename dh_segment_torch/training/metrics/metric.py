@@ -13,7 +13,10 @@ from dh_segment_torch.utils.ops import detach_and_move_tensors
 
 logger = Logger(__name__)
 
-MetricType = NewType("Metric", Union[float, List[float], Dict[str, float], Dict[str, List[float]]])
+MetricType = NewType(
+    "Metric", Union[float, List[float], Dict[str, float], Dict[str, List[float]]]
+)
+
 
 class Metric(Registrable):
     def __init__(
@@ -22,7 +25,7 @@ class Metric(Registrable):
         multilabel: bool = False,
         ignore_padding: bool = False,
         margin: int = 0,
-        device: Optional[str] = "cpu"
+        device: Optional[str] = "cpu",
     ):
         super().__init__()
         self.num_classes = num_classes
@@ -72,9 +75,7 @@ class Metric(Registrable):
     ):
         raise NotImplementedError
 
-    def get_metric_value(
-        self, reset: bool = False
-    ) -> MetricType:
+    def get_metric_value(self, reset: bool = False) -> MetricType:
         raise NotImplementedError
 
     def _reset_if_needed(self, reset: bool = False):
