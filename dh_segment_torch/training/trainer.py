@@ -80,7 +80,7 @@ class Trainer(Registrable):
 
     def train(self):
 
-        pbar = tqdm(range(self.num_epochs), desc="epoch 0: loss=???")
+        pbar = tqdm(range(self.num_epochs), desc=f"epoch {self.epoch}: loss=???")
         for epochs in batch_items(
             range(1, self.num_epochs + 1), self.evaluate_every_epoch
         ):
@@ -98,7 +98,7 @@ class Trainer(Registrable):
                 break
 
     def train_epoch(self):
-        pbar = tqdm(desc=f"iter=0: loss=???", leave=False)
+        pbar = tqdm(desc=f"iter={self.iteration}: loss=???", leave=False)
         train_loss = 0.0
         train_reg_loss = 0.0
         iterations_this_epoch = 0
@@ -169,11 +169,15 @@ class Trainer(Registrable):
             batch = None
             result = None
 
+            pbar = tqdm(desc=f"Evaluating", leave=False)
+
             for batch in self.val_loader:
                 num_iterations += 1
                 result = self.val_step(batch)
                 val_loss += result["loss"].item()
                 val_reg_loss += result["reg_loss"].item()
+                pbar.update()
+            pbar.close()
 
             metrics, losses = self.get_metrics_and_losses(
                 val_loss, val_reg_loss, num_iterations, reset=True
