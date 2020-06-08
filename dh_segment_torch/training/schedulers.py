@@ -320,15 +320,18 @@ class ConcatScheduler(Scheduler):
         warmup_start_value: float,
         warmup_end_value: float,
         warmup_duration: int,
+        cycle_momentum: bool = False,
         step_duration: int = 1,
     ):
+        if 'momentum' not in optimizer.defaults:
+            cycle_momentum = False
         warmup = Lazy(
             lambda optimizer: CyclicScheduler(
                 optimizer,
                 warmup_start_value,
                 warmup_end_value,
                 warmup_duration * step_duration,
-                cycle_momentum=True,
+                cycle_momentum=cycle_momentum,
             )
         )
         return cls(optimizer, [warmup, scheduler], durations=[warmup_duration,])
