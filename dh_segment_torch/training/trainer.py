@@ -314,13 +314,13 @@ class Trainer(Registrable):
             val_dataset = val_dataset.construct(assign_transform=assign_transform)
             if val_loader:
                 val_loader = val_loader.construct(
-                    dataset=train_dataset,
+                    dataset=val_dataset,
                     batch_size=batch_size,
                     num_workers=min(num_data_workers, val_dataset.num_images),
                 )
             else:
                 val_loader = DataLoader(
-                    dataset=train_dataset,
+                    dataset=val_dataset,
                     batch_size=batch_size,
                     num_workers=min(num_data_workers, val_dataset.num_images),
                     shuffle=False,
