@@ -1,10 +1,50 @@
 from types import ModuleType
 from typing import Callable, Optional
 
+import numpy as np
+import torch
+from torch.nn import functional as F
+
 from torch.utils import data
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.data.datasets.utils import collate_fn
+
+
+def compute_paddings(heights, widths):
+    max_height = np.max(heights)
+    max_width = np.max(widths)
+
+    paddings_height = max_height - heights
+    paddings_width = max_width - widths
+    paddings_zeros = np.zeros(len(heights), dtype=int)
+
+    paddings = np.stack(
+        [paddings_zeros, paddings_width, paddings_zeros, paddings_height]
+    ).T
+    return list(map(tuple, paddings))
+
+
+def collate_fn(examples):
+    if not isinstance(examples, list):
+        examples = [examples]
+    heights = np.array([x["shape"][0] for x in examples])
+    widths = np.array([x["shape"][1] for x in examples])
+    paddings = compute_paddings(heights, widths)
+    images = []
+    masks = []
+    shapes_out = []
+
+    for example, padding in zip(examples, paddings):
+        image, label, shape = example["image"], example["label"], example["shape"]
+        images.append(F.pad(image, padding))
+        masks.append(F.pad(label, padding))
+        shapes_out.append(shape)
+
+    return {
+        "input": torch.stack(images, dim=0),
+        "target": torch.stack(masks, dim=0),
+        "shapes": torch.stack(shapes_out, dim=0),
+    }
 
 
 class DataLoader(data.DataLoader, Registrable):
