@@ -211,7 +211,7 @@ class ElasticTransform(transforms.ElasticTransform, Transform):
         sigma: float = 50,
         alpha_affine: float = 50,
         interpolation: int = 1,
-        border_mode: int = 4,
+        border_mode: int = 0,
         value: Optional[Union[int, float, List[int], List[float]]] = None,
         mask_value: Optional[Union[int, float, List[int], List[float]]] = None,
         always_apply: bool = False,
@@ -323,7 +323,7 @@ class GridDistortion(transforms.GridDistortion, Transform):
         num_steps: int = 5,
         distort_limit: Union[float, Tuple[float, float]] = 0.3,
         interpolation: int = 1,
-        border_mode: int = 4,
+        border_mode: int = 0,
         value: Optional[Union[int, float, List[int], List[float]]] = None,
         mask_value: Optional[Union[int, float, List[int], List[float]]] = None,
         always_apply: bool = False,
@@ -566,7 +566,7 @@ class OpticalDistortion(transforms.OpticalDistortion, Transform):
         distort_limit: Union[float, Tuple[float, float]] = 0.05,
         shift_limit: Union[float, Tuple[float, float]] = 0.05,
         interpolation: int = 1,
-        border_mode: int = 4,
+        border_mode: int = 0,
         value: Optional[Union[int, float, List[int], List[float]]] = None,
         mask_value: Optional[Union[int, float, List[int], List[float]]] = None,
         always_apply: bool = False,
@@ -590,7 +590,7 @@ class PadIfNeeded(transforms.PadIfNeeded, Transform):
         self,
         min_height: int = 1024,
         min_width: int = 1024,
-        border_mode: int = 4,
+        border_mode: int = 0,
         value: Optional[Union[int, float, List[int], List[float]]] = None,
         mask_value: Optional[Union[int, float, List[int], List[float]]] = None,
         always_apply: bool = False,
@@ -634,17 +634,6 @@ class RGBShift(transforms.RGBShift, Transform):
         )
 
 
-@Transform.register("random_brightness")
-class RandomBrightness(transforms.RandomBrightness, Transform):
-    def __init__(
-        self,
-        limit: Union[Tuple[float, float], float] = 0.2,
-        always_apply: bool = False,
-        p: float = 0.5,
-    ):
-        super().__init__(limit=limit, always_apply=always_apply, p=p)
-
-
 @Transform.register("random_brightness_contrast")
 class RandomBrightnessContrast(transforms.RandomBrightnessContrast, Transform):
     def __init__(
@@ -662,17 +651,6 @@ class RandomBrightnessContrast(transforms.RandomBrightnessContrast, Transform):
             always_apply=always_apply,
             p=p,
         )
-
-
-@Transform.register("random_contrast")
-class RandomContrast(transforms.RandomContrast, Transform):
-    def __init__(
-        self,
-        limit: Union[Tuple[float, float], float] = 0.2,
-        always_apply: bool = False,
-        p: float = 0.5,
-    ):
-        super().__init__(limit=limit, always_apply=always_apply, p=p)
 
 
 @Transform.register("random_crop")
@@ -943,7 +921,7 @@ class Rotate(transforms.Rotate, Transform):
         self,
         limit: Union[Tuple[int, int], int] = 90,
         interpolation: int = 1,
-        border_mode: int = 4,
+        border_mode: int = 0,
         value: Optional[Union[int, float, List[int], List[float]]] = None,
         mask_value: Optional[Union[int, float, List[int], List[float]]] = None,
         always_apply: bool = False,
@@ -968,7 +946,7 @@ class ShiftScaleRotate(transforms.ShiftScaleRotate, Transform):
         scale_limit: Union[Tuple[float, float], float] = 0.1,
         rotate_limit: Union[Tuple[int, int], int] = 45,
         interpolation: int = 1,
-        border_mode: int = 4,
+        border_mode: int = 0,
         value: Optional[Union[int, float, List[int], List[float]]] = None,
         mask_value: Optional[Union[int, float, List[int], List[float]]] = None,
         always_apply: bool = False,
@@ -1056,3 +1034,4 @@ class _BaseRandomSizedCrop(transforms._BaseRandomSizedCrop, Transform):
         self, interpolation: int = 1, always_apply: bool = False, p: float = 1.0
     ):
         super().__init__(interpolation=interpolation, always_apply=always_apply, p=p)
+
