@@ -68,8 +68,8 @@ class Checkpoint(Registrable):
     ):
         if self.checkpoint_dir is None:
             return
-        # Do not save twice the same checkpoint
 
+        # Do not save twice the same checkpoint
         if (
             len(self.saved_checkpoints) > 0
             and (np.array([v for v, _ in self.saved_checkpoints]) - value).min() < 1e-6
@@ -77,7 +77,7 @@ class Checkpoint(Registrable):
             return
         save_path = os.path.join(
             self.checkpoint_dir,
-            join_not_none(self.prefix, "checkpoint", suffix, ".pth"),
+            join_not_none(self.prefix, "checkpoint", suffix)+".pth",
         )
         torch.save(save_dict, save_path)
         if permanent:

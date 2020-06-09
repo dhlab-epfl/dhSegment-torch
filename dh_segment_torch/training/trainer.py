@@ -142,7 +142,7 @@ class Trainer(Registrable):
 
             # Checkpoint
             if self.train_checkpoint:
-                self.train_checkpoint.maybe_save({})
+                self.train_checkpoint.maybe_save(self.model.state_dict())
 
         pbar.close()
 
@@ -184,7 +184,7 @@ class Trainer(Registrable):
             )
             self.val_metric_tracker.update(metrics, losses)
             if self.val_checkpoint:
-                self.val_checkpoint.maybe_save({})
+                self.val_checkpoint.maybe_save(self.model.state_dict())
             for logger in self.loggers:
                 logger.log(
                     self.iteration,
