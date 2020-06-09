@@ -66,7 +66,7 @@ def join_not_none(*items: Optional[str], join_str: str = "_"):
 def format_time(timestamp: float) -> str:
     timestamp = datetime.fromtimestamp(timestamp)
     return (
-        f"{timestamp.year:04d}-{timestamp.month:02d}-{timestamp.day:02d}"
+        f"{timestamp.year:04d}-{timestamp.month:02d}-{timestamp.day:02d}-"
         f"{timestamp.hour:02d}-{timestamp.minute:02d}-{timestamp.second:02d}"
     )
 
