@@ -1,4 +1,5 @@
 from dh_segment_torch.data.transforms.albumentation import Blur
+from dh_segment_torch.data.transforms.albumentation_imgaug import IAAAffine
 from dh_segment_torch.data.transforms.assign_labels import AssignLabel, AssignMultilabel
 from dh_segment_torch.data.transforms.extract_patches import SampleToPatches
 from dh_segment_torch.data.transforms.fixed_size_resize import FixedSizeResize

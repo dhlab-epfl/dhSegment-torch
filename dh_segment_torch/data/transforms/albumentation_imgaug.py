@@ -118,7 +118,7 @@ class IAAPerspective(iaa.IAAPerspective, Transform):
 class IAAPiecewiseAffine(iaa.IAAPiecewiseAffine, Transform):
     def __init__(
         self,
-        scale: float = (0.03, 0.05),
+        scale: Tuple[float, float] = (0.03, 0.05),
         nb_rows: int = 4,
         nb_cols: int = 4,
         order: int = 1,
