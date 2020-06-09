@@ -53,6 +53,7 @@ class Trainer(Registrable):
         num_accumulation_steps: int = 1,
         track_train_metrics: bool = False,
         device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
+        reset_early_stopping: bool = True,
     ):
         self.train_loader = train_loader
         self.model = model
@@ -72,17 +73,20 @@ class Trainer(Registrable):
         self.num_accumulation_steps = num_accumulation_steps
         self.track_train_metrics = track_train_metrics
         self.device = device
-
-        self.model = self.model.to(self.device)
+        self.reset_early_stopping = reset_early_stopping
 
         self.iteration = 0
         self.epoch = 0
 
     def train(self):
+        if self.reset_early_stopping and self.early_stopping:
+            self.early_stopping.reset()
+        
+        self.model = self.model.to(self.device)
 
         pbar = tqdm(range(self.num_epochs), desc=f"epoch {self.epoch}: loss=???")
         for epochs in batch_items(
-            range(1, self.num_epochs + 1), self.evaluate_every_epoch
+            range(self.epoch+1, self.epoch+self.num_epochs + 1), self.evaluate_every_epoch
         ):
             for epoch in epochs:
                 self.epoch = epoch
@@ -96,6 +100,8 @@ class Trainer(Registrable):
             if self.should_terminate:
                 logger_console.info("Reached an early stop threshold, stopping early.")
                 break
+        pbar.close()
+        self.final_save()
 
     def train_epoch(self):
         pbar = tqdm(desc=f"iter={self.iteration}: loss=???", leave=False)
@@ -142,7 +148,7 @@ class Trainer(Registrable):
 
             # Checkpoint
             if self.train_checkpoint:
-                self.train_checkpoint.maybe_save(self.model.state_dict())
+                self.train_checkpoint.maybe_save(self.state_dict())
 
         pbar.close()
 
@@ -184,7 +190,7 @@ class Trainer(Registrable):
             )
             self.val_metric_tracker.update(metrics, losses)
             if self.val_checkpoint:
-                self.val_checkpoint.maybe_save(self.model.state_dict())
+                self.val_checkpoint.maybe_save(self.state_dict())
             for logger in self.loggers:
                 logger.log(
                     self.iteration,
@@ -237,6 +243,43 @@ class Trainer(Registrable):
             )
         return metrics, losses
 
+    def final_save(self):
+        self.train_checkpoint.save(self.state_dict(), permanent=True)
+
+    def state_dict(self):
+        state_dict = {}
+        for key, value in self.__dict__.items():
+            if key in {
+                "model",
+                "optimizer",
+                "lr_scheduler",
+                "regularizer",
+                "val_metric_tracker",
+                "early_stopping",
+                "train_checkpoint",
+                "val_checkpoint",
+            }:
+                state_dict[key] = state_dict_or_none(value)
+            elif key not in {"train_loader", "val_loader", "loggers"}:
+                state_dict[key] = value
+        return state_dict
+
+    def load_state_dict(self, state_dict):
+        for key, value in state_dict.items():
+            if key in {
+                "model",
+                "optimizer",
+                "lr_scheduler",
+                "regularizer",
+                "val_metric_tracker",
+                "early_stopping",
+                "train_checkpoint",
+                "val_checkpoint",
+            }:
+                load_state_dict_not_none(self.__dict__.get(key, None), value)
+            elif key not in {"train_loader", "val_loader", "loggers"}:
+                self.__dict__[key] = value
+
     @property
     def should_terminate(self):
         return self.early_stopping and self.early_stopping.should_terminate()
@@ -278,8 +321,9 @@ class Trainer(Registrable):
         model_out_dir: str = "./model",
         track_train_metrics: bool = False,
         device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
+        reset_early_stopping: bool = True,
         exp_name: str = "dhSegment_experiment",
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
     ):
 
         if color_labels.multilabel:
@@ -335,9 +379,7 @@ class Trainer(Registrable):
             margin=training_margin,
         )
 
-        parameters = [
-            (n, p) for n, p in model.named_parameters() if p.requires_grad
-        ]
+        parameters = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
 
         if initializer:
             initializer.apply(parameters)
@@ -412,7 +454,7 @@ class Trainer(Registrable):
                         ignore_padding=ignore_padding,
                         margin=training_margin,
                         exp_name=exp_name,
-                        config=config
+                        config=config,
                     )
                 )
         else:
@@ -435,7 +477,20 @@ class Trainer(Registrable):
             num_accumulation_steps,
             track_train_metrics,
             device,
+            reset_early_stopping,
         )
 
 
 Trainer.register("default", "from_partial")(Trainer)
+
+
+def state_dict_or_none(obj):
+    if obj is not None:
+        return obj.state_dict()
+    return None
+
+
+def load_state_dict_not_none(obj, state_dict):
+    if obj is not None:
+        obj.load_state_dict(state_dict)
+

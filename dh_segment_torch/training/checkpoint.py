@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from datetime import datetime
 from typing import Optional, List, Tuple, Dict, Any
 
 import numpy as np
@@ -28,7 +29,7 @@ class Checkpoint(Registrable):
         os.makedirs(checkpoint_dir, exist_ok=True)
         self.prefix = prefix
         self.checkpoint_to_keep = checkpoints_to_keep
-        self.saved_checkpoints: List[Tuple[float, str]] = []
+        self.saved_checkpoints: List[Tuple[float, str, str]] = []
         self._last_save = 0.0
         self._last_permanent_save = 0.0
 
@@ -59,6 +60,9 @@ class Checkpoint(Registrable):
     def _update_value(self):
         raise NotImplementedError
 
+    def _sort(self, values):
+        return sorted(values)
+
     def _save_and_delete_if_needed(
         self,
         save_dict: Dict[str, Any],
@@ -72,24 +76,33 @@ class Checkpoint(Registrable):
         # Do not save twice the same checkpoint
         if (
             len(self.saved_checkpoints) > 0
-            and (np.array([v for v, _ in self.saved_checkpoints]) - value).min() < 1e-6
+            and np.abs(np.array([v for v, _, _ in self.saved_checkpoints]) - value).min() < 1e-6
         ):
             return
-        save_path = os.path.join(
+
+        model_save_path = os.path.join(
             self.checkpoint_dir,
-            join_not_none(self.prefix, "checkpoint", suffix)+".pth",
+            join_not_none(self.prefix, "model", "checkpoint", suffix) + ".pth",
         )
-        torch.save(save_dict, save_path)
+        torch.save(save_dict.pop('model'), model_save_path)
+
+        trainer_save_path = os.path.join(
+            self.checkpoint_dir,
+            join_not_none(self.prefix, "trainer", "checkpoint", suffix)+".pth",
+        )
+        torch.save(save_dict, trainer_save_path)
+
         if permanent:
             return
-        self.saved_checkpoints.append((value, save_path))
+        self.saved_checkpoints.append((value, trainer_save_path, model_save_path))
         if len(self.saved_checkpoints) > self.checkpoint_to_keep:
-            self.saved_checkpoints = sorted(self.saved_checkpoints)
-            _, delete_path = self.saved_checkpoints.pop(0)
+            self.saved_checkpoints = self._sort(self.saved_checkpoints)
+            _, delete_trainer_path, delete_model_path = self.saved_checkpoints.pop(0)
             try:
-                os.remove(delete_path)
+                os.remove(delete_trainer_path)
+                os.remove(delete_model_path)
             except FileNotFoundError:
-                logger.warning(f"Tried to delete {delete_path} but did not exist")
+                logger.warning(f"Tried to delete {delete_trainer_path} and {delete_model_path} but did not exist")
 
     def state_dict(self):
         return self.__dict__
@@ -118,10 +131,10 @@ class TimeCheckpoint(Checkpoint):
         self.every_n_seconds = every_n_seconds
         self.permanent_every_n_seconds = permanent_every_n_seconds
 
-        self._start_time = time.time()
-        self._last_save = time.time()
-        self._last_permanent_save = time.time()
-        self._current_time = time.time()
+        self._start_time = datetime.now().timestamp()
+        self._last_save = datetime.now().timestamp()
+        self._last_permanent_save = datetime.now().timestamp()
+        self._current_time = datetime.now().timestamp()
 
     def should_save(self) -> bool:
         return self._current_time - self._last_save >= self.every_n_seconds
@@ -134,10 +147,10 @@ class TimeCheckpoint(Checkpoint):
         )
 
     def _update_value(self):
-        self._current_time = time.time()
+        self._current_time = datetime.now().timestamp()
 
     def get_save_infos(self) -> Tuple[float, str]:
-        current_time = time.time()
+        current_time = datetime.now().timestamp()
         return current_time, f"t={format_time(current_time)}"
 
 
@@ -208,6 +221,12 @@ class BestCheckpoint(Checkpoint):
     def _update_value(self):
         pass
 
+    def _sort(self, values):
+        if self.tracker.mode == 'min':
+            return sorted(values, reverse=True)
+        else:
+            return sorted(values)
+
     def get_save_infos(self) -> Tuple[float, str]:
         best = self.tracker.best
         metric_name = self.tracker.metric_name
@@ -215,3 +234,6 @@ class BestCheckpoint(Checkpoint):
 
     def state_dict(self):
         return {k: v for k, v in self.__dict__.items() if k != "tracker"}
+
+    def load_state_dict(self, state_dict):
+        self.__dict__.update({k: v for k, v in state_dict.items() if k != "tracker"})

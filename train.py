@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+import torch
+
 from dh_segment_torch.config.params import Params
 from dh_segment_torch.training.trainer import Trainer
 
@@ -8,6 +10,8 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Train a dhSegment model")
 parser.add_argument("config", type=str, help='The configuration file for training a dhSegment model')
+parser.add_argument("--trainer-checkpoint", type=str, nargs='?', default=None, help='trainer checkpoint to resume from')
+parser.add_argument("--model-checkpoint", type=str, nargs='?', default=None, help='model checkpoint to resume from')
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -19,4 +23,20 @@ if __name__ == "__main__":
     ex.add_config(config)
 
     trainer = Trainer.from_params(params, exp_name=exp_name, config=deepcopy(config))
-    trainer.train()
+
+    state_dict = {}
+
+    if args.trainer_checkpoint:
+        state_dict = torch.load(args.trainer_checkpoint)
+
+    if args.model_checkpoint:
+        state_dict['model'] = torch.load(args.model_checkpoint)
+
+    trainer.load_state_dict(state_dict)
+
+    try:
+        trainer.train()
+    except KeyboardInterrupt as e:
+        trainer.final_save()
+        raise e
+

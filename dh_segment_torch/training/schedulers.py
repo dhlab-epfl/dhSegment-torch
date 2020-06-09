@@ -34,7 +34,7 @@ class Scheduler(Registrable):
         }
 
     def load_state_dict(self, state_dict: Dict[str, Any]):
-        self.scheduler = self.scheduler.load_state_dict(state_dict["scheduler"])
+        self.scheduler.load_state_dict(state_dict["scheduler"])
         self.step_duration = state_dict["step_duration"]
         self._step_count = state_dict["_step_count"]
 

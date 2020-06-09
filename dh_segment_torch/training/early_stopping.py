@@ -15,13 +15,10 @@ class EarlyStopping(Registrable):
         self.patience = patience
 
         self.num_bad_epochs = 0
-        self.num_epochs = 0
 
     def should_terminate(self):
         if self.patience is None:
             return False
-
-        self.num_epochs += 1
 
         if self.tracker.is_last_best:
             self.num_bad_epochs = 0
@@ -29,6 +26,9 @@ class EarlyStopping(Registrable):
             self.num_bad_epochs += 1
 
         return self.num_bad_epochs > self.patience
+
+    def reset(self):
+        self.num_bad_epochs = 0
 
     def state_dict(self):
         return {k: v for k, v in self.__dict__.items() if k != "tracker"}

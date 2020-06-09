@@ -85,6 +85,12 @@ class Metric(Registrable):
     def reset(self):
         raise NotImplementedError
 
+    def state_dict(self):
+        return self.__dict__
+
+    def load_state_dict(self, state_dict):
+        self.__dict__.update(state_dict)
+
 
 class MultilabelConfusionMetric(Metric):
     def __init__(
