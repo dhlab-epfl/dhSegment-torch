@@ -81,7 +81,7 @@ class Trainer(Registrable):
     def train(self):
         if self.reset_early_stopping and self.early_stopping:
             self.early_stopping.reset()
-        
+            
         self.model = self.model.to(self.device)
 
         pbar = tqdm(range(self.num_epochs), desc=f"epoch {self.epoch}: loss=???")
@@ -212,7 +212,8 @@ class Trainer(Registrable):
     ):
         batch = move_batch(batch, self.device, non_blocking=True)
         result = self.model(**batch, track_metrics=track_metrics)
-        self.apply_regularization(result)
+        if 'loss' in result:
+            self.apply_regularization(result)
         return result
 
     def apply_regularization(self, result: Dict[str, torch.Tensor]):

@@ -32,6 +32,24 @@ class Model(Registrable, nn.Module):
     def reset_metrics(self):
         raise NotImplementedError
 
+    def state_dict(self, **kwargs):
+        state_dict = super().state_dict(**kwargs)
+        state_dict.update({
+            'loss': self.loss.state_dict(),
+            'metrics': {k: v.state_dict() for k, v in self.metrics.items()}
+        })
+        return state_dict
+
+    def load_state_dict(self, state_dict, strict=True):
+        if 'loss' in state_dict:
+            self.loss.load_state_dict(state_dict.pop('loss'))
+        if 'metrics' in state_dict:
+            metrics_state_dict = state_dict.pop('metrics')
+            for k, v in metrics_state_dict.items():
+                if k in self.metrics:
+                    self.metrics[k].load_state_dict(v)
+        super().load_state_dict(state_dict, strict)
+
 
 @Model.register("segmentation_model", "from_partial")
 class SegmentationModel(Model):
@@ -46,7 +64,7 @@ class SegmentationModel(Model):
         self.encoder = encoder
         self.decoder = decoder
         self.loss = loss
-        self.metrics: Dict[str, Metric] = metrics
+        self.metrics: Dict[str, Metric] = metrics if metrics else {}
 
     def forward(
         self,

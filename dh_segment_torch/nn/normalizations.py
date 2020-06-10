@@ -1,7 +1,7 @@
 import torch
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.nn.normalization import batch_norm_drop, batch_renorm
+from dh_segment_torch.nn.normalization import batch_renorm
 
 
 class Normalization(Registrable):
@@ -46,24 +46,6 @@ class BatchNorm2dNormalization(Normalization):
         )
 
 
-@Normalization.register("batch_norm_2d_drop")
-class BatchNorm2dDropNormalization(Normalization):
-    def __init__(
-        self,
-        eps: float = 1e-05,
-        momentum: float = 0.1,
-        affine: bool = True,
-        track_running_stats: bool = True,
-    ):
-        super().__init__(
-            batch_norm_drop.BatchNorm2dDrop,
-            eps=eps,
-            momentum=momentum,
-            affine=affine,
-            track_running_stats=track_running_stats,
-        )
-
-
 @Normalization.register("batch_renorm_2d")
 class BatchRenorm2dNormalization(Normalization):
     def __init__(
@@ -71,19 +53,6 @@ class BatchRenorm2dNormalization(Normalization):
     ):
         super().__init__(
             batch_renorm.BatchRenorm2d, eps=eps, momentum=momentum, affine=affine,
-        )
-
-
-@Normalization.register("batch_renorm_2d_drop")
-class BatchRenorm2dDropNormalization(Normalization):
-    def __init__(
-        self, eps: float = 1e-05, momentum: float = 0.1, affine: bool = True,
-    ):
-        super().__init__(
-            batch_norm_drop.BatchRenorm2dDrop,
-            eps=eps,
-            momentum=momentum,
-            affine=affine,
         )
 
 

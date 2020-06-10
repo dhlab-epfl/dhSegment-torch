@@ -27,7 +27,7 @@ class UnetDecoder(Decoder):
 
         # TODO add value to default config batch_norm_decay = 0.999
         if normalization is None:
-            normalization = Normalization.get_constructor("batch_norm_2d_drop")(
+            normalization = Normalization.get_constructor("batch_norm_2d")(
                 momentum=1 - 0.999
             )
 
