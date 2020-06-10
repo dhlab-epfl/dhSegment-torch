@@ -87,9 +87,9 @@ class WandbLogger(Logger):
                 pred = pred.numpy().astype(np.uint8)
                 mask_dict["prediction"] = {
                     "mask_data": pred,
-                    "class_labels": dict(enumerate(self.color_labels.one_hot_labels))
-                    if self.color_labels.one_hot_labels
-                    else dict(enumerate([str(x) for x in range(self.colors)])),
+                    "class_labels": dict(enumerate(self.color_labels.log_labels))
+                    if self.color_labels.log_labels
+                    else dict(enumerate([str(x) for x in range(len(self.color_labels.colors))])),
                 }
 
             if gts is not None:
@@ -99,9 +99,9 @@ class WandbLogger(Logger):
                 gt = gt.numpy().astype(np.uint8)
                 mask_dict["ground_truth"] = {
                     "mask_data": gt,
-                    "class_labels": dict(enumerate(self.color_labels.one_hot_labels))
-                    if self.color_labels.one_hot_labels
-                    else dict(enumerate([str(x) for x in range(self.colors)])),
+                    "class_labels": dict(enumerate(self.color_labels.log_labels))
+                    if self.color_labels.log_labels
+                    else dict(enumerate([str(x) for x in range(len(self.color_labels.colors))])),
                 }
             if len(mask_dict) == 0:
                 mask_dict = None

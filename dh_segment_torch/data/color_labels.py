@@ -20,7 +20,7 @@ class ColorLabels(Registrable):
         self.colors = colors
         self.one_hot_encoding = one_hot_encoding
         self.labels = labels
-        self.one_hot_labels = None
+        self.log_labels = None
 
         if labels:
             if one_hot_encoding:
@@ -28,8 +28,11 @@ class ColorLabels(Registrable):
                 for line in np.array(one_hot_encoding).astype(bool):
                     new_names.append("+".join(np.array(labels)[line]))
                 new_names[0] = "background"
-                self.one_hot_labels = new_names
-                assert len(self.one_hot_labels) == len(colors)
+                self.log_labels = new_names
+                assert len(self.log_labels) == len(colors)
+            else:
+                self.log_labels = labels
+                assert len(self.log_labels) == len(colors)
             assert len(self.labels) == self.num_classes
 
     @property
