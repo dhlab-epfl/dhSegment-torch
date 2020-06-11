@@ -41,7 +41,7 @@ class Metric(Registrable):
         shapes: Optional[torch.Tensor] = None,
     ):
         labels, logits, shapes = detach_and_move_tensors(
-            labels, logits, shapes, device=self.device
+            labels, logits, shapes, device=self.device, non_blocking=True,
         )
         if self.multilabel:
             probas = torch.sigmoid(logits)
@@ -122,9 +122,9 @@ class MultilabelConfusionMetric(Metric):
         else:
             predictions = probas.argmax(dim=1).to(torch.long)
 
-        matrix = batch_multilabel_confusion_matrix(
+        matrix = detach_and_move_tensors(batch_multilabel_confusion_matrix(
             labels, predictions, self.num_classes, self.multilabel
-        ).cpu()
+        ), device='cpu', non_blocking=True)
         self._batch_multilabel_confusion_matrix = torch.cat(
             [self._batch_multilabel_confusion_matrix, matrix], 0
         )
