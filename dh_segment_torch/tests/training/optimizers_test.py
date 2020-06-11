@@ -49,7 +49,7 @@ class OptimizerTest(DhSegmentTestCase):
             "param_groups": {
                 "encoder": {"params": {"lr": lr_encoder}},
                 "decoder_logits": {
-                    "regexes": ["decoder.logits.0.weight", "decoder.logits.0.bias"],
+                    "regexes": ["decoder.logits.*.weight", "decoder.logits.*.bias"],
                     "params": {"lr": lr_logits},
                 },
             },

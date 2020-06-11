@@ -49,7 +49,7 @@ class RegularizerTest(DhSegmentTestCase):
             "param_groups": [
                 {"regexes": "encoder", "params": {"alpha": alpha_encoder}},
                 {
-                    "regexes": ["decoder.logits.0.weight", "decoder.logits.0.bias"],
+                    "regexes": ["decoder.logits.*.weight", "decoder.logits.*.bias"],
                     "params": {"alpha": alpha_logits},
                 },
             ],

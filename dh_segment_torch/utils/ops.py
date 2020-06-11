@@ -27,12 +27,15 @@ def cut_with_padding(
 def detach_and_move_tensors(
     *tensors: torch.Tensor, device: Optional[str] = None, non_blocking: bool = True,
 ) -> Iterable[torch.Tensor]:
-    return (
+    tensors = [
         tensor.detach().to(device if device else tensor.device, non_blocking=non_blocking)
         if isinstance(tensor, torch.Tensor)
         else tensor
         for tensor in tensors
-    )
+    ]
+    if len(tensors) == 1:
+        return tensors[0]
+    return tensors
 
 
 def batch_items(items: Iterable[T], batch_size: int = 1) -> Iterator[T]:
