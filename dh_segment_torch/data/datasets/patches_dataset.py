@@ -26,7 +26,9 @@ class PatchesDataset(IterableDataset, Dataset):
     def __init__(
         self,
         data: pd.DataFrame,
-        base_dir: Optional[str] = None,
+        base_dir: Optional[Union[str, Path]] = None,
+        image_base_dir: Optional[Union[str, Path]] = None,
+        label_base_dir: Optional[Union[str, Path]] = None,
         pre_patches_compose: Compose = None,
         post_patches_compose: Compose = None,
         assign_transform: Assign = None,
@@ -42,7 +44,7 @@ class PatchesDataset(IterableDataset, Dataset):
         repeat_dataset: int = 1,
         offsets_augment: bool = False,
     ):
-        super().__init__(data, base_dir, repeat_dataset)
+        super().__init__(data, base_dir, image_base_dir, label_base_dir, repeat_dataset)
 
         self.pre_patches_compose = pre_patches_compose
         self.post_patches_compose = post_patches_compose
@@ -151,6 +153,8 @@ class PatchesDataset(IterableDataset, Dataset):
         cls,
         csv_filename: Union[str, Path],
         base_dir: Union[str, Path] = None,
+        image_base_dir: Union[str, Path] = None,
+        label_base_dir: Union[str, Path] = None,
         pre_patches_compose: Compose = None,
         post_patches_compose: Compose = None,
         assign_transform: Assign = None,
@@ -169,7 +173,9 @@ class PatchesDataset(IterableDataset, Dataset):
         data = load_data_from_csv(str(csv_filename))
         return cls(
             data,
-            str(base_dir),
+            base_dir,
+            image_base_dir,
+            label_base_dir,
             pre_patches_compose,
             post_patches_compose,
             assign_transform,
@@ -187,6 +193,8 @@ class PatchesDataset(IterableDataset, Dataset):
         cls,
         csv_list: List[Union[str, Path]],
         base_dir: Union[str, Path] = None,
+        image_base_dir: Union[str, Path] = None,
+        label_base_dir: Union[str, Path] = None,
         pre_patches_compose: Compose = None,
         post_patches_compose: Compose = None,
         assign_transform: Assign = None,
@@ -205,7 +213,9 @@ class PatchesDataset(IterableDataset, Dataset):
         data = load_data_from_csv_list([str(csv) for csv in csv_list])
         return cls(
             data,
-            str(base_dir),
+            base_dir,
+            image_base_dir,
+            label_base_dir,
             pre_patches_compose,
             post_patches_compose,
             assign_transform,
@@ -240,6 +250,8 @@ class PatchesDataset(IterableDataset, Dataset):
         data = load_data_from_folder(str(folder))
         return cls(
             data,
+            None,
+            None,
             None,
             pre_patches_compose,
             post_patches_compose,

@@ -20,12 +20,14 @@ class ImageDataset(Dataset):
     def __init__(
         self,
         data: pd.DataFrame,
-        base_dir: Optional[str] = None,
+        base_dir: Optional[Union[str, Path]] = None,
+        image_base_dir: Optional[Union[str, Path]] = None,
+        label_base_dir: Optional[Union[str, Path]] = None,
         compose: Compose = None,
         assign_transform: Assign = None,
         repeat_dataset: int = 1,
     ):
-        super().__init__(data, base_dir, repeat_dataset)
+        super().__init__(data, base_dir, image_base_dir, label_base_dir, repeat_dataset)
         self.compose = compose
         if self.compose:
             self.compose.add_targets({"label": "mask"})
@@ -57,24 +59,44 @@ class ImageDataset(Dataset):
         cls,
         csv_filename: Union[str, Path],
         base_dir: Union[str, Path] = None,
+        image_base_dir: Union[str, Path] = None,
+        label_base_dir: Union[str, Path] = None,
         compose: Compose = None,
         assign_transform: Assign = None,
         repeat_dataset: int = 1,
     ):
         data = load_data_from_csv(str(csv_filename))
-        return cls(data, str(base_dir), compose, assign_transform, repeat_dataset)
+        return cls(
+            data,
+            base_dir,
+            image_base_dir,
+            label_base_dir,
+            compose,
+            assign_transform,
+            repeat_dataset,
+        )
 
     @classmethod
     def from_csv_list(
         cls,
         csv_list: List[Union[str, Path]],
         base_dir: Union[str, Path] = None,
+        image_base_dir: Union[str, Path] = None,
+        label_base_dir: Union[str, Path] = None,
         compose: Compose = None,
         assign_transform: Assign = None,
         repeat_dataset: int = 1,
     ):
         data = load_data_from_csv_list([str(csv) for csv in csv_list])
-        return cls(data, str(base_dir), compose, assign_transform, repeat_dataset)
+        return cls(
+            data,
+            base_dir,
+            image_base_dir,
+            label_base_dir,
+            compose,
+            assign_transform,
+            repeat_dataset,
+        )
 
     @classmethod
     def from_folder(

@@ -3,7 +3,8 @@ import mimetypes
 import os
 from abc import ABC
 from glob import glob
-from typing import List, Optional, Dict, Any
+from pathlib import Path
+from typing import List, Optional, Dict, Any, Union
 
 import cv2
 import pandas as pd
@@ -14,17 +15,45 @@ from dh_segment_torch.config.registrable import Registrable
 
 mimetypes.init()
 
+logger = logging.getLogger(__name__)
+
 
 class Dataset(torch.utils.data.Dataset, Registrable, ABC):
     def __init__(
         self,
         data: pd.DataFrame,
-        base_dir: Optional[str] = None,
+        base_dir: Optional[Union[str, Path]] = None,
+        image_base_dir: Optional[Union[str, Path]] = None,
+        label_base_dir: Optional[Union[str, Path]] = None,
         repeat_dataset: int = 1,
     ):
         self.data = data.applymap(lambda path: path.strip())
-        if base_dir is not None:
-            self.data = self.data.applymap(lambda path: os.path.join(base_dir, path))
+
+        if base_dir:
+            base_dir = str(base_dir)
+            if image_base_dir:
+                logger.warning(
+                    "Base dir and image base dir were set, ignoring base dir"
+                )
+            else:
+                image_base_dir = base_dir
+            if label_base_dir:
+                logger.warning(
+                    "Base dir and label base dir were set, ignoring base dir"
+                )
+            else:
+                label_base_dir = base_dir
+
+        if image_base_dir is not None:
+            image_base_dir = str(image_base_dir)
+            self.data["image"] = self.data["image"].apply(
+                lambda path: os.path.join(image_base_dir, path)
+            )
+        if label_base_dir is not None:
+            label_base_dir = str(label_base_dir)
+            self.data["label"] = self.data["label"].apply(
+                lambda path: os.path.join(label_base_dir, path)
+            )
         self.check_filenames_exist()
         if repeat_dataset < 1:
             raise ValueError(
