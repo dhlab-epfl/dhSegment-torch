@@ -4,8 +4,12 @@ from pathlib import Path
 from typing import Dict, Tuple, List, Optional, Any, Union
 
 import numpy as np
+import logging
 
 from dh_segment_torch.config.registrable import Registrable
+from dh_segment_torch.data.utils import parse_and_validate_color, n_colors
+
+logger = logging.getLogger(__name__)
 
 
 class ColorLabels(Registrable):
@@ -33,7 +37,10 @@ class ColorLabels(Registrable):
             else:
                 self.log_labels = labels
                 assert len(self.log_labels) == len(colors)
-            assert len(self.labels) == self.num_classes
+            if self.num_classes != len(self.labels):
+                raise ValueError(
+                    f"Cannot have a different number of classes, {self.num_classes}, and labels, {len(self.labels)}"
+                )
 
     @property
     def multilabel(self):
@@ -117,30 +124,56 @@ class ColorLabels(Registrable):
 
         return cls(colors, one_hot_encoding, labels)
 
+    @classmethod
+    def from_colors(
+        cls,
+        colors: List[Union[str, Tuple[int, int, int]]],
+        labels: Optional[List[str]] = None,
+    ):
+        colors = [parse_and_validate_color(color) for color in colors]
+        return cls(colors, labels=labels)
+
+    @classmethod
+    def from_colors_multilabel(
+        cls,
+        colors: List[Union[str, Tuple[int, int, int]]],
+        labels: Optional[List[str]] = None,
+    ):
+        colors = [parse_and_validate_color(color) for color in colors]
+        one_hot_encoding, colors = all_one_hot_and_colors(colors)
+        return cls(colors, one_hot_encoding, labels)
+
+    @classmethod
+    def from_labels(cls, labels: List[str]):
+        num_classes = len(labels)
+        colors = n_colors(num_classes)
+        return cls(colors, labels=labels)
+
+    @classmethod
+    def from_labels_multilabel(cls, labels: List[str]):
+        num_classes = len(labels)
+
+        num_tries_left = 10
+        while num_tries_left:
+            num_tries_left -= 1
+            base_colors = n_colors(num_classes)
+            one_hot_encoding, colors = all_one_hot_and_colors(base_colors)
+            if len(colors) == len(set(colors)):
+                break
+        else:
+            logger.warning(f"Could not find a color combinatation for {num_classes}."
+                           "Falling back on one color per one hot encoding.")
+            one_hot_encoding = get_all_one_hots(num_classes).tolist()
+            colors = n_colors(len(one_hot_encoding))
+        return cls(colors, one_hot_encoding, labels)
+
 
 ColorLabels.register("labels_list", "from_list_of_color_labels")(ColorLabels)
 ColorLabels.register("txt", "from_labels_text_file")(ColorLabels)
-
-
-def hex_to_rgb(hex: str) -> Tuple[int, ...]:
-    hex = hex.lstrip("#")
-    return tuple(int(hex[i : i + 2], 16) for i in (0, 2, 4))
-
-
-def parse_and_validate_color(color) -> Tuple[int, int, int]:
-    if not isinstance(color, str) and not (
-        isinstance(color, Sized) and len(color) == 3
-    ):
-        raise ValueError("Colors needs to be defined either by 3 ints or a hex string")
-    if isinstance(color, str):
-        color = hex_to_rgb(color)
-    color = np.array(color).astype(np.float32)
-    if (color <= 1.0).all():
-        color = np.round(color * 255)
-    color = color.astype(np.int32)
-    if np.max(color) > 255 or np.min(color) < 0:
-        raise ValueError("A color should have values between 0 and 255")
-    return color[0], color[1], color[2]
+ColorLabels.register("colors", "from_colors")(ColorLabels)
+ColorLabels.register("colors_multilabel", "from_colors_multilabel")(ColorLabels)
+ColorLabels.register("labels", "from_labels")(ColorLabels)
+ColorLabels.register("labels_multilabel", "from_labels_multilabel")(ColorLabels)
 
 
 def parse_validate_one_hot(one_hot) -> List[int]:
@@ -152,3 +185,31 @@ def parse_validate_one_hot(one_hot) -> List[int]:
     if len(set(np.unique(one_hot).tolist()).difference({0, 1})) > 0:
         raise ValueError("Found not 0 and 1 ")
     return [x for x in one_hot]
+
+
+def all_one_hot_and_colors(
+    colors: List[Tuple[int, int, int]]
+) -> Tuple[List[List[int]], List[Tuple[int, int, int]]]:
+    num_classes = len(colors)
+    colors = np.array(colors)
+    one_hots = get_all_one_hots(num_classes)
+
+    final_colors = []
+    for one_hot in one_hots:
+        if one_hot.sum() == 0:
+            color = (0, 0, 0)
+        else:
+            color = tuple(
+                np.round(np.mean(colors[np.where(one_hot)[0]], axis=0))
+                .astype(int)
+                .tolist()
+            )
+        final_colors.append(color)
+    return one_hots.tolist(), final_colors
+
+
+def get_all_one_hots(num_classes: int) -> np.array:
+    return (
+        ((np.arange(0, 2 ** num_classes)[:, None] & (1 << np.arange(num_classes))) > 0)
+        .astype(int)
+    )

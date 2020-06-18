@@ -27,6 +27,10 @@ def compute_paddings(heights, widths):
 def collate_fn(examples):
     if not isinstance(examples, list):
         examples = [examples]
+    if not all(['shape' in x for x in examples]):
+        for example in examples:
+            example['shape'] = torch.tensor(example['image'].shape[1:])
+
     heights = np.array([x["shape"][0] for x in examples])
     widths = np.array([x["shape"][1] for x in examples])
     paddings = compute_paddings(heights, widths)
@@ -35,16 +39,25 @@ def collate_fn(examples):
     shapes_out = []
 
     for example, padding in zip(examples, paddings):
-        image, label, shape = example["image"], example["label"], example["shape"]
+        image, shape = example["image"], example["shape"]
         images.append(F.pad(image, padding))
-        masks.append(F.pad(label, padding))
         shapes_out.append(shape)
 
-    return {
-        "input": torch.stack(images, dim=0),
-        "target": torch.stack(masks, dim=0),
-        "shapes": torch.stack(shapes_out, dim=0),
-    }
+        if 'label' in example:
+            label = example["label"]
+            masks.append(F.pad(label, padding))
+
+    if len(masks) > 0:
+        return {
+            "input": torch.stack(images, dim=0),
+            "target": torch.stack(masks, dim=0),
+            "shapes": torch.stack(shapes_out, dim=0),
+        }
+    else:
+        return {
+            "input": torch.stack(images, dim=0),
+            "shapes": torch.stack(shapes_out, dim=0),
+        }
 
 
 class DataLoader(data.DataLoader, Registrable):
