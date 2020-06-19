@@ -4,7 +4,7 @@ import numpy as np
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.annotation.shape import Shape
-from dh_segment_torch.data.annotation.utils import ImageSize
+from dh_segment_torch.data.annotation.image_size import ImageSize
 
 
 class LabelAnnotation(Registrable):

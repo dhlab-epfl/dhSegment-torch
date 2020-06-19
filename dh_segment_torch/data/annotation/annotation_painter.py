@@ -5,7 +5,7 @@ import numpy as np
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
-from dh_segment_torch.data.annotation.utils import ImageSize
+from dh_segment_torch.data.annotation.image_size import ImageSize
 from dh_segment_torch.data.color_labels import ColorLabels
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class AnnotationPainter(Registrable):
             self.disallowed_overlaps = self._get_disallowed_indices(disallowed_overlaps)
         else:
             self.disallowed_overlaps = []
-        self.used_colors = set()
+        self.used_colors = {(0, 0, 0)}
 
     def paint(
         self,

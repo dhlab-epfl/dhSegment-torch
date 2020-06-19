@@ -5,3 +5,4 @@ from dh_segment_torch.data.transforms.extract_patches import SampleToPatches
 from dh_segment_torch.data.transforms.fixed_size_resize import FixedSizeResize
 from dh_segment_torch.data.transforms.fixed_size_rotate_crop import FixedSizeRotateCrop
 from dh_segment_torch.data.transforms.rotate_no_crop import RotateNoCrop
+from dh_segment_torch.data.transforms.fixed_resize import FixedResize

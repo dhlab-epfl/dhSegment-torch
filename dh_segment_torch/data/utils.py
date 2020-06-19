@@ -5,7 +5,7 @@ import numpy as np
 
 def hex_to_rgb(hex: str) -> Tuple[int, ...]:
     hex = hex.lstrip("#")
-    return tuple(int(hex[i: i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(hex[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def n_colors(n: int) -> List[Tuple[int, int, int]]:
@@ -23,6 +23,7 @@ def n_colors(n: int) -> List[Tuple[int, int, int]]:
         b = int(b) % 256
         colors.append((r, g, b))
     return colors
+
 
 def parse_and_validate_color(color) -> Tuple[int, int, int]:
     if not isinstance(color, str) and not (

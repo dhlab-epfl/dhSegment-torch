@@ -1,10 +1,11 @@
+import json
+import logging
 import os
 from collections.abc import Sized
 from pathlib import Path
-from typing import Dict, Tuple, List, Optional, Any, Union
+from typing import Dict, Tuple, List, Optional, Any, Union, Set
 
 import numpy as np
-import logging
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.utils import parse_and_validate_color, n_colors
@@ -26,7 +27,20 @@ class ColorLabels(Registrable):
         self.labels = labels
         self.log_labels = None
 
+        if one_hot_encoding:
+            if len(colors) != len(one_hot_encoding):
+                raise ValueError(
+                    f"Cannot have a different number of colors, {len(self.colors)}"
+                    f", and one hot encoding, {len(self.one_hot_encoding)}"
+                )
+            self._check_empty_labels_one_hot()
+
         if labels:
+            if self.num_classes != len(self.labels):
+                raise ValueError(
+                    f"Cannot have a different number of classes, {self.num_classes}"
+                    f", and labels, {len(self.labels)}"
+                )
             if one_hot_encoding:
                 new_names = []
                 for line in np.array(one_hot_encoding).astype(bool):
@@ -37,10 +51,7 @@ class ColorLabels(Registrable):
             else:
                 self.log_labels = labels
                 assert len(self.log_labels) == len(colors)
-            if self.num_classes != len(self.labels):
-                raise ValueError(
-                    f"Cannot have a different number of classes, {self.num_classes}, and labels, {len(self.labels)}"
-                )
+
 
     @property
     def multilabel(self):
@@ -52,6 +63,58 @@ class ColorLabels(Registrable):
             return len(self.one_hot_encoding[0])
         else:
             return len(self.colors)
+
+    @classmethod
+    def from_filter_by_colors(cls, color_labels, colors: Set[Tuple[int, int, int]]):
+        new_colors = []
+        new_one_hot_encoding = None
+        new_labels = None
+        for index, color in enumerate(color_labels.colors):
+            if color in colors:
+                new_colors.append(color)
+                if color_labels.one_hot_encoding:
+                    if new_one_hot_encoding is None:
+                        new_one_hot_encoding = []
+                    new_one_hot_encoding.append(color_labels.one_hot_encoding[index])
+                elif color_labels.labels:
+                    if new_labels is None:
+                        new_labels = []
+                    new_labels.append(color_labels.labels[index])
+
+        if color_labels.one_hot_encoding:
+            new_labels = color_labels.labels
+        return cls(new_colors, new_one_hot_encoding, new_labels)
+
+    def _check_empty_labels_one_hot(self):
+        num_occ_per_label = np.array(self.one_hot_encoding).sum(axis=0)
+        empty_labels_indices = np.where(num_occ_per_label == 0)[0].tolist()
+        if len(empty_labels_indices) > 0:
+            labels_str = str(empty_labels_indices)
+            if self.labels:
+                labels_str = ",".join([self.labels[idx] for idx in empty_labels_indices])
+            logger.warning(f"One hot encoding contains empty labels indices, in particular {labels_str}.")
+
+    def to_json(self, path: Union[str, Path]):
+        path = str(path)
+        kwargs = {
+            'colors': np.int32(self.colors).tolist(),
+            'one_hot_encoding': np.int32(self.one_hot_encoding).tolist() if self.one_hot_encoding else None,
+            'labels': self.labels
+        }
+        with open(path, 'w', encoding='utf-8') as outfile:
+            json.dump(kwargs, outfile)
+
+    def __repr__(self):
+        labels_str = ""
+        if self.labels:
+            labels_str = f", labels={self.labels}"
+        return f"ColorLabels(num_classes={self.num_classes}, multilabel={self.multilabel}, colors={self.colors}{labels_str})"
+
+    def __str__(self):
+        labels_str = ""
+        if self.labels:
+            labels_str = f", labels={self.labels}"
+        return f"ColorLabels(num_classes={self.num_classes}, multilabel={self.multilabel}{labels_str})"
 
     @classmethod
     def from_labels_text_file(
@@ -76,6 +139,15 @@ class ColorLabels(Registrable):
                 parse_validate_one_hot(one_hot) for one_hot in labels_classes[:, 3:]
             ]
             return cls(colors, one_hot_encoding, labels)
+
+    @classmethod
+    def from_labels_json_file(cls, label_json_file: Union[str, Path]):
+        label_json_file = str(label_json_file)
+        if not os.path.exists(label_json_file):
+            raise FileNotFoundError(label_json_file)
+        with open(label_json_file, 'r', encoding='utf-8') as infile:
+            label_colors_kwargs = json.load(infile)
+        return cls(**label_colors_kwargs)
 
     @classmethod
     def from_list_of_color_labels(
@@ -131,6 +203,9 @@ class ColorLabels(Registrable):
         labels: Optional[List[str]] = None,
     ):
         colors = [parse_and_validate_color(color) for color in colors]
+        colors = [(0, 0, 0)] + colors
+        if labels:
+            labels = ['background'] + labels
         return cls(colors, labels=labels)
 
     @classmethod
@@ -170,6 +245,7 @@ class ColorLabels(Registrable):
 
 ColorLabels.register("labels_list", "from_list_of_color_labels")(ColorLabels)
 ColorLabels.register("txt", "from_labels_text_file")(ColorLabels)
+ColorLabels.register("json", "from_labels_json_file")(ColorLabels)
 ColorLabels.register("colors", "from_colors")(ColorLabels)
 ColorLabels.register("colors_multilabel", "from_colors_multilabel")(ColorLabels)
 ColorLabels.register("labels", "from_labels")(ColorLabels)

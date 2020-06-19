@@ -14,7 +14,7 @@ class FixedSizeResize(DualTransform):
         self,
         output_size: Union[int, float],
         interpolation: int = cv2.INTER_LINEAR,
-        always_apply: bool = False,
+        always_apply: bool = True,
         p: float = 1,
     ):
         super(FixedSizeResize, self).__init__(always_apply, p)

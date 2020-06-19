@@ -6,11 +6,11 @@ from shapely import geometry, ops, affinity
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.annotation.utils import (
-    ImageSize,
     Coordinates,
     convert_coord_to_image,
     convert_coord_to_normalized,
 )
+from dh_segment_torch.data.annotation.image_size import ImageSize
 
 
 class Shape(Registrable):

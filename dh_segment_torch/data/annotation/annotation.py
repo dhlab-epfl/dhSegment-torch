@@ -1,10 +1,10 @@
-from typing import Optional
-
-import cv2
+from typing import Optional, Tuple
 
 from dh_segment_torch.config.registrable import Registrable
+from dh_segment_torch.data.annotation.image_size import ImageSize
 from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
-from dh_segment_torch.data.annotation.utils import ImageSize
+from dh_segment_torch.data.annotation.utils import load_image, extract_image_basename, is_iiif_url, \
+    iiif_url_to_image_size
 
 
 class Annotation(Registrable):
@@ -16,9 +16,15 @@ class Annotation(Registrable):
         image_id: Optional[str] = None,
         image_size: Optional[ImageSize] = None,
         labels_annotations: LabelsAnnotations = None,
-        normalize_shapes: bool = True
+        normalize_shapes: bool = True,
+        auth: Optional[Tuple[str, str]] = None,
+        cache_image: bool = True
     ):
         self.uri = uri
+        self.auth = auth
+        self.cache_image = cache_image
+        self._image = None
+
         if image_id:
             self.image_id = image_id
         else:
@@ -38,15 +44,26 @@ class Annotation(Registrable):
             self.labels_annotations.normalize_shapes(self.image_size)
 
     def get_image_id(self) -> str:
-        return self.uri.split('/\\')[-1].split('.')[-2]
+        return extract_image_basename(self.uri)
 
     def get_image_size(self) -> ImageSize:
-        image = load_image(self.uri)
-        return ImageSize(height=image.shape[0], width=image.shape[1])
+        if self.is_iiif:
+            return iiif_url_to_image_size(self.uri, self.auth)
+        else:
+            return ImageSize.from_image_array(self.image)
 
+    @property
+    def image(self):
+        if self.cache_image:
+            if self._image is None:
+                self._image = load_image(self.uri, self.auth)
+            return self._image
+        else:
+            return load_image(self.uri, self.auth)
 
-def load_image(uri: str):
-    image = cv2.imread(uri)
-    return image
+    @property
+    def is_iiif(self):
+        return is_iiif_url(self.uri)
+
 
 Annotation.register("default")(Annotation)
