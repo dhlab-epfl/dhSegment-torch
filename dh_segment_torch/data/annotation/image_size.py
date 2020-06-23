@@ -82,7 +82,10 @@ class ImageSize(Registrable):
 
     def __truediv(self, other) -> Tuple[int, int]:
         if isinstance(other, ImageSize):
-            return int(round(self.height / other.height)), int(round(self.width / other.width))
+            return (
+                int(round(self.height / other.height)),
+                int(round(self.width / other.width)),
+            )
         elif isinstance(other, int) or isinstance(other, float):
             return int(round(self.height / other)), int(round(self.width / other))
         elif isinstance(other, tuple) and list(map(type, other)) == [int, int]:

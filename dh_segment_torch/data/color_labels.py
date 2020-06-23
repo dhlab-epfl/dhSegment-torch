@@ -52,7 +52,6 @@ class ColorLabels(Registrable):
                 self.log_labels = labels
                 assert len(self.log_labels) == len(colors)
 
-
     @property
     def multilabel(self):
         return self.one_hot_encoding is not None
@@ -91,17 +90,23 @@ class ColorLabels(Registrable):
         if len(empty_labels_indices) > 0:
             labels_str = str(empty_labels_indices)
             if self.labels:
-                labels_str = ",".join([self.labels[idx] for idx in empty_labels_indices])
-            logger.warning(f"One hot encoding contains empty labels indices, in particular {labels_str}.")
+                labels_str = ",".join(
+                    [self.labels[idx] for idx in empty_labels_indices]
+                )
+            logger.warning(
+                f"One hot encoding contains empty labels indices, in particular {labels_str}."
+            )
 
     def to_json(self, path: Union[str, Path]):
         path = str(path)
         kwargs = {
-            'colors': np.int32(self.colors).tolist(),
-            'one_hot_encoding': np.int32(self.one_hot_encoding).tolist() if self.one_hot_encoding else None,
-            'labels': self.labels
+            "colors": np.int32(self.colors).tolist(),
+            "one_hot_encoding": np.int32(self.one_hot_encoding).tolist()
+            if self.one_hot_encoding
+            else None,
+            "labels": self.labels,
         }
-        with open(path, 'w', encoding='utf-8') as outfile:
+        with open(path, "w", encoding="utf-8") as outfile:
             json.dump(kwargs, outfile)
 
     def __repr__(self):
@@ -145,7 +150,7 @@ class ColorLabels(Registrable):
         label_json_file = str(label_json_file)
         if not os.path.exists(label_json_file):
             raise FileNotFoundError(label_json_file)
-        with open(label_json_file, 'r', encoding='utf-8') as infile:
+        with open(label_json_file, "r", encoding="utf-8") as infile:
             label_colors_kwargs = json.load(infile)
         return cls(**label_colors_kwargs)
 
@@ -205,7 +210,7 @@ class ColorLabels(Registrable):
         colors = [parse_and_validate_color(color) for color in colors]
         colors = [(0, 0, 0)] + colors
         if labels:
-            labels = ['background'] + labels
+            labels = ["background"] + labels
         return cls(colors, labels=labels)
 
     @classmethod
@@ -236,8 +241,10 @@ class ColorLabels(Registrable):
             if len(colors) == len(set(colors)):
                 break
         else:
-            logger.warning(f"Could not find a color combinatation for {num_classes}."
-                           "Falling back on one color per one hot encoding.")
+            logger.warning(
+                f"Could not find a color combinatation for {num_classes}."
+                "Falling back on one color per one hot encoding."
+            )
             one_hot_encoding = get_all_one_hots(num_classes).tolist()
             colors = n_colors(len(one_hot_encoding))
         return cls(colors, one_hot_encoding, labels)
@@ -286,6 +293,5 @@ def all_one_hot_and_colors(
 
 def get_all_one_hots(num_classes: int) -> np.array:
     return (
-        ((np.arange(0, 2 ** num_classes)[:, None] & (1 << np.arange(num_classes))) > 0)
-        .astype(int)
-    )
+        (np.arange(0, 2 ** num_classes)[:, None] & (1 << np.arange(num_classes))) > 0
+    ).astype(int)

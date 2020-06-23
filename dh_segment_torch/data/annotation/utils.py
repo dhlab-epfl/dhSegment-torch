@@ -1,7 +1,7 @@
 import os
 import re
 import time
-from typing import Tuple, Union, Dict, TypeVar, Optional
+from typing import Tuple, Union, Dict, TypeVar, Optional, List
 
 import cv2
 import numpy as np
@@ -24,6 +24,12 @@ def convert_coord_to_normalized(
 ) -> Tuple[float, float]:
     x, y = coord
     return x / float(width), y / float(height)
+
+
+def int_coords(
+    coords: List[Tuple[Union[float, int], Union[float, int]]]
+) -> List[Tuple[int, int]]:
+    return [(int(round(x)), int(round(y))) for x, y in coords]
 
 
 T = TypeVar("T")
@@ -52,7 +58,7 @@ def write_image(path: str, image: np.array, overwrite: bool = True):
 
 
 def load_image(uri: str, auth: Optional[Tuple[str, str]] = None) -> np.array:
-    if uri.startswith("http"):
+    if is_url(uri):
         image = load_image_from_url(uri, auth)
     else:
         uri = uri.replace("file://", "")
@@ -110,6 +116,12 @@ def load_image_from_url(
     return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 
+def is_url(uri: str) -> bool:
+    if uri.startswith("http://") or uri.startswith("https://"):
+        return True
+    return False
+
+
 iiif_regex = re.compile(
     r"(https?://"  # scheme
     r"(?:(.*?)/){2,})"  # server + (prefix) + identifier match is always on identifier
@@ -152,6 +164,10 @@ def extract_image_ext(img_path: str) -> str:
 
 def extract_image_basename(img_path: str) -> str:
     return extract_image_filename(img_path).split(".")[0]
+
+
+def extract_image_name_with_ext(img_path: str) -> str:
+    return extract_image_basename(img_path) + extract_image_ext(img_path)
 
 
 def iiif_url_to_image_size(iiif_url, auth=None, retry: int = 5) -> ImageSize:

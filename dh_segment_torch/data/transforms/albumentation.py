@@ -1034,4 +1034,3 @@ class _BaseRandomSizedCrop(transforms._BaseRandomSizedCrop, Transform):
         self, interpolation: int = 1, always_apply: bool = False, p: float = 1.0
     ):
         super().__init__(interpolation=interpolation, always_apply=always_apply, p=p)
-

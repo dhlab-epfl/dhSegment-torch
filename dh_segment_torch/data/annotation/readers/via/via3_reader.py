@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from collections import OrderedDict
 from io import StringIO
 from typing import List, Union, Optional, Dict, Any, Callable, Set, Tuple
 
@@ -8,10 +9,15 @@ import pandas as pd
 
 from dh_segment_torch.data.annotation.annotation import Annotation
 from dh_segment_torch.data.annotation.annotation_reader import AnnotationReader
-from dh_segment_torch.data.annotation.readers.via.via_shapes_parser import parse_via3_shape
+from dh_segment_torch.data.annotation.readers.via.via_shapes_parser import (
+    parse_via3_shape,
+)
 
-from dh_segment_torch.data.annotation.readers.via.utils import data_to_annotations, annotation_data_to_data, \
-    data_row_to_annotation
+from dh_segment_torch.data.annotation.readers.via.utils import (
+    data_to_annotations,
+    annotation_data_to_data,
+    data_row_to_annotation,
+)
 from dh_segment_torch.data.annotation.utils import reverse_dict, append_image_dir
 
 logger = logging.getLogger("__name__")
@@ -80,10 +86,9 @@ class VIA3Reader(AnnotationReader):
 
 @AnnotationReader.register("via3_project")
 class VIA3ProjectReader(VIA3Reader):
-
     def _read_data(self, path: str, image_dir: Optional[str] = None) -> pd.DataFrame:
         with open(path, "r") as infile:
-            via_data = json.load(infile)
+            via_data = json.load(infile, object_pairs_hook=OrderedDict)
 
         annotations_data = pd.DataFrame.from_dict(via_data["metadata"], orient="index")
 
@@ -96,15 +101,17 @@ class VIA3ProjectReader(VIA3Reader):
 
         annotations_data["path"] = annotations_data["vid"].apply(file_id_to_path.get)
 
-        annotations_data = annotations_data.rename(columns={"xy": "shape_info", "av": "label"})[
-            ["path", "shape_info", "label"]
-        ]
+        annotations_data = annotations_data.rename(
+            columns={"xy": "shape_info", "av": "label"}
+        )[["path", "shape_info", "label"]]
 
         all_paths = set(list(file_id_to_path.values()))
 
         attributes_info = via_data["attribute"]
 
-        annotations_data = self._transform_annotations_data(annotations_data, attributes_info, ID_TO_SHAPE)
+        annotations_data = self._transform_annotations_data(
+            annotations_data, attributes_info, ID_TO_SHAPE
+        )
 
         return annotation_data_to_data(annotations_data, all_paths)
 
@@ -114,7 +121,6 @@ class VIA3ProjectReader(VIA3Reader):
 
 @AnnotationReader.register("via3")
 class VIA3CSVReader(VIA3Reader):
-
     def _read_data(self, path: str, image_dir: Optional[str] = None) -> pd.DataFrame:
         with open(path, "r", encoding="utf-8") as infile:
             lines = infile.readlines()
@@ -134,11 +140,15 @@ class VIA3CSVReader(VIA3Reader):
         )
 
         if image_dir:
-            annotations_data["path"] = annotations_data["path"].apply(lambda f: os.path.join(image_dir, f))
+            annotations_data["path"] = annotations_data["path"].apply(
+                lambda f: os.path.join(image_dir, f)
+            )
 
         all_paths = set(annotations_data["path"].unique().tolist())
 
-        annotations_data = self._transform_annotations_data(annotations_data, attributes_info, id_to_shape)
+        annotations_data = self._transform_annotations_data(
+            annotations_data, attributes_info, id_to_shape
+        )
 
         return annotation_data_to_data(annotations_data, all_paths)
 

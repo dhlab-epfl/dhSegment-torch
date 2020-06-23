@@ -27,9 +27,9 @@ def compute_paddings(heights, widths):
 def collate_fn(examples):
     if not isinstance(examples, list):
         examples = [examples]
-    if not all(['shape' in x for x in examples]):
+    if not all(["shape" in x for x in examples]):
         for example in examples:
-            example['shape'] = torch.tensor(example['image'].shape[1:])
+            example["shape"] = torch.tensor(example["image"].shape[1:])
 
     heights = np.array([x["shape"][0] for x in examples])
     widths = np.array([x["shape"][1] for x in examples])
@@ -43,7 +43,7 @@ def collate_fn(examples):
         images.append(F.pad(image, padding))
         shapes_out.append(shape)
 
-        if 'label' in example:
+        if "label" in example:
             label = example["label"]
             masks.append(F.pad(label, padding))
 

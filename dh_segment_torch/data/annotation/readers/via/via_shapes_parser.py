@@ -26,21 +26,35 @@ def parse_via2_shape(
         coordinates = [
             shape_info["x"],
             shape_info["y"],
-            shape_info["x"] + shape_info["width"],
-            shape_info["y"] + shape_info["height"],
+            shape_info["width"],
+            shape_info["height"],
         ]
         return parse_rectangle(coordinates)
     elif shape == "circle":
-        coordinates = [shape_info["cx"], shape_info["cy"], shape_info['r']]
+        coordinates = [shape_info["cx"], shape_info["cy"], shape_info["r"]]
         return parse_circle(coordinates)
     elif shape == "ellipse":
-        coordinates = [shape_info["cx"], shape_info["cy"], shape_info["rx"], shape_info["ry"], shape_info["theta"]]
+        coordinates = [
+            shape_info["cx"],
+            shape_info["cy"],
+            shape_info["rx"],
+            shape_info["ry"],
+            shape_info["theta"],
+        ]
         return parse_ellipse(coordinates)
     elif shape == "polyline":
-        coordinates = [y for x in zip(shape_info["all_points_x"], shape_info['all_points_y']) for y in x]
+        coordinates = [
+            y
+            for x in zip(shape_info["all_points_x"], shape_info["all_points_y"])
+            for y in x
+        ]
         return parse_linestring(coordinates, line_thickness)
     elif shape == "polygon":
-        coordinates = [y for x in zip(shape_info["all_points_x"], shape_info['all_points_y']) for y in x]
+        coordinates = [
+            y
+            for x in zip(shape_info["all_points_x"], shape_info["all_points_y"])
+            for y in x
+        ]
         return parse_polygon(coordinates)
     else:
         raise ValueError(f"The shape {shape} is not supported")
@@ -82,8 +96,8 @@ def parse_point(coordinates: List[float], radius: int = 5) -> Shape:
 
 
 def parse_rectangle(coordinates: List[float]) -> Shape:
-    coordinates = np.array(coordinates).reshape(2, 2).tolist()
-    return Rectangle((coordinates[0], coordinates[1]), normalized_coords=False)
+    x, y, w, h = coordinates
+    return Rectangle(((x, y), (x + w, y + h)), normalized_coords=False)
 
 
 def parse_extreme_rectangle(coordinates: List[float]) -> Shape:

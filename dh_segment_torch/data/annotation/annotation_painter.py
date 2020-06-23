@@ -15,9 +15,7 @@ class AnnotationPainter(Registrable):
     default_implementation = "default"
 
     def __init__(
-        self,
-        color_labels: ColorLabels,
-        disallowed_overlaps: List[List[str]] = None,
+        self, color_labels: ColorLabels, disallowed_overlaps: List[List[str]] = None,
     ):
         if not color_labels.labels:
             raise ValueError("Expected to have label names")
@@ -109,7 +107,7 @@ class AnnotationPainter(Registrable):
 
         for indices in self.disallowed_overlaps:
             one_hot_indices = np.tile(
-                np.arange(1, len(indices)+1), [one_hot.shape[0], one_hot.shape[1], 1]
+                np.arange(1, len(indices) + 1), [one_hot.shape[0], one_hot.shape[1], 1]
             ).astype(np.int32)
 
             first_index = one_hot[:, :, indices].argmax(axis=-1) + 1

@@ -19,7 +19,9 @@ class FixedResize(DualTransform):
     ):
         super(FixedResize, self).__init__(always_apply, p)
         if height is None and width is None:
-            raise ValueError("Cannot have a fixed resizer without a fixed width or height")
+            raise ValueError(
+                "Cannot have a fixed resizer without a fixed width or height"
+            )
 
         self.height = height
         self.width = width

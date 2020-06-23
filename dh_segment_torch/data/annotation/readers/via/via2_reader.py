@@ -1,4 +1,5 @@
 import json
+from collections import OrderedDict
 from collections.abc import Mapping
 from typing import List, Optional, Callable, Any, Tuple, Union
 
@@ -35,10 +36,18 @@ class VIA2Reader(AnnotationReader):
 
     def _read_data(self, path: str, image_dir: Optional[str] = None) -> pd.DataFrame:
         with open(path, "r") as infile:
-            data_raw = self.data_getter(json.load(infile))
+            data_raw = self.data_getter(
+                json.load(infile, object_pairs_hook=OrderedDict)
+            )
         annotations_data = []
         all_paths = []
         for item in data_raw:
+            if "filename" not in item:
+                raise ValueError(
+                    "The data was not loaded correctly, "
+                    "certainly due to the fact that is is project file "
+                    "and not an annotation file."
+                )
             path = item["filename"]
             path = append_image_dir(path, image_dir)
             all_paths.append(path)

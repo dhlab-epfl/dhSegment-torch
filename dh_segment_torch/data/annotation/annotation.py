@@ -3,8 +3,12 @@ from typing import Optional, Tuple
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.annotation.image_size import ImageSize
 from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
-from dh_segment_torch.data.annotation.utils import load_image, extract_image_basename, is_iiif_url, \
-    iiif_url_to_image_size
+from dh_segment_torch.data.annotation.utils import (
+    load_image,
+    extract_image_basename,
+    is_iiif_url,
+    iiif_url_to_image_size,
+)
 
 
 class Annotation(Registrable):
@@ -18,7 +22,7 @@ class Annotation(Registrable):
         labels_annotations: LabelsAnnotations = None,
         normalize_shapes: bool = True,
         auth: Optional[Tuple[str, str]] = None,
-        cache_image: bool = True
+        cache_image: bool = True,
     ):
         self.uri = uri
         self.auth = auth

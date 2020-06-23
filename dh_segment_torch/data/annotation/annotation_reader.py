@@ -1,35 +1,13 @@
 import logging
-from typing import List, Union, Optional, Tuple, Callable
+from typing import List, Union, Optional, Tuple
 
 import pandas as pd
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.annotation.annotation import Annotation
+from dh_segment_torch.data.annotation.annotation_iterator import AnnotationIterator
 
 logger = logging.getLogger(__name__)
-
-
-class AnnotationIterator:
-    def __init__(
-        self, data: pd.DataFrame, row_transform: Callable[[pd.Series], Annotation]
-    ):
-        self.data = data
-        self.row_transform = row_transform
-
-    def __getitem__(self, index) -> Union[Annotation, List[Annotation]]:
-        if isinstance(index, int):
-            return self.row_transform(self.data.iloc[index])
-        else:
-            return (
-                self.data.iloc[index].apply(self.row_transform, axis=1).values.tolist()
-            )
-
-    def __iter__(self) -> Annotation:
-        for _, row in self.data.iterrows():
-            yield self.row_transform(row)
-
-    def __len__(self):
-        return len(self.data)
 
 
 class AnnotationReader(Registrable):
@@ -40,14 +18,20 @@ class AnnotationReader(Registrable):
         image_auth: Optional[Tuple[str, str]] = None,
     ):
         self.image_auth = image_auth
-        if isinstance(file_path, str):
-            self.annotation_iterator = self._read(
-                file_path, images_dir
-            )
-        else:
-            self.annotation_iterator = self._read_paths(
-                file_path, images_dir
-            )
+        self.file_path = file_path
+        self.images_dir = images_dir
+        self._annotation_iterator = None
+
+    @property
+    def annotation_iterator(self) -> AnnotationIterator:
+        if self._annotation_iterator is None:
+            if isinstance(self.file_path, str):
+                self._annotation_iterator = self._read(self.file_path, self.images_dir)
+            else:
+                self._annotation_iterator = self._read_paths(
+                    self.file_path, self.images_dir
+                )
+        return self._annotation_iterator
 
     def _read(self, path: str, image_dir: Optional[str] = None) -> AnnotationIterator:
         data = self._read_data(path, image_dir)

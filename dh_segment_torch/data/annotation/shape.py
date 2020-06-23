@@ -9,6 +9,7 @@ from dh_segment_torch.data.annotation.utils import (
     Coordinates,
     convert_coord_to_image,
     convert_coord_to_normalized,
+    int_coords,
 )
 from dh_segment_torch.data.annotation.image_size import ImageSize
 
@@ -18,6 +19,9 @@ class Shape(Registrable):
         self.normalized_coords = normalized_coords
 
     def mask(self, mask_size: ImageSize) -> np.array:
+        raise NotImplementedError
+
+    def geometry(self, mask_size: ImageSize) -> geometry.base.BaseGeometry:
         raise NotImplementedError
 
     def coords_to_image(
@@ -33,8 +37,15 @@ class Shape(Registrable):
         )
         return convert_coord_to_image(coord, convert_height, convert_width)
 
+    def expanded_coords(self, image_size: ImageSize):
+        raise NotImplementedError
+
     def normalize_coords(self, image_size: ImageSize):
         raise NotImplementedError
+
+    def _raise_not_normalized(self):
+        if not self.normalized_coords:
+            raise ValueError("Can only get expended coords of normalized shape.")
 
 
 @Shape.register("circle")
@@ -52,6 +63,10 @@ class Circle(Shape):
         mask = cv2.circle(mask, coordinate, self.radius, 1, thickness=-1)
         return mask.astype(bool)
 
+    def geometry(self, mask_size: ImageSize) -> geometry.base.BaseGeometry:
+        center = self.coord_to_image(self.center, mask_size)
+        return geometry.Point(center).buffer(self.radius)
+
     def normalize_coords(self, image_size: ImageSize):
         if self.normalized_coords:
             return
@@ -59,6 +74,22 @@ class Circle(Shape):
             self.center, image_size.height, image_size.width
         )
         self.normalized_coords = True
+
+    def expanded_coords(self, image_size: ImageSize):
+        self._raise_not_normalized()
+        return self.coord_to_image(self.center, image_size), self.radius
+
+
+@Shape.register("point")
+class Point(Circle):
+    def __init__(
+        self, center: Coordinates, radius: int = 1, normalized_coords: bool = True
+    ):
+        super().__init__(center, radius, normalized_coords)
+
+    def geometry(self, mask_size: ImageSize) -> geometry.base.BaseGeometry:
+        center = self.coord_to_image(self.center, mask_size)
+        return geometry.Point(center)
 
 
 @Shape.register("line_string")
@@ -81,6 +112,10 @@ class LineString(Shape):
         )
         return mask.astype(bool)
 
+    def geometry(self, mask_size: ImageSize) -> geometry.base.BaseGeometry:
+        coordinates = self.coords_to_image(self.coordinates, mask_size)
+        return geometry.LineString(coordinates)
+
     def normalize_coords(self, image_size: ImageSize):
         if self.normalized_coords:
             return
@@ -89,6 +124,22 @@ class LineString(Shape):
             for coords in self.coordinates
         ]
         self.normalized_coords = True
+
+    def expanded_coords(self, image_size: ImageSize):
+        self._raise_not_normalized()
+        return self.coords_to_image(self.coordinates, image_size)
+
+
+@Shape.register("line")
+class Line(LineString):
+    def __init__(
+        self,
+        start: Coordinates,
+        end: Coordinates,
+        thickness: int = 1,
+        normalized_coords: bool = True,
+    ):
+        super().__init__([start, end], thickness, normalized_coords)
 
 
 @Shape.register("ellipse")
@@ -119,6 +170,16 @@ class Ellipse(Shape):
         )
         return mask.astype(bool)
 
+    def geometry(self, mask_size: ImageSize) -> geometry.base.BaseGeometry:
+        center = self.coord_to_image(self.center, mask_size)
+        x_radius, y_radius = self.coord_to_image(self.radiuses, mask_size)
+        circle = geometry.Point(center).buffer(1)
+        ellipse = affinity.scale(circle, x_radius, y_radius)
+        ellipse_rotated = affinity.rotate(
+            ellipse, self.angle
+        )  # TODO check rotation angle
+        return ellipse_rotated
+
     def normalize_coords(self, image_size: ImageSize):
         if self.normalized_coords:
             return
@@ -129,6 +190,14 @@ class Ellipse(Shape):
             self.radiuses, image_size.height, image_size.width
         )
         self.normalized_coords = True
+
+    def expanded_coords(self, image_size: ImageSize):
+        self._raise_not_normalized()
+        return (
+            self.coord_to_image(self.center, image_size),
+            self.coord_to_image(self.radiuses, image_size),
+            self.angle,
+        )
 
 
 @Shape.register("rectangle")
@@ -146,6 +215,15 @@ class Rectangle(Shape):
         mask = cv2.rectangle(mask, corner1, corner2, 1, thickness=-1)
         return mask.astype(bool)
 
+    def geometry(self, mask_size: ImageSize) -> geometry.base.BaseGeometry:
+        corner1 = self.coord_to_image(self.corner1, mask_size)
+        corner2 = self.coord_to_image(self.corner2, mask_size)
+        xmin = min(corner1[0], corner2[0])
+        ymin = min(corner1[1], corner2[1])
+        xmax = max(corner1[0], corner2[0])
+        ymax = max(corner1[1], corner2[1])
+        return geometry.box(xmin, ymin, xmax, ymax)
+
     def normalize_coords(self, image_size: ImageSize):
         if self.normalized_coords:
             return
@@ -156,6 +234,13 @@ class Rectangle(Shape):
             self.corner2, image_size.height, image_size.width
         )
         self.normalized_coords = True
+
+    def expanded_coords(self, image_size: ImageSize):
+        self._raise_not_normalized()
+        return (
+            self.coord_to_image(self.corner1, image_size),
+            self.coord_to_image(self.corner2, image_size),
+        )
 
 
 @Shape.register("polygon")
@@ -193,6 +278,11 @@ class Polygon(Shape):
         mask = cv2.fillPoly(mask, interiors, 0)
         return mask.astype(bool)
 
+    def geometry(self, mask_size: ImageSize) -> geometry.base.BaseGeometry:
+        return affinity.scale(
+            self.polygons, mask_size.width, mask_size.height, origin=(0, 0)
+        )
+
     def normalize_coords(self, image_size: ImageSize):
         if self.normalized_coords:
             return
@@ -200,6 +290,21 @@ class Polygon(Shape):
             self.polygons, 1 / image_size.width, 1 / image_size.height, origin=(0, 0)
         )
         self.normalized_coords = True
+
+    def expanded_coords(self, image_size: ImageSize):
+        self._raise_not_normalized()
+        polys = affinity.scale(
+            self.polygons, image_size.width, image_size.height, origin=(0, 0)
+        )
+
+        polys_coords = [
+            (
+                int_coords(poly.exterior.coords),
+                [int_coords(interior.coords) for interior in poly.interiors],
+            )
+            for poly in polys
+        ]
+        return polys_coords
 
 
 @Shape.register("multi_polygon")
@@ -223,6 +328,9 @@ class MultiPolygon(Shape):
             mask |= poly.mask(mask_size)
         return mask
 
+    def geometry(self, mask_size: ImageSize) -> geometry.base.BaseGeometry:
+        return ops.unary_union([poly.geometry(mask_size) for poly in self.polygons])
+
     def normalize_coords(self, image_size: ImageSize):
         if self.normalized_coords:
             return
@@ -230,6 +338,15 @@ class MultiPolygon(Shape):
             self.polygons, 1 / image_size.width, 1 / image_size.height, origin=(0, 0)
         )
         self.normalized_coords = True
+
+    def expanded_coords(self, image_size: ImageSize):
+        self._raise_not_normalized()
+        polys_coords = [
+            poly_coords
+            for polys in self.polygons
+            for poly_coords in polys.expanded_coords(image_size)
+        ]
+        return polys_coords
 
 
 def fix_poly(poly: geometry.Polygon):
