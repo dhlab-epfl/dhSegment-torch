@@ -1,5 +1,5 @@
-import numpy as np
 import cv2
+import numpy as np
 from scipy.ndimage import label
 
 
@@ -17,7 +17,9 @@ def thresholding(probs: np.ndarray, threshold: float = -1) -> np.ndarray:
         # TODO Correct that weird gaussianBlur
         probs = cv2.GaussianBlur(probs, (5, 5), 0)
 
-        thresh_val, bin_img = cv2.threshold(probs, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        thresh_val, bin_img = cv2.threshold(
+            probs, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
         mask = np.uint8(bin_img / 255)
     else:
         mask = np.uint8(probs > threshold)
@@ -36,13 +38,21 @@ def cleaning_binary(mask: np.ndarray, kernel_size: int = 5) -> np.ndarray:
 
     ksize_open = (kernel_size, kernel_size)
     ksize_close = (kernel_size, kernel_size)
-    mask = cv2.morphologyEx((mask.astype(np.uint8, copy=False) * 255), cv2.MORPH_OPEN, kernel=np.ones(ksize_open))
+    mask = cv2.morphologyEx(
+        (mask.astype(np.uint8, copy=False) * 255),
+        cv2.MORPH_OPEN,
+        kernel=np.ones(ksize_open),
+    )
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel=np.ones(ksize_close))
     return np.uint8(mask / 255)
 
 
-def hysteresis_thresholding(probs: np.array, low_threshold: float, high_threshold: float,
-                            candidates_mask: np.ndarray = None) -> np.ndarray:
+def hysteresis_thresholding(
+    probs: np.array,
+    low_threshold: float,
+    high_threshold: float,
+    candidates_mask: np.ndarray = None,
+) -> np.ndarray:
     low_mask = probs > low_threshold
     if candidates_mask is not None:
         low_mask = candidates_mask & low_mask
@@ -57,9 +67,11 @@ def hysteresis_thresholding(probs: np.array, low_threshold: float, high_threshol
 
 def cleaning_probs(probs: np.ndarray, sigma: float) -> np.ndarray:
     # Smooth
-    if sigma > 0.:
-        return cv2.GaussianBlur(probs, (int(3 * sigma) * 2 + 1, int(3 * sigma) * 2 + 1), sigma)
-    elif sigma == 0.:
+    if sigma > 0.0:
+        return cv2.GaussianBlur(
+            probs, (int(3 * sigma) * 2 + 1, int(3 * sigma) * 2 + 1), sigma
+        )
+    elif sigma == 0.0:
         return cv2.fastNlMeansDenoising((probs * 255).astype(np.uint8), h=20) / 255
     else:  # Negative sigma, do not do anything
         return probs

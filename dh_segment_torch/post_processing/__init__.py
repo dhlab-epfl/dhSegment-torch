@@ -1,46 +1,25 @@
-r"""
-The :mod:`dh_segment.post_processing` module contains functions to post-process probability maps.
+from dh_segment_torch.post_processing.filters import *
+from dh_segment_torch.post_processing.thresholding import *
+from dh_segment_torch.post_processing.operation import *
+from dh_segment_torch.post_processing.post_processing_pipeline import *
+from dh_segment_torch.post_processing.lines.lines_filter import *
+from dh_segment_torch.post_processing.lines.lines_to_columns import *
+from dh_segment_torch.post_processing.lines.lines_page import *
 
-**Binarization**
 
-.. autosummary::
-    thresholding
-    cleaning_binary
-
-**Detection**
-
-.. autosummary::
-    find_boxes
-    find_polygonal_regions
-
-**Vectorization**
-
-.. autosummary::
-    find_lines
-
-------
-
-"""
-
-_BINARIZATION = [
-    'thresholding',
-    'cleaning_binary',
-
+_BASE = [
+    "Operation",
+    "NoOperation",
+    "SplitOperation",
+    "IntermediaryOutput",
+    "MergeListsOperation",
+    "PostProcessingPipeline",
 ]
 
-_DETECTION = [
-    'find_boxes',
-    'find_polygonal_regions'
-]
+_FILTER = ["GaussianFilter", "MedianFilter", "BilateralFilter"]
 
-_VECTORIZATION = [
-    'find_lines'
-]
+_THRESHOLDING = ["Thresholding", "AdaptiveThresholding", "HysteresisThresholding"]
 
-__all__ = _BINARIZATION + _DETECTION + _VECTORIZATION
+_LINES = ["LinesPage", "LinesFilter", "LinesToColumns"]
 
-from .binarization import *
-from .boxes_detection import *
-from .line_vectorization import *
-from .polygon_detection import *
-
+__all__ = _BASE + _FILTER + _THRESHOLDING + _LINES

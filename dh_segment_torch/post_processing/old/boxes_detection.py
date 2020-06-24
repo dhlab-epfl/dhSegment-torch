@@ -1,12 +1,18 @@
+import math
+
 import cv2
 import numpy as np
-import math
-from shapely import geometry
 from scipy.spatial import KDTree
+from shapely import geometry
 
 
-def find_boxes(boxes_mask: np.ndarray, mode: str = 'min_rectangle', min_area: float = 0.2,
-               p_arc_length: float = 0.01, n_max_boxes=math.inf) -> list:
+def find_boxes(
+    boxes_mask: np.ndarray,
+    mode: str = "min_rectangle",
+    min_area: float = 0.2,
+    p_arc_length: float = 0.01,
+    n_max_boxes=math.inf,
+) -> list:
     """
     Finds the coordinates of the box in the binary image `boxes_mask`.
 
@@ -22,12 +28,17 @@ def find_boxes(boxes_mask: np.ndarray, mode: str = 'min_rectangle', min_area: fl
     :return: list of length n_max_boxes containing boxes with 4 corners [[x1,y1], ..., [x4,y4]]
     """
 
-    assert len(boxes_mask.shape) == 2, \
-        'Input mask must be a 2D array ! Mask is now of shape {}'.format(boxes_mask.shape)
+    assert (
+        len(boxes_mask.shape) == 2
+    ), "Input mask must be a 2D array ! Mask is now of shape {}".format(
+        boxes_mask.shape
+    )
 
-    contours, _ = cv2.findContours(boxes_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(
+        boxes_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
     if contours is None:
-        print('No contour found')
+        print("No contour found")
         return None
     found_boxes = list()
 
@@ -43,15 +54,20 @@ def find_boxes(boxes_mask: np.ndarray, mode: str = 'min_rectangle', min_area: fl
         if polygon.area > min_area * boxes_mask.size:
             # Correct out of range corners
             box = np.maximum(box, 0)
-            box = np.stack((np.minimum(box[:, 0], boxes_mask.shape[1]),
-                            np.minimum(box[:, 1], boxes_mask.shape[0])), axis=1)
+            box = np.stack(
+                (
+                    np.minimum(box[:, 0], boxes_mask.shape[1]),
+                    np.minimum(box[:, 1], boxes_mask.shape[0]),
+                ),
+                axis=1,
+            )
 
             # return box
             return box, polygon.area
 
-    if mode not in ['quadrilateral', 'min_rectangle', 'rectangle']:
+    if mode not in ["quadrilateral", "min_rectangle", "rectangle"]:
         raise NotImplementedError
-    if mode == 'quadrilateral':
+    if mode == "quadrilateral":
         for c in contours:
             epsilon = p_arc_length * cv2.arcLength(c, True)
             cnt = cv2.approxPolyDP(c, epsilon, True)
@@ -68,8 +84,14 @@ def find_boxes(boxes_mask: np.ndarray, mode: str = 'min_rectangle', min_area: fl
                 _, ur = tree.query((w_img, 0))
                 _, dl = tree.query((0, h_img))
                 _, dr = tree.query((w_img, h_img))
-                box = np.vstack([points[ul, 0, :], points[ur, 0, :],
-                                 points[dr, 0, :], points[dl, 0, :]])
+                box = np.vstack(
+                    [
+                        points[ul, 0, :],
+                        points[ur, 0, :],
+                        points[dr, 0, :],
+                        points[dl, 0, :],
+                    ]
+                )
             elif len(hull_points) == 4:
                 box = hull_points[:, 0, :]
             else:
@@ -77,17 +99,21 @@ def find_boxes(boxes_mask: np.ndarray, mode: str = 'min_rectangle', min_area: fl
             # Todo : test if it looks like a rectangle (2 sides must be more or less parallel)
             # todo : (otherwise we may end with strange quadrilaterals)
             if len(box) != 4:
-                mode = 'min_rectangle'
-                print('Quadrilateral has {} points. Switching to minimal rectangle mode'.format(len(box)))
+                mode = "min_rectangle"
+                print(
+                    "Quadrilateral has {} points. Switching to minimal rectangle mode".format(
+                        len(box)
+                    )
+                )
             else:
                 # found_box = validate_box(box)
                 found_boxes.append(validate_box(box))
-    if mode == 'min_rectangle':
+    if mode == "min_rectangle":
         for c in contours:
             rect = cv2.minAreaRect(c)
             box = np.int0(cv2.boxPoints(rect))
             found_boxes.append(validate_box(box))
-    elif mode == 'rectangle':
+    elif mode == "rectangle":
         for c in contours:
             x, y, w, h = cv2.boundingRect(c)
             box = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], dtype=int)
