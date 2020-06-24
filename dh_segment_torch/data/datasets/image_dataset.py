@@ -4,7 +4,7 @@ from typing import Union, List, Optional
 import pandas as pd
 import torch
 
-from dh_segment_torch.data.dataset import (
+from dh_segment_torch.data.datasets.dataset import (
     Dataset,
     load_sample,
     sample_to_tensor,

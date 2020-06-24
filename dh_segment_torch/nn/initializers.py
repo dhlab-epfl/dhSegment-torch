@@ -1,10 +1,9 @@
-from typing import List, Optional, Union, Callable, Any, Tuple
+from typing import List, Optional, Union, Callable, Tuple
 
 import torch
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.training import ParamGroup
-from dh_segment_torch.training.param_group import make_params_groups, check_param_groups
+from dh_segment_torch.nn.param_group import ParamGroup, make_params_groups, check_param_groups
 
 
 class Initializer(Registrable):

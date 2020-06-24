@@ -1,7 +1,7 @@
 import albumentations.augmentations.functional as F
 import cv2
 
-from dh_segment_torch.data.transform import Transform
+from dh_segment_torch.data.transforms.transform import Transform
 from dh_segment_torch.data.transforms.albumentation import Rotate
 from dh_segment_torch.data.transforms.rotate_no_crop import (
     get_rotated_size,

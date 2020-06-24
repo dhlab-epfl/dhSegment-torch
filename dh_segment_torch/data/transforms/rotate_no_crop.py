@@ -8,7 +8,7 @@ from albumentations.augmentations.functional import (
     preserve_channel_dim,
 )
 
-from dh_segment_torch.data.transform import Transform
+from dh_segment_torch.data.transforms.transform import Transform
 from dh_segment_torch.data.transforms.albumentation import Rotate
 
 

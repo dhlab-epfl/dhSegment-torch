@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Tuple
+
 import numpy as np
 
 from dh_segment_torch.config.registrable import Registrable

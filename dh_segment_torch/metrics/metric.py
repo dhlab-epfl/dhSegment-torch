@@ -4,7 +4,7 @@ from typing import Optional, Union, Dict, List, NewType
 import torch
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.training.metrics.utils import (
+from dh_segment_torch.metrics.utils import (
     batch_multilabel_confusion_matrix,
     nanaverage,
 )

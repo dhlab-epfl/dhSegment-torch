@@ -1,9 +1,9 @@
-from typing import List, Tuple, Optional, Union, Dict, Any
+from typing import List, Tuple, Optional, Union, Dict
 
 import torch
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.training.param_group import ParamGroup, make_params_groups, normalize_param_groups
+from dh_segment_torch.nn.param_group import ParamGroup, make_params_groups, normalize_param_groups
 
 
 class Optimizer(torch.optim.Optimizer, Registrable):
@@ -219,7 +219,7 @@ class RMSpropOptimizer(torch.optim.RMSprop, Optimizer):
 
 
 @Optimizer.register("rpop")
-class Rprop(torch.optim.Rprop, Optimizer):
+class RpropOptimizer(torch.optim.Rprop, Optimizer):
     def __init__(
         self,
         model_params: List[Tuple[str, torch.nn.Parameter]],

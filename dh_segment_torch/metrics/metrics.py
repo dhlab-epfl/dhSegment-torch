@@ -1,6 +1,6 @@
 from typing import List, Optional, Union, Dict
 
-from dh_segment_torch.training.metrics.metric import (
+from dh_segment_torch.metrics.metric import (
     Metric,
     MultilabelConfusionMetric,
     logger,

@@ -1,7 +1,6 @@
 import pytest
 
-from dh_segment_torch.config import RegistrableError
-from dh_segment_torch.config.registrable import Registrable
+from dh_segment_torch.config import RegistrableError, Registrable
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
 

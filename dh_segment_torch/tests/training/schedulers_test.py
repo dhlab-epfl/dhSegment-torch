@@ -1,10 +1,10 @@
 import numpy as np
 import torch
 
-from dh_segment_torch.config.params import Params
+from dh_segment_torch.config import Params
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
-from dh_segment_torch.training.optimizers import Optimizer
-from dh_segment_torch.training.schedulers import Scheduler
+from dh_segment_torch.training import Optimizer
+from dh_segment_torch.training import Scheduler
 
 
 class OptimizerTest(DhSegmentTestCase):

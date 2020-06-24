@@ -3,20 +3,18 @@ import logging
 import os
 from collections import OrderedDict
 from io import StringIO
-from typing import List, Union, Optional, Dict, Any, Callable, Set, Tuple
+from typing import List, Union, Optional, Dict, Any, Callable, Tuple
 
 import pandas as pd
 
 from dh_segment_torch.data.annotation.annotation import Annotation
-from dh_segment_torch.data.annotation.annotation_reader import AnnotationReader
-from dh_segment_torch.data.annotation.readers.via.via_shapes_parser import (
-    parse_via3_shape,
-)
-
+from dh_segment_torch.data.annotation.readers.annotation_reader import AnnotationReader
 from dh_segment_torch.data.annotation.readers.via.utils import (
-    data_to_annotations,
     annotation_data_to_data,
     data_row_to_annotation,
+)
+from dh_segment_torch.data.annotation.readers.via.via_shapes_parser import (
+    parse_via3_shape,
 )
 from dh_segment_torch.data.annotation.utils import reverse_dict, append_image_dir
 

@@ -4,7 +4,6 @@ from typing import Callable, Optional
 import numpy as np
 import torch
 from torch.nn import functional as F
-
 from torch.utils import data
 
 from dh_segment_torch.config.registrable import Registrable

@@ -9,7 +9,7 @@ from skimage.util import view_as_windows
 from torch.utils.data import IterableDataset
 from torch.utils.data.dataloader import get_worker_info
 
-from dh_segment_torch.data.dataset import (
+from dh_segment_torch.data.datasets.dataset import (
     Dataset,
     load_sample,
     sample_to_tensor,

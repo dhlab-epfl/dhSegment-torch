@@ -2,9 +2,9 @@ import pytest
 import torch
 
 from dh_segment_torch.config import ConfigurationError
-from dh_segment_torch.config.params import Params
-from dh_segment_torch.models.decoders.decoder import Decoder
-from dh_segment_torch.nn.normalization.batch_renorm import BatchRenorm2d
+from dh_segment_torch.config import Params
+from dh_segment_torch.models import Decoder
+from dh_segment_torch.nn.normalizations.batch_renorm import BatchRenorm2d
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
 

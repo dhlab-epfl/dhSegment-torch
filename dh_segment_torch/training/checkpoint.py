@@ -1,6 +1,5 @@
 import logging
 import os
-import time
 from datetime import datetime
 from typing import Optional, List, Tuple, Dict, Any
 
@@ -8,7 +7,7 @@ import numpy as np
 import torch
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.training.metrics.metric_tracker import MetricTracker
+from dh_segment_torch.metrics import MetricTracker
 from dh_segment_torch.utils.ops import join_not_none, format_time
 
 logger = logging.getLogger(__name__)

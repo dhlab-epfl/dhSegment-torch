@@ -3,7 +3,7 @@ from typing import Tuple, Union
 from albumentations import DualTransform
 from skimage.util import view_as_windows
 
-from dh_segment_torch.data.transform import Transform
+from dh_segment_torch.data.transforms.transform import Transform
 
 
 @Transform.register("sample_to_patches")

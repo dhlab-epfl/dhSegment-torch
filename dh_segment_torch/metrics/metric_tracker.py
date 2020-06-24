@@ -2,7 +2,7 @@ from math import inf
 from typing import Dict
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.training.metrics.metric import MetricType
+from dh_segment_torch.metrics.metric import MetricType
 
 
 class MetricTracker(Registrable):

@@ -2,11 +2,10 @@ import pytest
 import torch
 from torch.nn import BatchNorm2d, GroupNorm, Identity
 
-from dh_segment_torch.config import ConfigurationError
-from dh_segment_torch.config.params import Params
-from dh_segment_torch.models.encoders.encoder import Encoder
-from dh_segment_torch.nn.normalization.batch_renorm import BatchRenorm2d
-from dh_segment_torch.nn.normalizations import Normalization
+from dh_segment_torch.config import ConfigurationError, Params
+from dh_segment_torch.models import Encoder
+from dh_segment_torch.nn import Normalization
+from dh_segment_torch.nn.normalizations.batch_renorm import BatchRenorm2d
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
 

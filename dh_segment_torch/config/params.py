@@ -5,7 +5,7 @@ from collections.abc import MutableMapping
 from pathlib import Path
 from typing import Dict, Any, Union
 
-from dh_segment_torch.config import ConfigurationError
+from dh_segment_torch.config.errors import ConfigurationError
 
 try:
     from _jsonnet import evaluate_file, evaluate_snippet

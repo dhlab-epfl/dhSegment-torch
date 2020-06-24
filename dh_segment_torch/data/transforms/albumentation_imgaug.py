@@ -2,7 +2,7 @@ from typing import Tuple, Optional
 
 from albumentations.imgaug import transforms as iaa
 
-from dh_segment_torch.data.transform import Transform
+from dh_segment_torch.data.transforms.transform import Transform
 
 
 @Transform.register("iaa_additive_gaussian_noise")

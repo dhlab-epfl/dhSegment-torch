@@ -1,8 +1,8 @@
 import torch
 
-from dh_segment_torch.config.params import Params
+from dh_segment_torch.config import Params
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
-from dh_segment_torch.training.metrics.metric import Metric
+from dh_segment_torch.metrics import Metric
 
 
 class OptimizerTest(DhSegmentTestCase):

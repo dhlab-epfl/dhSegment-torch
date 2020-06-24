@@ -1,7 +1,7 @@
 from typing import Optional
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.training.metrics.metric_tracker import MetricTracker
+from dh_segment_torch.metrics import MetricTracker
 
 
 class EarlyStopping(Registrable):

@@ -3,7 +3,7 @@ from typing import Union, Dict, List, Any, Tuple, Optional
 import torch
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.training.param_group import ParamGroup, make_params_groups, normalize_param_groups, \
+from dh_segment_torch.nn.param_group import ParamGroup, make_params_groups, normalize_param_groups, \
     check_param_groups
 
 

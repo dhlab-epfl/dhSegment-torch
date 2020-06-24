@@ -4,8 +4,8 @@ from typing import List
 import numpy as np
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
 from dh_segment_torch.data.annotation.image_size import ImageSize
+from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
 from dh_segment_torch.data.color_labels import ColorLabels
 
 logger = logging.getLogger(__name__)

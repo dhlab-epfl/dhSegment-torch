@@ -1,7 +1,6 @@
 import pytest
 
-from dh_segment_torch.config import ConfigurationError
-from dh_segment_torch.config.params import Params
+from dh_segment_torch.config import ConfigurationError, Params
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
 

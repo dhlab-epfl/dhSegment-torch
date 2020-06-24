@@ -10,7 +10,7 @@ from tqdm import tqdm
 from dh_segment_torch.data.annotation import shape as sh
 from dh_segment_torch.data.annotation.annotation import Annotation
 from dh_segment_torch.data.annotation.annotation_iterator import AnnotationIterator
-from dh_segment_torch.data.annotation.annotation_writer import AnnotationWriter
+from dh_segment_torch.data.annotation.writers.annotation_writer import AnnotationWriter
 from dh_segment_torch.data.annotation.image_size import ImageSize
 from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
 from dh_segment_torch.data.annotation.utils import is_url, extract_image_name_with_ext

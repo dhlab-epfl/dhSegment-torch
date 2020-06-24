@@ -6,7 +6,7 @@ from pretrainedmodels import pretrained_settings as pretraining
 from torchvision.models.resnet import ResNet, Bottleneck, BasicBlock
 
 from dh_segment_torch.models.encoders.encoder import Encoder
-from dh_segment_torch.nn.normalizations import Normalization
+from dh_segment_torch.nn.normalizations.normalization import Normalization
 
 
 class ResNetEncoder(Encoder, ResNet):

@@ -6,10 +6,8 @@ import torch.nn.functional as F
 
 from dh_segment_torch.models.decoders.decoder import Decoder
 from dh_segment_torch.nn.activations import Activation
-from dh_segment_torch.nn.normalizations import (
-    Normalization,
-    BatchNorm2dNormalization,
-)
+from dh_segment_torch.nn.normalizations.normalizations import BatchNorm2dNormalization
+from dh_segment_torch.nn.normalizations.normalization import Normalization
 
 default_normalization = BatchNorm2dNormalization(momentum=1 - 0.999)
 default_activation = Activation.get_constructor("relu")(inplace=True)

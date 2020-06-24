@@ -10,8 +10,8 @@ from tqdm import tqdm
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.data.annotation.annotation_iterator import AnnotationIterator
 from dh_segment_torch.data.annotation.annotation_painter import AnnotationPainter
-from dh_segment_torch.data.annotation.annotation_reader import AnnotationReader
-from dh_segment_torch.data.annotation.annotation_writer import AnnotationWriter
+from dh_segment_torch.data.annotation.readers.annotation_reader import AnnotationReader
+from dh_segment_torch.data.annotation.writers.annotation_writer import AnnotationWriter
 from dh_segment_torch.data.annotation.image_size import ImageSize
 from dh_segment_torch.data.annotation.utils import (
     write_image,

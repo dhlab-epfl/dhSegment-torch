@@ -8,7 +8,7 @@ from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.models.decoders.decoder import Decoder
 from dh_segment_torch.models.encoders.encoder import Encoder
 from dh_segment_torch.nn.losses import Loss, BCEWithLogitsLoss, CrossEntropyLoss
-from dh_segment_torch.training.metrics.metric import Metric, MetricType
+from dh_segment_torch.metrics.metric import Metric, MetricType
 
 
 class Model(Registrable, nn.Module):

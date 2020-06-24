@@ -6,8 +6,8 @@ import numpy as np
 from shapely import geometry
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.data.annotation.shape import Shape
 from dh_segment_torch.data.annotation.image_size import ImageSize
+from dh_segment_torch.data.annotation.shape import Shape
 
 
 class LabelsAnnotations(Registrable, MutableMapping):

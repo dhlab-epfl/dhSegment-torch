@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from typing import TypeVar, Dict, Type, Tuple, Optional, Callable, List
 
-from dh_segment_torch.config import ConfigurationError, RegistrableError
+from dh_segment_torch.config.errors import ConfigurationError, RegistrableError
 from dh_segment_torch.config.from_params import FromParams
 
 T = TypeVar("T", bound="Registrable")

@@ -10,7 +10,7 @@ from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.color_labels import ColorLabels
 from dh_segment_torch.data.data_loader import DataLoader
 from dh_segment_torch.data.datasets import PatchesDataset
-from dh_segment_torch.data.dataset import Dataset
+from dh_segment_torch.data.datasets.dataset import Dataset
 from dh_segment_torch.data.transforms import AssignMultilabel, AssignLabel
 from dh_segment_torch.models.model import Model
 from dh_segment_torch.nn.initializers import InitializerApplier
@@ -18,8 +18,8 @@ from dh_segment_torch.training.checkpoint import BestCheckpoint, IterationCheckp
 from dh_segment_torch.training.checkpoint import Checkpoint
 from dh_segment_torch.training.early_stopping import EarlyStopping
 from dh_segment_torch.training.logging.logger import Logger
-from dh_segment_torch.training.metrics.metric import Metric, MetricType
-from dh_segment_torch.training.metrics.metric_tracker import MetricTracker
+from dh_segment_torch.metrics.metric import Metric, MetricType
+from dh_segment_torch.metrics import MetricTracker
 from dh_segment_torch.training.optimizers import Optimizer, AdamOptimizer
 from dh_segment_torch.training.regularizers import Regularizer
 from dh_segment_torch.training.schedulers import (

@@ -323,7 +323,7 @@ class ConcatScheduler(Scheduler):
         cycle_momentum: bool = False,
         step_duration: int = 1,
     ):
-        if 'momentum' not in optimizer.defaults:
+        if "momentum" not in optimizer.defaults:
             cycle_momentum = False
         warmup = Lazy(
             lambda optimizer: CyclicScheduler(

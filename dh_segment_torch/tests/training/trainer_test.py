@@ -1,6 +1,6 @@
-from dh_segment_torch.config.params import Params
+from dh_segment_torch.config import Params
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
-from dh_segment_torch.training.trainer import Trainer
+from dh_segment_torch.training import Trainer
 
 
 class TrainerTest(DhSegmentTestCase):

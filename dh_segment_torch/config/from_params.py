@@ -18,7 +18,7 @@ from typing import (
     List,
 )
 
-from dh_segment_torch.config import ConfigurationError, RegistrableError
+from dh_segment_torch.config.errors import ConfigurationError, RegistrableError
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.config.params import Params
 
@@ -34,7 +34,7 @@ class FromParams:
     """
 
     @classmethod
-    def from_params(cls: Type[T], params: Params, **extras):
+    def from_params(cls: Type[T], params: Params, **extras) -> T:
         from dh_segment_torch.config.registrable import Registrable
 
         params = normalize_params(params)

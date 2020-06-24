@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from dh_segment_torch.models.decoders.decoder import Decoder
 from dh_segment_torch.nn.activations import Activation
-from dh_segment_torch.nn.normalizations import Normalization
+from dh_segment_torch.nn.normalizations.normalization import Normalization
 
 
 @Decoder.register("unet")

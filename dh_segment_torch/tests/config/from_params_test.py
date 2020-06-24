@@ -4,11 +4,7 @@ from typing import Union, Dict, List, Set, Tuple, Any
 
 import pytest
 
-from dh_segment_torch.config import ConfigurationError
-from dh_segment_torch.config.from_params import FromParams
-from dh_segment_torch.config.lazy import Lazy
-from dh_segment_torch.config.params import Params
-from dh_segment_torch.config.registrable import Registrable
+from dh_segment_torch.config import ConfigurationError, FromParams, Lazy, Params, Registrable
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
 

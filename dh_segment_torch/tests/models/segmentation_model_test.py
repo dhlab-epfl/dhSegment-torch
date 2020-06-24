@@ -1,9 +1,7 @@
 import torch
 
-from dh_segment_torch.config.params import Params
-from dh_segment_torch.models.decoders.pan import PanDecoder
-from dh_segment_torch.models.encoders.resnet import ResNetEncoder
-from dh_segment_torch.models.model import Model
+from dh_segment_torch.config import Params
+from dh_segment_torch.models import Model, ResNetEncoder, PanDecoder
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
 

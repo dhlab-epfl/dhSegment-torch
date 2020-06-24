@@ -3,8 +3,7 @@ import pytest
 from torch.utils.data import IterableDataset, Dataset
 
 from dh_segment_torch.config.params import Params
-from dh_segment_torch.data.datasets import PatchesDataset, ImageDataset
-from dh_segment_torch.data.dataset import Dataset
+from dh_segment_torch.data.datasets import Dataset, PatchesDataset, ImageDataset
 from dh_segment_torch.tests.dhsegment_test_case import DhSegmentTestCase
 
 
