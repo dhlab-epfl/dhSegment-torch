@@ -7,7 +7,7 @@ import pandas as pd
 
 from dh_segment_torch.config.params import Params
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.data.annotation.annotation_writer import AnnotationWriter
+from dh_segment_torch.data.annotation.writers.annotation_writer import AnnotationWriter
 
 
 class DataSplitter(Registrable):

@@ -22,3 +22,4 @@ class PostProcessingPipeline(Registrable):
 
 
 PostProcessingPipeline.register("default")(PostProcessingPipeline)
+

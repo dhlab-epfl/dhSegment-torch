@@ -4,7 +4,7 @@ import numpy as np
 from shapely import geometry
 
 from dh_segment_torch.config.registrable import Registrable
-from dh_segment_torch.post_processing.utils import recursively_merge
+from dh_segment_torch.post_processing.utils import merge_lists
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -26,6 +26,15 @@ class NoOperation(Operation):
         return input
 
 
+@Operation.register('extract_index')
+class ExtractIndexOpration(Operation):
+    def __init__(self, index: int):
+        self.index = index
+
+    def apply(self, input: List[T]) -> T:
+        return input[self.index]
+
+
 @Operation.register("split")
 class SplitOperation(Operation):
     def __init__(self, operations_splits: List[List[Operation]]):
@@ -42,11 +51,23 @@ class SplitOperation(Operation):
 
 
 @Operation.register("merge_lists")
-class MergeListsOperation(Operation):
+class MergeLists(Operation):
+    def __init__(self, recursive: bool = False):
+        self.recursive = recursive
+
+    def apply(self, lists: List[List[T]]) -> List[T]:
+        return merge_lists(lists, self.recursive)
+
+
+@Operation.register("concat_lists")
+class ConcatLists(Operation):
     def __init__(self):
         pass
     def apply(self, lists: List[List[T]]) -> List[T]:
-        return recursively_merge(lists)
+        result = []
+        for list_ in lists:
+            result += list_
+        return result
 
 
 @Operation.register("intermediary_output")
@@ -73,6 +94,15 @@ class ClasswiseOperation(Operation):
 
     def _apply_wrapper(self, input: T) -> U:
         return self.apply(input)
+
+
+@Operation.register("classwise_noop")
+class ClasswiseNoOperation(ClasswiseOperation):
+    def __call__(self, input: T) -> U:
+        return self.apply_by_sel(input)
+
+    def apply(self, input: T) -> U:
+        return input
 
 
 class ProbasOperation(ClasswiseOperation):
