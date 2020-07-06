@@ -249,7 +249,7 @@ def construct_param(
         return new_list
     elif origin == Union:
         backup_params = deepcopy(params)
-
+        all_errors = []
         for value_class in args:
             value_class_as_param = inspect.Parameter(
                 "dummy", kind=inspect.Parameter.VAR_KEYWORD, annotation=value_class
@@ -264,10 +264,11 @@ def construct_param(
                 TypeError,
                 ConfigurationError,
                 RegistrableError,
-            ):
+            ) as e:
                 params = deepcopy(backup_params)
+                all_errors.append(e)
         raise ConfigurationError(
-            f"Failed to construct {param_name} wit type {param_type}"
+            f"Failed to construct {param_name} with type {param_type} and {params}, got errors: {all_errors}"
         )
     else:
         logger.warning(

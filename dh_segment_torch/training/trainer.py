@@ -315,7 +315,7 @@ class Trainer(Registrable):
         shuffle_train: bool = True,
         num_data_workers: int = 4,
         ignore_padding: bool = False,
-        training_margin: int = 16,
+        training_margin: int = 0,
         num_epochs: int = 20,
         evaluate_every_epoch: int = 10,
         num_accumulation_steps: int = 1,

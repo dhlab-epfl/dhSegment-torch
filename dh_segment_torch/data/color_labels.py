@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class ColorLabels(Registrable):
-    default_implementation = "labels_list"
+    default_implementation = "json"
 
     def __init__(
         self,

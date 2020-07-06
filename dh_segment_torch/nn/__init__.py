@@ -1,6 +1,6 @@
 from dh_segment_torch.nn.activations import *
 from dh_segment_torch.nn.initializers import *
-from dh_segment_torch.nn.losses import *
+from dh_segment_torch.nn.loss.losses import *
 from dh_segment_torch.nn.normalizations.normalization import *
 from dh_segment_torch.nn.normalizations.normalizations import *
 from dh_segment_torch.nn.param_group import *

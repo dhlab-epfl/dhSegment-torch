@@ -35,6 +35,8 @@ class Loss(torch.nn.Module, Registrable):
                 loss, shapes, reduce=self._reduce_function, margin=self.margin
             )
         else:
+            if self.margin > 0:
+                loss = loss[..., self.margin:-self.margin, self.margin:-self.margin]
             return loss
 
 

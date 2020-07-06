@@ -2,12 +2,13 @@ from typing import Dict, Optional, Union, List, Set, Tuple
 
 import torch
 import torch.nn as nn
+from dh_segment_torch.data.color_labels import ColorLabels
 
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.models.decoders.decoder import Decoder
 from dh_segment_torch.models.encoders.encoder import Encoder
-from dh_segment_torch.nn.losses import Loss, BCEWithLogitsLoss, CrossEntropyLoss
+from dh_segment_torch.nn.loss.losses import Loss, BCEWithLogitsLoss, CrossEntropyLoss
 from dh_segment_torch.metrics.metric import Metric, MetricType
 
 
@@ -34,24 +35,25 @@ class Model(Registrable, nn.Module):
 
     def state_dict(self, **kwargs):
         state_dict = super().state_dict(**kwargs)
-        state_dict.update({
-            'loss': self.loss.state_dict(),
-            'metrics': {k: v.state_dict() for k, v in self.metrics.items()}
-        })
+        state_dict.update(
+            {
+                "loss": self.loss.state_dict(),
+                "metrics": {k: v.state_dict() for k, v in self.metrics.items()},
+            }
+        )
         return state_dict
 
     def load_state_dict(self, state_dict, strict=True):
-        if 'loss' in state_dict:
-            self.loss.load_state_dict(state_dict.pop('loss'))
-        if 'metrics' in state_dict:
-            metrics_state_dict = state_dict.pop('metrics')
+        if "loss" in state_dict:
+            self.loss.load_state_dict(state_dict.pop("loss"))
+        if "metrics" in state_dict:
+            metrics_state_dict = state_dict.pop("metrics")
             for k, v in metrics_state_dict.items():
                 if k in self.metrics:
                     self.metrics[k].load_state_dict(v)
         super().load_state_dict(state_dict, strict)
 
 
-@Model.register("segmentation_model", "from_partial")
 class SegmentationModel(Model):
     def __init__(
         self,
@@ -193,3 +195,36 @@ class SegmentationModel(Model):
                 loss = CrossEntropyLoss(ignore_padding=ignore_padding, margin=margin)
 
         return cls(encoder, decoder, loss, metrics)
+
+    @classmethod
+    def from_color_labels(
+        cls,
+        encoder: Encoder,
+        decoder: Lazy[Decoder],
+        color_labels: ColorLabels,
+        loss: Optional[Lazy[Loss]] = None,
+        metrics: Optional[
+            Union[
+                Dict[str, Lazy[Metric]],
+                List[Union[Tuple[str, Lazy[Metric]], Lazy[Metric]]],
+                Lazy[Metric],
+            ]
+        ] = None,
+        ignore_padding: bool = False,
+        margin: int = 0,
+    ):
+        return cls.from_partial(
+            encoder,
+            decoder,
+            color_labels.num_classes,
+            loss,
+            metrics,
+            color_labels.multilabel,
+            color_labels.labels,
+            ignore_padding,
+            margin,
+        )
+
+
+Model.register("segmentation_model", "from_partial")(SegmentationModel)
+Model.register("segmentation_model_color_labels", "from_color_labels")(SegmentationModel)
