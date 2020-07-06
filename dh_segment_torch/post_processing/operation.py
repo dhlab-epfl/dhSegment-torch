@@ -1,9 +1,10 @@
-from typing import Any, Union, List, Optional, TypeVar
+from typing import Union, List, Optional, TypeVar
 
 import numpy as np
 from shapely import geometry
 
 from dh_segment_torch.config.registrable import Registrable
+from dh_segment_torch.data.annotation import Shape
 from dh_segment_torch.post_processing.utils import merge_lists
 
 T = TypeVar("T")
@@ -11,27 +12,40 @@ U = TypeVar("U")
 
 
 class Operation(Registrable):
-    def __call__(self, input: T) -> U:
-        return self.apply(input)
+    def __call__(self, *args, **kwargs) -> U:
+        return self.apply(*args, **kwargs)
 
-    def apply(self, input: T) -> U:
+    def apply(self, *args, **kwargs) -> U:
         raise NotImplementedError
 
 
-@Operation.register('noop')
+# @Operation.register("concat_ops")
+# class ConcatOps(Operation):
+#     def __init__(self, ops: List[Operation]):
+#         self.ops = ops
+#
+#     def apply(self, input: T, *args, **kwargs) -> U:
+#         result = input
+#         for op in self.ops:
+#             result = op.apply(input, *args, **kwargs)
+#         return result
+
+
+@Operation.register("noop")
 class NoOperation(Operation):
     def __init__(self):
         pass
-    def apply(self, input: T) -> U:
+
+    def apply(self, *args, **kwargs) -> U:
         return input
 
 
-@Operation.register('extract_index')
+@Operation.register("extract_index")
 class ExtractIndexOpration(Operation):
     def __init__(self, index: int):
         self.index = index
 
-    def apply(self, input: List[T]) -> T:
+    def apply(self, input: List[T], *args, **kwargs) -> T:
         return input[self.index]
 
 
@@ -40,7 +54,7 @@ class SplitOperation(Operation):
     def __init__(self, operations_splits: List[List[Operation]]):
         self.operations_splits = operations_splits
 
-    def apply(self, input: T) -> U:
+    def apply(self, input: T, *args, **kwargs) -> U:
         results = []
         for operations_split in self.operations_splits:
             result = input
@@ -55,7 +69,7 @@ class MergeLists(Operation):
     def __init__(self, recursive: bool = False):
         self.recursive = recursive
 
-    def apply(self, lists: List[List[T]]) -> List[T]:
+    def apply(self, lists: List[List[T]], *args, **kwargs) -> List[T]:
         return merge_lists(lists, self.recursive)
 
 
@@ -63,8 +77,9 @@ class MergeLists(Operation):
 class ConcatLists(Operation):
     def __init__(self):
         pass
-    def apply(self, lists: List[List[T]]) -> List[T]:
-        result = []
+
+    def apply(self, list_: List[T], *lists, **kwargs) -> List[T]:
+        result = list(list_)
         for list_ in lists:
             result += list_
         return result
@@ -85,60 +100,78 @@ class ClasswiseOperation(Operation):
                 raise ValueError("Classes selection cannot be none.")
         self.classes_sel = classes_sel
 
-    def apply_by_sel(self, input: T) -> List[U]:
+    def apply(self, *args, **kwargs) -> U:
+        raise NotImplementedError
+
+    def apply_by_sel(self, input: T, *args, **kwargs) -> List[U]:
         classes_selection = self.classes_sel if self.classes_sel else range(len(input))
         result = []
         for class_ in classes_selection:
             result.append(self._apply_wrapper(input[class_]))
         return result
 
-    def _apply_wrapper(self, input: T) -> U:
-        return self.apply(input)
+    def _apply_wrapper(self, input: T, *args, **kwargs) -> U:
+        return self.apply(input, *args, **kwargs)
 
 
 @Operation.register("classwise_noop")
 class ClasswiseNoOperation(ClasswiseOperation):
-    def __call__(self, input: T) -> U:
-        return self.apply_by_sel(input)
+    def __call__(self, input: T, *args, **kwargs) -> U:
+        return self.apply_by_sel(input, *args, **kwargs)
 
-    def apply(self, input: T) -> U:
+    def apply(self, input: T, *args, **kwargs) -> U:
         return input
 
 
-class ProbasOperation(ClasswiseOperation):
-    def __call__(self, probas: np.array) -> np.array:
-        return np.stack(self.apply_by_sel(probas))
-
-    def apply(self, input: np.array) -> np.array:
-        raise NotImplementedError
-
-
-class ProbasIntOperation(ProbasOperation):
-    def _apply_wrapper(self, probas: np.array) -> np.array:
-        assert probas.ndim == 2
-        probas_int = np.uint8(probas * 255)
-        probas_transformed = self.apply(probas_int)
-        return (probas_transformed.astype(np.float64) / 255.0).astype(probas.dtype)
-
-
-class BinaryToGeometriesOperation(ClasswiseOperation):
-    def __call__(self, binary: np.array) -> List[List[geometry.base.BaseGeometry]]:
+class BinaryToGeometriesOperation(Operation):
+    def __call__(
+        self, binary: np.array, *args, **kwargs
+    ) -> List[geometry.base.BaseGeometry]:
         binary = binary.astype(np.uint8)
         if len(set(np.unique(binary).tolist()).difference({0, 1})) != 0:
             raise ValueError("Input should be binary, got more than 0 and 1 values.")
-        return self.apply_by_sel(binary)
+        return self.apply(binary, *args, **kwargs)
 
-    def apply(self, binary: np.array) -> List[geometry.base.BaseGeometry]:
+    def apply(
+        self, binary: np.array, *args, **kwargs
+    ) -> List[geometry.base.BaseGeometry]:
         raise NotImplementedError
+
+
+# class BinaryToGeometriesOperation(ClasswiseOperation):
+#     def __call__(self, binary: np.array, *args, **kwargs) -> List[List[geometry.base.BaseGeometry]]:
+#         binary = binary.astype(np.uint8)
+#         if len(set(np.unique(binary).tolist()).difference({0, 1})) != 0:
+#             raise ValueError("Input should be binary, got more than 0 and 1 values.")
+#         return self.apply_by_sel(binary, *args, **kwargs)
+#
+#     def apply(self, binary: np.array, *args, **kwargs) -> List[geometry.base.BaseGeometry]:
+#         raise NotImplementedError
 
 
 class GeometriesToGeometriesOperation(ClasswiseOperation):
     def __call__(
-        self, geometries: List[List[geometry.base.BaseGeometry]]
+        self, geometries: List[List[geometry.base.BaseGeometry]], *args, **kwargs
     ) -> List[List[geometry.base.BaseGeometry]]:
-        return self.apply_by_sel(geometries)
+        return self.apply_by_sel(geometries, *args, **kwargs)
 
     def apply(
-        self, input: List[geometry.base.BaseGeometry]
+        self, input: List[geometry.base.BaseGeometry], *args, **kwargs
     ) -> List[geometry.base.BaseGeometry]:
+        raise NotImplementedError
+
+
+class GeometriesToShapesOperation(ClasswiseOperation):
+    def __init__(self):
+        super().__init__()
+        pass
+
+    def apply(
+        self, input: List[geometry.base.BaseGeometry], *args, **kwargs
+    ) -> List[Shape]:
+        return [self.apply_to_geom(geom, *args, **kwargs) for geom in input]
+
+    def apply_to_geom(
+        self, input: geometry.base.BaseGeometry, *args, **kwargs
+    ) -> Shape:
         raise NotImplementedError

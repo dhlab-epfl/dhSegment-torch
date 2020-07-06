@@ -1,25 +1,29 @@
 import math
-from typing import List, Optional, Union
+from typing import List, Union
 
 import cv2
 import numpy as np
-from shapely import geometry
 from scipy.spatial import KDTree
+from shapely import geometry
 
-from dh_segment_torch.post_processing.operation import BinaryToGeometriesOperation, Operation
+from dh_segment_torch.post_processing.operation import (
+    Operation,
+    BinaryToGeometriesOperation,
+)
+from dh_segment_torch.post_processing.utils import normalize_min_area
 
 
 @Operation.register("box_detection")
 class BoxDetection(BinaryToGeometriesOperation):
-    def __init__(self,
-                 box_type: str = 'min_rectangle',
-                 min_area: float= 0.0,
-                 p_arc_length: float = 0.01,
-                 max_boxes=math.inf,
-                 classes_sel: Optional[Union[int, List[int]]] = None):
-        super().__init__(classes_sel)
+    def __init__(
+        self,
+        box_type: str = "min_rectangle",
+        min_area: Union[int, float] = 0.0,
+        p_arc_length: float = 0.01,
+        max_boxes=math.inf,
+    ):
 
-        if box_type not in {'min_rectangle', 'rectangle', 'quadrilateral'}:
+        if box_type not in {"min_rectangle", "rectangle", "quadrilateral"}:
             raise ValueError(f"Box type {box_type} is not supported.")
 
         self.box_type = box_type
@@ -27,8 +31,14 @@ class BoxDetection(BinaryToGeometriesOperation):
         self.p_arc_length = p_arc_length
         self.max_boxes = max_boxes
 
-    def apply(self, binary: np.array) -> List[geometry.base.BaseGeometry]:
-        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    def apply(
+        self, binary: np.array, *args, **kwargs
+    ) -> List[geometry.base.BaseGeometry]:
+        min_area = normalize_min_area(self.min_area, binary)
+
+        contours, _ = cv2.findContours(
+            binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         if contours is None:
             return []
         found_boxes = []
@@ -41,16 +51,21 @@ class BoxDetection(BinaryToGeometriesOperation):
             :return: (box, area)
             """
             polygon = geometry.Polygon([point for point in box])
-            if polygon.area > self.min_area * binary.size:
+            if polygon.area > min_area:
                 # Correct out of range corners
                 box = np.maximum(box, 0)
-                box = np.stack((np.minimum(box[:, 0], binary.shape[1]),
-                                np.minimum(box[:, 1], binary.shape[0])), axis=1)
+                box = np.stack(
+                    (
+                        np.minimum(box[:, 0], binary.shape[1]),
+                        np.minimum(box[:, 1], binary.shape[0]),
+                    ),
+                    axis=1,
+                )
 
                 # return box
                 return geometry.Polygon([point for point in box])
 
-        if self.box_type == 'quadrilateral':
+        if self.box_type == "quadrilateral":
             for c in contours:
                 epsilon = self.p_arc_length * cv2.arcLength(c, True)
                 cnt = cv2.approxPolyDP(c, epsilon, True)
@@ -67,8 +82,14 @@ class BoxDetection(BinaryToGeometriesOperation):
                     _, ur = tree.query((w_img, 0))
                     _, dl = tree.query((0, h_img))
                     _, dr = tree.query((w_img, h_img))
-                    box = np.vstack([points[ul, 0, :], points[ur, 0, :],
-                                     points[dr, 0, :], points[dl, 0, :]])
+                    box = np.vstack(
+                        [
+                            points[ul, 0, :],
+                            points[ur, 0, :],
+                            points[dr, 0, :],
+                            points[dl, 0, :],
+                        ]
+                    )
                 elif len(hull_points) == 4:
                     box = hull_points[:, 0, :]
                 else:
@@ -76,23 +97,29 @@ class BoxDetection(BinaryToGeometriesOperation):
                 # Todo : test if it looks like a rectangle (2 sides must be more or less parallel)
                 # todo : (otherwise we may end with strange quadrilaterals)
                 if len(box) != 4:
-                    self.box_type = 'min_rectangle'
-                    print('Quadrilateral has {} points. Switching to minimal rectangle mode'.format(len(box)))
+                    self.box_type = "min_rectangle"
+                    print(
+                        "Quadrilateral has {} points. Switching to minimal rectangle mode".format(
+                            len(box)
+                        )
+                    )
                 else:
                     # found_box = validate_box(box)
                     found_boxes.append(validate_box(box))
-        if self.box_type == 'min_rectangle':
+        if self.box_type == "min_rectangle":
             for c in contours:
                 rect = cv2.minAreaRect(c)
                 box = np.int0(cv2.boxPoints(rect))
                 found_boxes.append(validate_box(box))
-        elif self.box_type == 'rectangle':
+        elif self.box_type == "rectangle":
             for c in contours:
                 x, y, w, h = cv2.boundingRect(c)
-                box = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], dtype=int)
+                box = np.array(
+                    [[x, y], [x + w, y], [x + w, y + h], [x, y + h]], dtype=int
+                )
                 found_boxes.append(validate_box(box))
 
         # sort by area
         found_boxes = [box for box in found_boxes if box is not None]
         found_boxes = sorted(found_boxes, key=lambda box: box.area, reverse=True)
-        return found_boxes[:min(self.max_boxes, len(found_boxes))]
+        return found_boxes[: min(self.max_boxes, len(found_boxes))]

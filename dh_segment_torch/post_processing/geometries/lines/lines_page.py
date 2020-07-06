@@ -1,10 +1,13 @@
-from typing import List, Optional, Union
+from typing import List
 
 import cv2
 import numpy as np
 from shapely import geometry
 
-from dh_segment_torch.post_processing.operation import BinaryToGeometriesOperation, Operation
+from dh_segment_torch.post_processing.operation import (
+    BinaryToGeometriesOperation,
+    Operation,
+)
 
 
 class LinesPage(BinaryToGeometriesOperation):
@@ -15,7 +18,6 @@ class LinesPage(BinaryToGeometriesOperation):
         vote_threshold: int = 100,
         rho_res: float = 1.0,
         theta_res: float = 0.25,
-        classes_sel: Optional[Union[int, List[int]]] = None,
     ):
         """
         Runs a hough transform on a binary image
@@ -27,16 +29,16 @@ class LinesPage(BinaryToGeometriesOperation):
         :param vote_threshold: number of votes to be considered valid (to be tweaked depends on input image)
         :param rho_res: resolution for the rho argument
         :param theta_res: degree step to consider for angle
-        :param classes_sel:
         """
-        super().__init__(classes_sel)
         self.center_angle = center_angle
         self.angle_variance = angle_variance
         self.vote_threshold = vote_threshold
         self.rho_res = rho_res
         self.theta_res = theta_res
 
-    def apply(self, binary: np.array) -> List[geometry.base.BaseGeometry]:
+    def apply(
+        self, binary: np.array, *args, **kwargs
+    ) -> List[geometry.base.BaseGeometry]:
         theta_res = np.deg2rad(self.theta_res)
         center_angle = np.deg2rad(self.center_angle)
         angle_variance = np.deg2rad(self.angle_variance)
@@ -62,9 +64,8 @@ class LinesPage(BinaryToGeometriesOperation):
         vote_threshold: int = 100,
         rho_res: float = 1.0,
         theta_res: float = 0.25,
-        classes_sel: Optional[Union[int, List[int]]] = None,
     ):
-        return cls(0, angle_variance, vote_threshold, rho_res, theta_res, classes_sel)
+        return cls(0, angle_variance, vote_threshold, rho_res, theta_res)
 
     @classmethod
     def horizontal_lines(
@@ -73,9 +74,8 @@ class LinesPage(BinaryToGeometriesOperation):
         vote_threshold: int = 100,
         rho_res: float = 1.0,
         theta_res: float = 0.25,
-        classes_sel: Optional[Union[int, List[int]]] = None,
     ):
-        return cls(90, angle_variance, vote_threshold, rho_res, theta_res, classes_sel)
+        return cls(90, angle_variance, vote_threshold, rho_res, theta_res)
 
 
 Operation.register("lines_page")(LinesPage)

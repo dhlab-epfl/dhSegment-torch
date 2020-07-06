@@ -1,20 +1,18 @@
-from typing import Optional, Union, List
+from typing import List
 
-import numpy as np
 from shapely import geometry
 
-from dh_segment_torch.post_processing.operation import GeometriesToGeometriesOperation, Operation
+from dh_segment_torch.post_processing.operation import Operation
 
 
 @Operation.register("lines_filter")
-class LinesFilter(GeometriesToGeometriesOperation):
-    def __init__(self,
-                 dist_thresh: int,
-                 classes_sel: Optional[Union[int, List[int]]] = None):
-        super().__init__(classes_sel)
+class LinesFilter(Operation):
+    def __init__(self, dist_thresh: int):
         self.dist_thresh = dist_thresh
 
-    def apply(self, geoms: List[geometry.base.BaseGeometry]) -> List[geometry.base.BaseGeometry]:
+    def apply(
+        self, geoms: List[geometry.base.BaseGeometry], *args, **kwargs
+    ) -> List[geometry.base.BaseGeometry]:
         """
         Filter a list of line coordinates by a threshold.
         Takes the list of line coordinates, ordered by rank of confidence (as output by opencv hough)

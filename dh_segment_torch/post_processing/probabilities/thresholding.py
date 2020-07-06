@@ -1,13 +1,11 @@
-from typing import Optional, Union, List
+from typing import Union
 
 import cv2
 import numpy as np
 from scipy.ndimage import label
 
-from dh_segment_torch.post_processing.operation import (
-    ProbasIntOperation,
-    Operation,
-)
+from dh_segment_torch.post_processing.operation import Operation
+from dh_segment_torch.post_processing.probabilities.operation import ProbasIntOperation
 
 
 @Operation.register("threshold")
@@ -17,9 +15,7 @@ class Thresholding(ProbasIntOperation):
         low_threshold: Union[int, float],
         high_threshold: Union[int, float] = 1.0,
         threshold_mode: str = "binary",
-        classes_sel: Optional[Union[int, List[int]]] = None,
     ):
-        super().__init__(classes_sel)
 
         if low_threshold < 0:
             self.low_threshold = 0
@@ -30,7 +26,7 @@ class Thresholding(ProbasIntOperation):
             self.low_threshold = normalize_threshold(low_threshold)
             self.high_threshold = normalize_threshold(high_threshold)
 
-    def apply(self, input: np.array) -> np.array:
+    def apply(self, input: np.array, *args, **kwargs) -> np.array:
         return cv2.threshold(
             input, self.low_threshold, self.high_threshold, self.threshold_mode
         )
@@ -45,9 +41,7 @@ class AdaptiveThresholding(ProbasIntOperation):
         blockSize: int,
         C: float,
         threshold_mode: str = "binary",
-        classes_sel: Optional[Union[int, List[int]]] = None,
     ):
-        super().__init__(classes_sel)
 
         self.high_threshold = normalize_threshold(high_threshold)
         if adaptive_method == "mean":
@@ -64,7 +58,7 @@ class AdaptiveThresholding(ProbasIntOperation):
 
         self.threshold_mode = parse_threshold_mode(threshold_mode)
 
-    def apply(self, input: np.array) -> np.array:
+    def apply(self, input: np.array, *args, **kwargs) -> np.array:
         return cv2.adaptiveThreshold(
             input,
             self.high_threshold,
@@ -83,16 +77,15 @@ class HysteresisThresholding(ProbasIntOperation):
         high_threshold: Union[int, float],
         vertical_local_maxima: bool = False,
         horizontal_local_maxima: bool = False,
-        classes_sel: Optional[Union[int, List[int]]] = None,
     ):
-        super().__init__(classes_sel)
 
         self.low_threshold = normalize_threshold(low_threshold)
         self.high_threshold = normalize_threshold(high_threshold)
         self.vertical_local_maxima = vertical_local_maxima
         self.horizontal_local_maxima = horizontal_local_maxima
 
-    def apply(self, input: np.array) -> np.array:
+    def apply(self, input: np.array, *args, **kwargs) -> np.array:
+
         low_mask = input > self.low_threshold
         if self.vertical_local_maxima:
             low_mask &= vertical_local_maxima(input)
