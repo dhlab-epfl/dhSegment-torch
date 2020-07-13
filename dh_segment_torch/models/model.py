@@ -35,13 +35,15 @@ class Model(Registrable, nn.Module):
 
     def state_dict(self, **kwargs):
         state_dict = super().state_dict(**kwargs)
-        state_dict.update(
-            {
-                "loss": self.loss.state_dict(),
-                "metrics": {k: v.state_dict() for k, v in self.metrics.items()},
-            }
-        )
-        return state_dict
+        if self.loss:
+            state_dict.update(
+                {"loss": self.loss.state_dict()}
+            )
+        if self.metrics:
+            state_dict.update(
+                {"metrics": {k: v.state_dict() for k, v in self.metrics.items()}}
+            )
+            return state_dict
 
     def load_state_dict(self, state_dict, strict=True):
         if "loss" in state_dict:
@@ -227,4 +229,6 @@ class SegmentationModel(Model):
 
 
 Model.register("segmentation_model", "from_partial")(SegmentationModel)
-Model.register("segmentation_model_color_labels", "from_color_labels")(SegmentationModel)
+Model.register("segmentation_model_color_labels", "from_color_labels")(
+    SegmentationModel
+)
