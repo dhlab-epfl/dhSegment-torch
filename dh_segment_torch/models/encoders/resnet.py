@@ -35,7 +35,7 @@ class ResNetEncoder(Encoder, ResNet):
         self.blocks = blocks
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
-        x = Encoder.forward(self, x)
+        x = super().normalize_if_pretrained(x)
 
         layers = [
             nn.Sequential(self.conv1, self.bn1, self.relu),

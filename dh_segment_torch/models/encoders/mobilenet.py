@@ -40,7 +40,7 @@ class MobileNetV2Encoder(Encoder, MobileNetV2):
         self.blocks = blocks
 
     def forward(self, x):
-        x = Encoder.forward(self, x)
+        x = super().normalize_if_pretrained(x)
 
         layers = [
             self.features[:2],

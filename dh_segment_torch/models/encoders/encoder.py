@@ -42,7 +42,7 @@ class Encoder(torch.nn.Module, Registrable):
             else:
                 raise ValueError("Cannot be pretrained if pretrained_settings is None")
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def normalize_if_pretrained(self, x: torch.Tensor) -> torch.Tensor:
         if self.pretrained:
             x = normalize_batch(
                 x, self.pretrained_settings["mean"], self.pretrained_settings["std"]
