@@ -1,9 +1,10 @@
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Union
 
 import torch
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.nn.loss import dice_loss
+from dh_segment_torch.nn.loss import topology_loss
 from dh_segment_torch.utils.ops import cut_with_padding
 
 
@@ -36,7 +37,7 @@ class Loss(torch.nn.Module, Registrable):
             )
         else:
             if self.margin > 0:
-                loss = loss[..., self.margin:-self.margin, self.margin:-self.margin]
+                loss = loss[..., self.margin : -self.margin, self.margin : -self.margin]
             return loss
 
 
@@ -117,7 +118,25 @@ class DiceLoss(Loss):
         )
 
 
-@Loss.register("combined_loss")
+@Loss.register("topology")
+class TopologyLoss(Loss):
+    def __init__(
+        self,
+        layers_sel: Union[int, List[int]],
+        labels_sel: Optional[List[int]] = None,
+        multilabel: bool = False,
+        ignore_padding: bool = False,
+        margin: int = 0,
+    ):
+        if ignore_padding:
+            raise ValueError("Cannot compute topology loss and ignore padding")
+        loss = topology_loss.TopologyLoss(layers_sel, labels_sel, multilabel)
+        super().__init__(
+            loss_module=loss, ignore_padding=False, margin=margin,
+        )
+
+
+@Loss.register("combined")
 class CombinedLoss(Loss):
     def __init__(self, losses: List[Loss], weights: Optional[List[float]] = None):
         super().__init__(torch.nn.Identity)

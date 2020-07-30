@@ -24,7 +24,7 @@ _INITIALIZER = [
     "SparseInitializer",
 ]
 
-_LOSS = ["Loss", "CrossEntropyLoss", "BCEWithLogitsLoss", "DiceLoss", "CombinedLoss"]
+_LOSS = ["Loss", "CrossEntropyLoss", "BCEWithLogitsLoss", "DiceLoss", "TopologyLoss", "CombinedLoss"]
 
 _NORMALIZATION = [
     "Normalization",
