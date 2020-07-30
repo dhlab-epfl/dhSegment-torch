@@ -11,19 +11,23 @@ from dh_segment_torch.data.annotation.shape import Shape
 
 
 class LabelsAnnotations(Registrable, MutableMapping):
+    """
+    Represents a dictionary of label to shapes.
+    The keys can be either tuples in case of multi-labels, either string for multi-class.
+    """
     default_implementation = "default"
 
     def __init__(self, *args, **kwargs):
         self.annots: Dict[Union[Tuple[str, ...], str], List[Shape]] = {}
         self.update(dict(*args, **kwargs))
 
-    def __getitem__(self, label: str):
+    def __getitem__(self, label: Union[Tuple[str, ...], str]):
         return self.annots[label]
 
-    def __setitem__(self, label: str, shapes: List[Shape]):
+    def __setitem__(self, label: Union[Tuple[str, ...], str], shapes: List[Shape]):
         self.annots[label] = shapes
 
-    def __delitem__(self, label: str):
+    def __delitem__(self, label: Union[Tuple[str, ...], str]):
         del self.annots[label]
 
     def __iter__(self):

@@ -16,8 +16,8 @@ from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotation
 from dh_segment_torch.data.annotation.utils import is_url, extract_image_name_with_ext
 from dh_segment_torch.data.annotation.writers.via.utils import (
     DEFAULT_VIA2_DICT,
-    AnnotationProcessorDataset,
 )
+from dh_segment_torch.data.annotation.writers.utils import AnnotationProcessorDataset, _collate_fn
 
 logger = logging.getLogger(__name__)
 
@@ -261,10 +261,3 @@ def shape_to_via_shapes(shape: sh.Shape, image_size: ImageSize) -> List[Dict[str
         return shapes
     else:
         raise ValueError(f"The shape {shape} is not supported")
-
-
-def _collate_fn(examples):
-    res = {}
-    for example in examples:
-        res.update(example)
-    return res

@@ -138,7 +138,7 @@ class ColorLabels(Registrable):
         colors = [parse_and_validate_color(color) for color in labels_classes[:, :3]]
 
         if labels_classes.shape[1] == 3:
-            return cls(colors)
+            return cls(colors, labels=labels)
         else:
             one_hot_encoding = [
                 parse_validate_one_hot(one_hot) for one_hot in labels_classes[:, 3:]

@@ -209,3 +209,11 @@ def iiif_url_to_resized(
     match = iiif_regex.match(iiif_url)
 
     return f"{match.group(1)}{match.group(3)}/{query_str}/{match.group(5)}/{match.group(6)}"
+
+
+def iiif_url_to_manifest(
+    iiif_url: str,
+) -> str:
+    match = iiif_regex.match(iiif_url)
+    return f"{match.group(1)}info.json"
+

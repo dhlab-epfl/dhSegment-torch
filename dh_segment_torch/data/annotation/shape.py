@@ -328,7 +328,7 @@ class MultiPolygon(Shape):
             mask |= poly.mask(mask_size)
         return mask
 
-    def geometry(self, mask_size: ImageSize) -> geometry.base.BaseGeometry:
+    def geometry(self, mask_size: ImageSize) -> geometry.MultiPolygon:
         return ops.unary_union([poly.geometry(mask_size) for poly in self.polygons])
 
     def normalize_coords(self, image_size: ImageSize):

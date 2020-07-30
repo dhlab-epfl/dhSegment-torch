@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Tuple, Optional
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dh_segment_torch.data.annotation import shape as sh
+from dh_segment_torch.data.annotation import shape as sh, AnnotationProcessorDataset
 from dh_segment_torch.data.annotation.annotation import Annotation
 from dh_segment_torch.data.annotation.annotation_iterator import AnnotationIterator
 from dh_segment_torch.data.annotation.writers.annotation_writer import AnnotationWriter
@@ -20,8 +20,8 @@ from dh_segment_torch.data.annotation.utils import (
     extract_image_name_with_ext,
     is_url,
 )
+from dh_segment_torch.data.annotation.writers.utils import _collate_fn
 from dh_segment_torch.data.annotation.writers.via.utils import (
-    AnnotationProcessorDataset,
     DEFAULT_VIA3_DICT,
 )
 
@@ -282,13 +282,6 @@ def shape_to_via_shapes(shape: sh.Shape, image_size: ImageSize) -> List[List[int
         return shapes
     else:
         raise ValueError(f"The shape {shape} is not supported")
-
-
-def _collate_fn(examples):
-    res = {}
-    for example in examples:
-        res.update(example)
-    return res
 
 
 def get_id(size=8, chars=string.ascii_letters + string.digits):
