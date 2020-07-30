@@ -88,6 +88,7 @@ class Trainer(Registrable):
         for epochs in batch_items(
             range(self.epoch+1, self.epoch+self.num_epochs + 1), self.evaluate_every_epoch
         ):
+            self.model.train()
             for epoch in epochs:
                 self.epoch = epoch
                 metrics, losses = self.train_epoch()
@@ -159,7 +160,6 @@ class Trainer(Registrable):
         return metrics, losses
 
     def train_step(self, batch: Dict[str, torch.Tensor]):
-        self.model.train()
         result = self.apply_model_to_batch(
             batch, track_metrics=self.track_train_metrics
         )
@@ -176,13 +176,14 @@ class Trainer(Registrable):
             result = None
 
             pbar = tqdm(desc=f"Evaluating", leave=False)
-
-            for batch in self.val_loader:
-                num_iterations += 1
-                result = self.val_step(batch)
-                val_loss += result["loss"].item()
-                val_reg_loss += result["reg_loss"].item()
-                pbar.update()
+            with torch.no_grad():
+                self.model.eval()
+                for batch in self.val_loader:
+                    num_iterations += 1
+                    result = self.val_step(batch)
+                    val_loss += result["loss"].item()
+                    val_reg_loss += result["reg_loss"].item()
+                    pbar.update()
             pbar.close()
 
             metrics, losses = self.get_metrics_and_losses(
@@ -203,9 +204,7 @@ class Trainer(Registrable):
                 )
 
     def val_step(self, batch: Dict[str, torch.Tensor]):
-        with torch.no_grad():
-            self.model.eval()
-            return self.apply_model_to_batch(batch, track_metrics=True)
+        return self.apply_model_to_batch(batch, track_metrics=True)
 
     def apply_model_to_batch(
         self, batch: Dict[str, torch.Tensor], track_metrics: bool = False

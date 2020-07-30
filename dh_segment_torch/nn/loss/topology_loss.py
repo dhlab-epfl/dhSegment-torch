@@ -39,7 +39,7 @@ class TopologyLoss(torch.nn.Module):
         else:
             probas = torch.softmax(logits, dim=1)
 
-        loss = torch.tensor(0.0)
+        loss = torch.tensor(0.0).to(logits.device)
 
         if self.labels_sel:
             labels_sel = self.labels_sel
@@ -48,14 +48,14 @@ class TopologyLoss(torch.nn.Module):
 
         for label_index in labels_sel:
             for features_extractor in self.features_extractors:
-                pred_features = features_extractor(
+                pred_features = features_extractor.to(logits.device)(
                     probas[:, label_index].unsqueeze(1).repeat(1, 3, 1, 1)
                 )
                 if self.multilabel:
                     labels = target[:, label_index]
                 else:
                     labels = (target == label_index).to(torch.float)
-                gt_features = features_extractor(
+                gt_features = features_extractor.to(logits.device)(
                     labels.unsqueeze(1).repeat(1, 3, 1, 1)
                 )
                 loss += self.mse(pred_features, gt_features)
