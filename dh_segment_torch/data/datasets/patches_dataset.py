@@ -287,8 +287,8 @@ def sample_to_patche_samples(
         offsets = np.random.rand(2)
         h, w = sample["image"].shape[:2]
 
-        offset_h = round(offsets[0] * h // 2)
-        offset_w = round(offsets[1] * w // 2)
+        offset_h = (offsets[0] * h) // 2
+        offset_w = (offsets[1] * w) // 2
     else:
         offset_h = 0
         offset_w = 0
