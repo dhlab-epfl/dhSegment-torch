@@ -92,7 +92,7 @@ _ALBUMENTATION_TRANSFORMS = [
     "ToSepia",
     "Transpose",
     "VerticalFlip",
-    "_BaseRandomSizedCrop",
+    "BaseRandomSizedCrop",
 ]
 
 _IMG_AUG_TRANSFORMS = [

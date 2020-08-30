@@ -43,6 +43,17 @@ class Loss(torch.nn.Module, Registrable):
 
 @Loss.register("cross_entropy")
 class CrossEntropyLoss(Loss):
+    """Cross entropy loss.
+
+    C.f. :class:`torch.nn.CrossEntropyLoss` for this loss
+
+    :param weights: C.f. pytorch doc.
+    :param size_average: C.f. pytorch doc.
+    :param ignore_index: C.f. pytorch doc.
+    :param reduction: C.f. pytorch doc.
+    :param ignore_padding: Whether to compute the loss ignoring the padding and margin.
+    :param margin: The margin size, only used if the padding is ignored in the computation.
+    """
     def __init__(
         self,
         weights: Optional[List[float]] = None,
@@ -52,15 +63,6 @@ class CrossEntropyLoss(Loss):
         ignore_padding: bool = False,
         margin: int = 0,
     ):
-        """
-
-        :param weights: Class weights, must be of size C
-        :param size_average:
-        :param ignore_index:
-        :param reduction:
-        :param ignore_padding:
-        :param margin:
-        """
         if ignore_padding:
             reduction = "none"
         loss = torch.nn.CrossEntropyLoss(
@@ -76,6 +78,16 @@ class CrossEntropyLoss(Loss):
 
 @Loss.register("bce_with_logits")
 class BCEWithLogitsLoss(Loss):
+    """Binary Cross Entropy Loss with logits.
+
+     C.f. :class:`torch.nn.BCEWithLogitsLoss` for this loss
+
+    :param weights: C.f. pytorch doc.
+    :param size_average: C.f. pytorch doc.
+    :param reduction: C.f. pytorch doc.
+    :param ignore_padding: Whether to compute the loss ignoring the padding and margin.
+    :param margin: The margin size, only used if the padding is ignored in the computation.
+    """
     def __init__(
         self,
         weights: Optional[List[float]] = None,
@@ -84,14 +96,6 @@ class BCEWithLogitsLoss(Loss):
         ignore_padding: bool = False,
         margin: int = 0,
     ):
-        """
-
-        :param weights: Class weights, must be of size C
-        :param size_average:
-        :param reduction:
-        :param ignore_padding:
-        :param margin:
-        """
         if ignore_padding:
             reduction = "none"
         loss = torch.nn.BCEWithLogitsLoss(
@@ -106,6 +110,19 @@ class BCEWithLogitsLoss(Loss):
 
 @Loss.register("dice")
 class DiceLoss(Loss):
+    r"""Dice Coefficient Loss.
+
+    This loss penalizes the dissimilarity between the ground truth :math:`Y` and the prediction :math:`\hat{Y}` with a smoothing factor :math:`\alpha`, it is defined as:
+
+    .. math::
+        \text{loss}(Y, \hat{Y}) = 1-\frac{2 \left(\vert Y\cap \hat{Y} \vert + \alpha \right)}{\vert Y \vert + \vert \hat{Y} \vert + \alpha}
+
+    It ressembles Intersection over Union (IoU), except that it counts true positives twice in the denominator.
+
+    :param smooth: Smoothing ratio.
+    :param ignore_padding: Whether to compute the loss ignoring the padding and margin.
+    :param margin: The margin size, only used if the padding is ignored in the computation.
+    """
     def __init__(
         self, smooth: float = 1.0, ignore_padding: bool = False, margin: int = 0
     ):
@@ -120,6 +137,20 @@ class DiceLoss(Loss):
 
 @Loss.register("topology")
 class TopologyLoss(Loss):
+    r"""Topology loss.
+
+    Implementation of the loss presented in  `arXiv:1712.02190 <https://arxiv.org/abs/1712.02190>`__.
+
+    For a selection of labels, it takes the corresponding ground truth and prediction probabilities,
+    compute for a selection of layers levels of an imagenet pre-trained VGG19 the result of each probabilities map and
+    finally compute the sum of RMSE.
+
+    :param layers_sel: Single layer or list of layers for the VGG19 selection, can be in range [1,4].
+    :param labels_sel: List of labels index selected.
+    :param multilabel: Whether the model is multilabel.
+    :param ignore_padding: Cannot be used with this loss.
+    :param margin: Not used.
+    """
     def __init__(
         self,
         layers_sel: Union[int, List[int]],
@@ -138,6 +169,13 @@ class TopologyLoss(Loss):
 
 @Loss.register("combined")
 class CombinedLoss(Loss):
+    r"""Weighted combination of losses.
+
+    Combines several losses with pre-defined weights or equal weights by default.
+
+    :param losses: List of :class:`losses <.Loss>`.
+    :param weights: Optional weights list that should be the same size as the number of losses.
+    """
     def __init__(self, losses: List[Loss], weights: Optional[List[float]] = None):
         super().__init__(torch.nn.Identity)
         self.losses = losses

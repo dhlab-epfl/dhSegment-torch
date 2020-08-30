@@ -55,6 +55,26 @@ class Trainer(Registrable):
         device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
         reset_early_stopping: bool = True,
     ):
+        """
+
+        :param train_loader:
+        :param model:
+        :param optimizer:
+        :param val_loader:
+        :param val_metric_tracker:
+        :param lr_scheduler:
+        :param regularizer:
+        :param early_stopping:
+        :param train_checkpoint:
+        :param val_checkpoint:
+        :param loggers:
+        :param num_epochs:
+        :param evaluate_every_epoch:
+        :param num_accumulation_steps:
+        :param track_train_metrics:
+        :param device:
+        :param reset_early_stopping:
+        """
         self.train_loader = train_loader
         self.model = model
         self.optimizer = optimizer
@@ -325,7 +345,41 @@ class Trainer(Registrable):
         exp_name: str = "dhSegment_experiment",
         config: Optional[Dict[str, Any]] = None,
     ):
+        """
 
+        :param color_labels:
+        :param train_dataset:
+        :param model:
+        :param optimizer:
+        :param metrics:
+        :param train_loader:
+        :param val_dataset:
+        :param val_loader:
+        :param lr_scheduler:
+        :param regularizer:
+        :param initializer:
+        :param early_stopping:
+        :param train_checkpoint:
+        :param val_checkpoint:
+        :param val_metric_tracker:
+        :param loggers:
+        :param val_metric:
+        :param batch_size:
+        :param shuffle_train:
+        :param num_data_workers:
+        :param ignore_padding:
+        :param training_margin:
+        :param num_epochs:
+        :param evaluate_every_epoch:
+        :param num_accumulation_steps:
+        :param model_out_dir:
+        :param track_train_metrics:
+        :param device:
+        :param reset_early_stopping:
+        :param exp_name:
+        :param config:
+        :return:
+        """
         if color_labels.multilabel:
             assign_transform = AssignMultilabel(
                 color_labels.colors, color_labels.one_hot_encoding

@@ -31,6 +31,10 @@ class OneOf(composition.OneOf, Transform):
 
 @Transform.register("blur")
 class Blur(transforms.Blur, Transform):
+    """
+    Cf. :class:`~albumentations.augmentations.transforms.Blur` for arguments and usage.
+
+    """
     def __init__(
         self,
         blur_limit: Union[int, Tuple[int, int]] = 7,
@@ -1029,7 +1033,7 @@ class VerticalFlip(transforms.VerticalFlip, Transform):
 
 
 @Transform.register("base_random_sized_crop")
-class _BaseRandomSizedCrop(transforms._BaseRandomSizedCrop, Transform):
+class BaseRandomSizedCrop(transforms._BaseRandomSizedCrop, Transform):
     def __init__(
         self, interpolation: int = 1, always_apply: bool = False, p: float = 1.0
     ):

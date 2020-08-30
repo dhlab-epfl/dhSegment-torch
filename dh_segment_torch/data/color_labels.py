@@ -12,7 +12,6 @@ from dh_segment_torch.data.utils import parse_and_validate_color, n_colors
 
 logger = logging.getLogger(__name__)
 
-
 class ColorLabels(Registrable):
     default_implementation = "json"
 
@@ -22,6 +21,11 @@ class ColorLabels(Registrable):
         one_hot_encoding: Optional[List[List[int]]] = None,
         labels: Optional[List[str]] = None,
     ):
+        """s
+        :param colors:
+        :param one_hot_encoding:
+        :param labels:
+        """
         self.colors = colors
         self.one_hot_encoding = one_hot_encoding
         self.labels = labels
@@ -64,7 +68,7 @@ class ColorLabels(Registrable):
             return len(self.colors)
 
     @classmethod
-    def from_filter_by_colors(cls, color_labels, colors: Set[Tuple[int, int, int]]):
+    def from_filter_by_colors(cls, color_labels: 'ColorLabels', colors: Set[Tuple[int, int, int]]):
         new_colors = []
         new_one_hot_encoding = None
         new_labels = None
@@ -125,6 +129,13 @@ class ColorLabels(Registrable):
     def from_labels_text_file(
         cls, label_text_file: Union[str, Path], labels: Optional[List[str]] = None
     ):
+        """
+        From label text file
+
+        :param label_text_file:
+        :param labels:
+        :return:
+        """
         label_text_file = str(label_text_file)
         if not os.path.exists(label_text_file):
             raise FileNotFoundError(label_text_file)
@@ -147,6 +158,10 @@ class ColorLabels(Registrable):
 
     @classmethod
     def from_labels_json_file(cls, label_json_file: Union[str, Path]):
+        """
+        :param label_json_file:
+        :return:
+        """
         label_json_file = str(label_json_file)
         if not os.path.exists(label_json_file):
             raise FileNotFoundError(label_json_file)

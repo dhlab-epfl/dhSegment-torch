@@ -27,6 +27,15 @@ class Dataset(torch.utils.data.Dataset, Registrable, ABC):
         label_base_dir: Optional[Union[str, Path]] = None,
         repeat_dataset: int = 1,
     ):
+        """
+        Dataset
+
+        :param data:
+        :param base_dir:
+        :param image_base_dir:
+        :param label_base_dir:
+        :param repeat_dataset:
+        """
         self.data = data.applymap(lambda path: path.strip())
 
         if base_dir:
