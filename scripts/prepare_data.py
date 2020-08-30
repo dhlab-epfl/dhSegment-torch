@@ -121,8 +121,8 @@ if __name__ == "__main__":
     data = image_writer.write(num_processes)
 
     if relative_path:
-        data['image'] = data['image'].apply(lambda path: os.path.join("labels", os.path.basename(path)))
-        data['label'] = data['label'].apply(lambda path: os.path.join("images", os.path.basename(path)))
+        data['image'] = data['image'].apply(lambda path: os.path.join("images", os.path.basename(path)))
+        data['label'] = data['label'].apply(lambda path: os.path.join("labels", os.path.basename(path)))
 
     if data_splitter_params:
         data_splitter = DataSplitter.from_params(data_splitter_params)
