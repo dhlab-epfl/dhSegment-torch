@@ -1,13 +1,11 @@
 import json
 import uuid
 from copy import deepcopy
-from typing import Dict, Any, List
+from typing import Dict, Any
 
-from torch.utils.data import DataLoader
-
-from dh_segment_torch.data.annotation.writers.utils import AnnotationProcessorDataset, _collate_fn
 from lxml import etree
 from shapely import geometry
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from dh_segment_torch.data.annotation import Annotation
@@ -20,6 +18,7 @@ from dh_segment_torch.data.annotation.shape import (
 )
 from dh_segment_torch.data.annotation.utils import iiif_url_to_manifest
 from dh_segment_torch.data.annotation.writers.annotation_writer import AnnotationWriter
+from dh_segment_torch.data.annotation.writers.utils import AnnotationProcessorDataset, _collate_fn
 
 
 @AnnotationWriter.register("mirador")

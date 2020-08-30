@@ -140,7 +140,7 @@ iiif_regex = re.compile(
     r"!?\d+,\d+"
     r"|pct:\d+)"
     r"/(!?[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)"  # rotation
-    r"/((?:color|gray|bitonal|default)"  # quality
+    r"/((?:color|gray|bitonal|default|native)"  # quality
     r".(?:jpg|tif|png|gif|jp2|pdf|webp)))"  # format
 )
 
@@ -151,11 +151,22 @@ def is_iiif_url(url):
 
 def extract_image_filename(img_path: str) -> str:
     if is_iiif_url(img_path):
-        return iiif_regex.search(img_path).group(2)
+        return extract_iiif_filename(img_path)
     elif img_path.startswith("http"):
         return img_path.split("/")[-1]
     else:
         return os.path.basename(img_path)
+
+
+def make_safe(string: str):
+    keepcharacters = (" ", ".", "_")
+    return "".join(c for c in string if c.isalnum() or c in keepcharacters).rstrip()
+
+
+def extract_iiif_filename(iiif_url: str):
+    first_part = iiif_regex.match(iiif_url)[1]
+    without_address = first_part.split(".")[-1]
+    return "_".join([make_safe(s) for s in without_address.split("/")[1:]]).strip("_")
 
 
 def extract_image_ext(img_path: str) -> str:
@@ -211,9 +222,6 @@ def iiif_url_to_resized(
     return f"{match.group(1)}{match.group(3)}/{query_str}/{match.group(5)}/{match.group(6)}"
 
 
-def iiif_url_to_manifest(
-    iiif_url: str,
-) -> str:
+def iiif_url_to_manifest(iiif_url: str,) -> str:
     match = iiif_regex.match(iiif_url)
     return f"{match.group(1)}info.json"
-

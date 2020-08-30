@@ -52,7 +52,11 @@ class VIA2Reader(AnnotationReader):
             path = append_image_dir(path, image_dir)
             all_paths.append(path)
             for region in item["regions"]:
-                shape = parse_via2_shape(region["shape_attributes"])
+                shape = parse_via2_shape(
+                    region["shape_attributes"],
+                    point_radius=self.point_radius,
+                    line_thickness=self.line_thickness,
+                )
                 labels = []
                 if self.attrib_name in region["region_attributes"]:
                     label = region["region_attributes"][self.attrib_name]
