@@ -7,7 +7,7 @@ This respository contains the PyTorch version of **dhSegment** which the one cur
 
 The no longer developed Tensorflow version can still be found at this [address](https://dhsegment.readthedocs.io).
 
-The original version was created by [Benoit Seguin](https://twitter.com/Seguin_Be) and Sofia Ares Oliveiëra at DHLAB, EPFL.
+The original version was created by [Benoit Seguin](https://twitter.com/Seguin_Be) and Sofia Ares Oliveira at DHLAB, EPFL.
 
 The complete rewrite in Pytorch was done by Sofia Ares Oliveira and Raphäel Barman. Current development is currently pursued by Raphaël Barman.
 
