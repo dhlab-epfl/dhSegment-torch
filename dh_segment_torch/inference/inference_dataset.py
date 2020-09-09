@@ -48,7 +48,7 @@ class InferenceDataset(torch.utils.data.Dataset, Registrable):
 
         if self.pre_processing:
             image = self.pre_processing(image=image)["image"]
-        return {"image": np_to_tensor(image), "shape": torch.tensor(image.shape[:2])}
+        return {"image": np_to_tensor(image), "shape": torch.tensor(image.shape[:2]), 'path': image_path}
 
     @classmethod
     def from_folder(
