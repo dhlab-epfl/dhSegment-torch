@@ -345,6 +345,7 @@ class Trainer(Registrable):
                 dataset=train_dataset,
                 batch_size=batch_size,
                 num_workers=min(num_data_workers, train_dataset.num_images),
+                shuffle=True and not is_patches,
             )
         else:
             train_loader = DataLoader(
@@ -361,6 +362,7 @@ class Trainer(Registrable):
                     dataset=val_dataset,
                     batch_size=batch_size,
                     num_workers=min(num_data_workers, val_dataset.num_images),
+                    shuffle=False,
                 )
             else:
                 val_loader = DataLoader(
