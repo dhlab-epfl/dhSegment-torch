@@ -22,6 +22,7 @@ _BASE = [
     "MergeLists",
     "ExtractIndexOpration",
     "IntermediaryOutput",
+    "ProbasToImageSize",
     "MergeListsOperation",
     "PostProcessingPipeline",
     "DagPipeline",
