@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Tuple, Optional
 
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from dh_segment_torch.data.annotation import shape as sh, AnnotationProcessorDataset
 from dh_segment_torch.data.annotation.annotation import Annotation

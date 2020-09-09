@@ -6,7 +6,7 @@ from typing import Dict, Any
 from lxml import etree
 from shapely import geometry
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from dh_segment_torch.data.annotation import Annotation
 from dh_segment_torch.data.annotation.annotation_iterator import AnnotationIterator

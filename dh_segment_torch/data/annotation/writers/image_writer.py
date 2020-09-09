@@ -5,7 +5,7 @@ from typing import Union, Optional
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.data.annotation.annotation_iterator import AnnotationIterator

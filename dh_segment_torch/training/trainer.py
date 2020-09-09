@@ -3,7 +3,7 @@ from typing import Optional, List, Union, Dict, Tuple, Any
 
 import torch
 from torch.utils import data
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.config.registrable import Registrable
