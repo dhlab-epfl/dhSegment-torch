@@ -94,6 +94,9 @@ class IntermediaryOutput(SplitOperation):
 
 @Operation.register("probas_to_image_size")
 class ProbasToImageSize(Operation):
+    def __init__(self):
+        pass
+
     def __call__(self, probas: np.array, *args, **kwargs) -> ImageSize:
         return self.apply(probas, *args, **kwargs)
 
