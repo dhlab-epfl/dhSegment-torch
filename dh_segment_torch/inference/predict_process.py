@@ -1,6 +1,7 @@
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Union
 
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.data_loader import collate_fn
@@ -20,6 +21,8 @@ def collate_fn_with_paths(examples):
 
 
 class PredictProcess(Registrable):
+    default_implementation = "default"
+
     def __init__(
         self,
         data: InferenceDataset,
@@ -29,7 +32,7 @@ class PredictProcess(Registrable):
         num_workers: int = 0,
         index_to_name: Optional[Dict[int, str]] = None,
         add_path: bool = False,
-        output_names: Optional[List[str]] = None,
+        output_names: Optional[Union[str, List[str]]] = None,
         progress: bool = True,
     ):
         self.data = data
@@ -53,7 +56,7 @@ class PredictProcess(Registrable):
             collate_fn=collate_fn_with_paths,
         )
 
-        for example in data_loader:
+        for example in tqdm(data_loader):
             images_batch = example["input"]
             shapes = example["shapes"]
             paths = example["paths"]
@@ -73,11 +76,18 @@ class PredictProcess(Registrable):
                     complete_result = self.post_process.apply(probas, **kwargs)
 
                 if self.output_names:
-                    result = {}
-                    for name in self.output_names:
-                        result[name] = complete_result[name]
+                    if isinstance(self.output_names, str):
+                        result = complete_result[self.output_names]
+                    else:
+                        result = {}
+
+                        for name in self.output_names:
+                            result[name] = complete_result[name]
                 else:
                     result = complete_result
 
                 results.append(result)
         return results
+
+
+PredictProcess.register("default")(PredictProcess)
