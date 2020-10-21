@@ -23,6 +23,7 @@ setup(
         "numpy>=1.18.1,<1.19.0",
         "scipy>=1.3.0,<1.4.0",
         "networkx>=2.4",
+        "lxml>=4.6.1",
         "sacred>=0.8.0",
         "pretrainedmodels>=0.7.4",
         "opencv-python-headless>=4.3.0",
