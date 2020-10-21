@@ -3,7 +3,7 @@ from typing import Optional, List, Union, Dict, Tuple, Any
 
 import torch
 from torch.utils import data
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.config.registrable import Registrable
@@ -345,6 +345,7 @@ class Trainer(Registrable):
                 dataset=train_dataset,
                 batch_size=batch_size,
                 num_workers=min(num_data_workers, train_dataset.num_images),
+                shuffle=True and not is_patches,
             )
         else:
             train_loader = DataLoader(
@@ -361,6 +362,7 @@ class Trainer(Registrable):
                     dataset=val_dataset,
                     batch_size=batch_size,
                     num_workers=min(num_data_workers, val_dataset.num_images),
+                    shuffle=False,
                 )
             else:
                 val_loader = DataLoader(

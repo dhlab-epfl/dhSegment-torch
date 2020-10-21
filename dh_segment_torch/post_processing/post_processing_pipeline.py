@@ -15,11 +15,11 @@ class PostProcessingPipeline(Registrable):
     def __init__(self, operations: List[Operation]):
         self.operations = operations
 
-    def apply(self, probabilities: np.array) -> Any:
-        result = probabilities
+    def apply(self, *args, **kwargs) -> Dict[str, Any]:
+        result = args[0]
         for operation in self.operations:
             result = operation(result)
-        return result
+        return {"res": result}
 
 
 PostProcessingPipeline.register("default")(PostProcessingPipeline)
@@ -57,7 +57,7 @@ class DagPipeline(PostProcessingPipeline):
             [name for name, in_degree in list(self.dag.in_degree()) if in_degree == 0]
         )
 
-    def apply(self, *args, **kwargs):
+    def apply(self, *args, **kwargs) -> Dict[str, Any]:
         inputs = self.parse_and_validate_input(*args, **kwargs)
 
         results = {}
