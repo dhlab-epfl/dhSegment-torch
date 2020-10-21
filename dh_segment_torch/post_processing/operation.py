@@ -1,6 +1,7 @@
 from typing import Union, List, Optional, TypeVar
 
 import numpy as np
+from dh_segment_torch.data.annotation.image_size import ImageSize
 from shapely import geometry
 
 from dh_segment_torch.config.registrable import Registrable
@@ -89,6 +90,18 @@ class ConcatLists(Operation):
 class IntermediaryOutput(SplitOperation):
     def __init__(self, operations: List[Operation]):
         super().__init__([[NoOperation()], operations])
+
+
+@Operation.register("probas_to_image_size")
+class ProbasToImageSize(Operation):
+    def __init__(self):
+        pass
+
+    def __call__(self, probas: np.array, *args, **kwargs) -> ImageSize:
+        return self.apply(probas, *args, **kwargs)
+
+    def apply(self, probas: np.array, *args, **kwargs) -> ImageSize:
+        return ImageSize(*probas.shape[-2:])
 
 
 class ClasswiseOperation(Operation):

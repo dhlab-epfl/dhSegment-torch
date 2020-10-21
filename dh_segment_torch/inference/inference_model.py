@@ -13,7 +13,7 @@ from dh_segment_torch.models import Model
 from dh_segment_torch.utils.ops import batch_items
 
 
-class ModelInference(Registrable):
+class InferenceModel(Registrable):
     default_implementation = "default"
 
     def __init__(
@@ -31,7 +31,7 @@ class ModelInference(Registrable):
         device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
     ):
         if model_state_dict is not None:
-            model.load_state_dict(model_state_dict)
+            model.load_state_dict(model_state_dict, strict=False)
         self.model = model
         self.device = device
 
@@ -53,17 +53,19 @@ class ModelInference(Registrable):
         else:
             self.predict = self.predict_batch
 
-    def predict_batch(self, images_batch: torch.tensor) -> torch.tensor:
+    def predict_batch(self, images_batch: torch.tensor, shapes: torch.tensor = None) -> torch.tensor:
         images_batch = images_batch.to(self.device)
         if self.margin > 0:
             images_batch = F.pad(
                 images_batch, [self.margin] * 4, self.padding_mode, self.padding_value
             )
 
-        result = self.model.to(self.device)(images_batch)
+        with torch.no_grad():
+            self.model.eval()
+            result = self.model.to(self.device)(images_batch)
         logits = result["logits"]
         if self.margin > 0:
-            logits = logits[..., self.margin : -self.margin, self.margin : -self.margin]
+            logits = logits[..., self.margin: -self.margin, self.margin: -self.margin]
 
         if self.multilabel:
             probas = torch.sigmoid(logits)
@@ -140,12 +142,14 @@ class ModelInference(Registrable):
         patch_size: Tuple[int, int] = None,
         patches_overlap: Union[int, float] = 0,
         patches_batch_size: int = 4,
-        model_state_dict: Dict[str, Any] = None,
+        model_state_dict: str = None,
         device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
     ):
         model = model.construct(
             num_classes=num_classes, multilabel=multilabel, margin=margin
         )
+
+        model_state_dict = torch.load(model_state_dict, map_location=device)
         return cls(
             model,
             num_classes,
@@ -171,7 +175,7 @@ class ModelInference(Registrable):
         padding_value: int = 0,
         patches_overlap: Union[int, float] = 0,
         patches_batch_size: int = 4,
-        model_state_dict: Dict[str, Any] = None,
+        model_state_dict: str = None,
         device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
     ):
         if hasattr(dataset, "patches_size"):
@@ -179,6 +183,7 @@ class ModelInference(Registrable):
         else:
             patches_size = None
 
+        model_state_dict = torch.load(model_state_dict, map_location=device)
         return cls.from_partial(
             model,
             color_labels.num_classes,
@@ -194,9 +199,9 @@ class ModelInference(Registrable):
         )
 
 
-ModelInference.register("default", "from_partial")(ModelInference)
-ModelInference.register("training_config", "from_color_labels_and_dataset")(
-    ModelInference
+InferenceModel.register("default", "from_partial")(InferenceModel)
+InferenceModel.register("training_config", "from_color_labels_and_dataset")(
+    InferenceModel
 )
 
 
