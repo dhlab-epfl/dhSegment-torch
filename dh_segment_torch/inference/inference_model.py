@@ -1,9 +1,9 @@
 from itertools import product
-from typing import Dict, Any, Tuple, Union
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+from typing import Dict, Any, Tuple, Union
 
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.config.registrable import Registrable
@@ -53,7 +53,9 @@ class InferenceModel(Registrable):
         else:
             self.predict = self.predict_batch
 
-    def predict_batch(self, images_batch: torch.tensor, shapes: torch.tensor = None) -> torch.tensor:
+    def predict_batch(
+        self, images_batch: torch.tensor, shapes: torch.tensor = None
+    ) -> torch.tensor:
         images_batch = images_batch.to(self.device)
         if self.margin > 0:
             images_batch = F.pad(
@@ -65,7 +67,7 @@ class InferenceModel(Registrable):
             result = self.model.to(self.device)(images_batch)
         logits = result["logits"]
         if self.margin > 0:
-            logits = logits[..., self.margin: -self.margin, self.margin: -self.margin]
+            logits = logits[..., self.margin : -self.margin, self.margin : -self.margin]
 
         if self.multilabel:
             probas = torch.sigmoid(logits)
@@ -90,7 +92,7 @@ class InferenceModel(Registrable):
             shapes = torch.tensor([images_batch.size()[-2:]])
         results = []
         for image, shape in zip(images_batch, shapes):
-            h, w = shape
+            h, w = shape.numpy()
             image = image[..., :h, :w]
 
             x_step = compute_step(
@@ -100,12 +102,16 @@ class InferenceModel(Registrable):
                 w, self.patch_size[1], self.margin, self.patches_overlap
             )
 
-            x_pos = np.round(
-                np.arange(x_step + 1) / x_step * (h - self.patch_size[0])
-            ).astype(np.int32)
-            y_pos = np.round(
-                np.arange(y_step + 1) / y_step * (w - self.patch_size[1])
-            ).astype(np.int32)
+            x_pos = (
+                np.round(np.arange(x_step + 1) / x_step * (h - self.patch_size[0]))
+                .astype(np.int32)
+                .tolist()
+            )
+            y_pos = (
+                np.round(np.arange(y_step + 1) / y_step * (w - self.patch_size[1]))
+                .astype(np.int32)
+                .tolist()
+            )
 
             counts = torch.zeros((h, w), dtype=torch.long).to(self.device)
             probas_sum = torch.zeros([self.num_classes, h, w]).to(self.device)
@@ -121,7 +127,7 @@ class InferenceModel(Registrable):
                 )
 
                 probas = self.predict_batch(crops)
-                for idx, (x, y) in positions:
+                for idx, (x, y) in enumerate(positions):
                     counts[x : x + self.patch_size[0], y : y + self.patch_size[1]] += 1
                     probas_sum[
                         :, x : x + self.patch_size[0], y : y + self.patch_size[1]
