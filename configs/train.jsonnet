@@ -9,6 +9,10 @@ local train_base = import 'train_base.libsonnet';
 local fixed_size_resize = 1e6;
 
 train_base + {
+
+  # TODO update the path to which the model will be saved
+  model_out_dir : "/path/to/model/dir",
+
   # Definition of the mapping of colors and labels
   # Need to at least define each color (label key is optional)
   # TODO update the colors_labels to match your own data.
@@ -24,10 +28,10 @@ train_base + {
   },
   # If you used the data creation script, you can use the generated json file.
   # You can comment the previous color_labels and uncomment following lines
-  # colors_labels: {
+  # color_labels: {
   #   type: "json",
   #   label_json_file: "/path/to/color_labels.json"
-  #}
+  #},
 
   # Definition of the training and validation datasets
   # TODO update the paths to the CSVs and base_dir
@@ -49,7 +53,6 @@ train_base + {
             }
 
      },
-
   # Same as training without data augmentation, but keeping the fixed resize
   val_dataset: {
          type: "image_csv",
