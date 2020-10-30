@@ -28,7 +28,8 @@ class Logger(Registrable):
         margin: int = 0,
         names_separator: str = "/",
         exp_name: str = "",
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
+        model_out_dir: Optional[str] = None
     ):
         self.color_labels = color_labels
         self.log_every = log_every

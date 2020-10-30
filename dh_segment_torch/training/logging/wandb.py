@@ -23,7 +23,8 @@ class WandbLogger(Logger):
         margin: int = 0,
         names_separator: str = "/",
         exp_name: str = "",
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
+        model_out_dir: Optional[str] = None
     ):
         super().__init__(
             color_labels,

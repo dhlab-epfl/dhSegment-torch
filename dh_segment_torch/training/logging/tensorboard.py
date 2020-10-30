@@ -1,19 +1,24 @@
+import os
 from pathlib import Path
 from typing import Union, Optional, Dict, Any
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+from logging import Logger as log
+
 from dh_segment_torch.data.color_labels import ColorLabels
 from dh_segment_torch.training.logging.logger import Logger
+
+logger = log(__name__)
 
 
 @Logger.register("tensorboard")
 class TensorboardLogger(Logger):
     def __init__(
         self,
-        log_dir: Union[str, Path],
         color_labels: ColorLabels,
+        log_dir: Optional[Union[str, Path]] = None,
         log_every: int = 200,
         log_images_every: int = 500,
         probas_threshold: float = 0.5,
@@ -22,7 +27,8 @@ class TensorboardLogger(Logger):
         margin: int = 0,
         names_separator: str = "/",
         exp_name: str = "",
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
+        model_out_dir: Optional[str] = None
     ):
         super().__init__(
             color_labels,
@@ -34,7 +40,13 @@ class TensorboardLogger(Logger):
             margin,
             names_separator,
         )
-        self.log_dir = log_dir
+        if log_dir:
+            self.log_dir = log_dir
+        elif model_out_dir:
+            self.log_dir = os.path.join(model_out_dir, 'log')
+        else:
+            logger.warning("Both log dir and model out dir are undefined, defaulting to ./log")
+            self.log_dir = os.path.join('.', 'log')
 
         self.writer = SummaryWriter(log_dir)
 
