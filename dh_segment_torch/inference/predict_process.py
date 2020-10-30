@@ -27,7 +27,7 @@ class PredictProcess(Registrable):
         self,
         data: InferenceDataset,
         model: InferenceModel,
-        post_process: PostProcessingPipeline,
+        post_process: Optional[PostProcessingPipeline] = None,
         batch_size: int = 1,
         num_workers: int = 0,
         index_to_name: Optional[Dict[int, str]] = None,
@@ -62,29 +62,29 @@ class PredictProcess(Registrable):
             paths = example["paths"]
             batch_probas = self.model.predict(images_batch, shapes).to("cpu").numpy()
             for probas, path in zip(batch_probas, paths):
+                input_data = {}
                 if self.index_to_name:
-                    input_probas = {}
                     for index, name in self.index_to_name.items():
-                        input_probas[name] = probas[index]
-                    if self.add_path:
-                        input_probas["path"] = path
-                    complete_result = self.post_process.apply(**input_probas)
+                        input_data[name] = probas[index]
                 else:
-                    kwargs = {}
-                    if self.add_path:
-                        kwargs["path"] = path
-                    complete_result = self.post_process.apply(probas, **kwargs)
+                    input_data['probas'] = probas
+                if self.add_path:
+                    input_data['path'] = path
+
+                if self.post_process:
+                    result = self.post_process.apply(**input_data)
+                else:
+                    result = input_data
 
                 if self.output_names:
                     if isinstance(self.output_names, str):
-                        result = complete_result[self.output_names]
+                        result = result[self.output_names]
                     else:
-                        result = {}
+                        result_filtered = {}
 
                         for name in self.output_names:
-                            result[name] = complete_result[name]
-                else:
-                    result = complete_result
+                            result_filtered[name] = result[name]
+                        result = result_filtered
 
                 results.append(result)
         return results

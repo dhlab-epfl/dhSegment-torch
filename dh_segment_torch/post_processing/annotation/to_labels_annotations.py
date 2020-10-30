@@ -10,10 +10,10 @@ class ToLabelsAnnotations(Operation):
         pass
 
     def apply(
-        self, labelled_shapes: List[Tuple[str, Shape]], *args, **kwargs
+        self, labeled_shapes: List[Tuple[str, Shape]], *args, **kwargs
     ) -> LabelsAnnotations:
         labels_annotations = LabelsAnnotations()
-        for label, shape in labelled_shapes:
+        for label, shape in labeled_shapes:
             if label not in labels_annotations:
                 labels_annotations[label] = []
             labels_annotations[label].append(shape)

@@ -1,15 +1,15 @@
 from itertools import product
+from typing import Dict, Any, Tuple, Union
 
 import numpy as np
 import torch
 import torch.nn.functional as F
-from typing import Dict, Any, Tuple, Union
 
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.color_labels import ColorLabels
 from dh_segment_torch.data.datasets.dataset import Dataset
-from dh_segment_torch.models import Model
+from dh_segment_torch.models.model import Model
 from dh_segment_torch.utils.ops import batch_items
 
 
@@ -24,7 +24,7 @@ class InferenceModel(Registrable):
         padding_mode: str = "reflect",
         padding_value: int = 0,
         multilabel: bool = False,
-        patch_size: Tuple[int, int] = None,
+        patch_size: Union[int, Tuple[int, int]] = None,
         patches_overlap: Union[int, float] = 0,
         patches_batch_size: int = 4,
         model_state_dict: Dict[str, Any] = None,
@@ -44,6 +44,9 @@ class InferenceModel(Registrable):
         self.padding_value = padding_value
 
         self.multilabel = multilabel
+
+        if isinstance(patch_size, int):
+            patch_size = (patch_size, patch_size)
         self.patch_size = patch_size
         self.patches_overlap = patches_overlap
         self.patches_batch_size = patches_batch_size
@@ -203,6 +206,7 @@ class InferenceModel(Registrable):
             model_state_dict,
             device,
         )
+
 
 
 InferenceModel.register("default", "from_partial")(InferenceModel)
