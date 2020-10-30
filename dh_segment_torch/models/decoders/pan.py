@@ -126,7 +126,7 @@ class FPABlock(nn.Module):
 
         self.middle_branch = Conv2DNormalizeActivate(
             in_channels,
-            out_channels=1,
+            out_channels=out_channels,
             kernel_size=1,
             normalization=normalization,
             activation=activation,
@@ -136,7 +136,7 @@ class FPABlock(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2),
             Conv2DNormalizeActivate(
                 in_channels,
-                out_channels=1,
+                out_channels=out_channels,
                 kernel_size=7,
                 normalization=normalization,
                 activation=activation,
@@ -146,8 +146,8 @@ class FPABlock(nn.Module):
         self.conv2_down = nn.Sequential(
             nn.MaxPool2d(kernel_size=2, stride=2),
             Conv2DNormalizeActivate(
-                in_channels=1,
-                out_channels=1,
+                in_channels=out_channels,
+                out_channels=out_channels,
                 kernel_size=5,
                 normalization=normalization,
                 activation=activation,
@@ -157,15 +157,15 @@ class FPABlock(nn.Module):
         self.conv3_down = nn.Sequential(
             nn.MaxPool2d(kernel_size=2, stride=2),
             Conv2DNormalizeActivate(
-                in_channels=1,
-                out_channels=1,
+                in_channels=out_channels,
+                out_channels=out_channels,
                 kernel_size=3,
                 normalization=normalization,
                 activation=activation,
             ),
             Conv2DNormalizeActivate(
-                in_channels=1,
-                out_channels=1,
+                in_channels=out_channels,
+                out_channels=out_channels,
                 kernel_size=3,
                 normalization=normalization,
                 activation=activation,
@@ -173,16 +173,16 @@ class FPABlock(nn.Module):
         )
 
         self.conv2_up = Conv2DNormalizeActivate(
-            in_channels=1,
-            out_channels=1,
+            in_channels=out_channels,
+            out_channels=out_channels,
             kernel_size=5,
             normalization=normalization,
             activation=activation,
         )
 
         self.conv1_up = Conv2DNormalizeActivate(
-            in_channels=1,
-            out_channels=1,
+            in_channels=out_channels,
+            out_channels=out_channels,
             kernel_size=7,
             normalization=normalization,
             activation=activation,
