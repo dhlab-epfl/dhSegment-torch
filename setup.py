@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
+import sys
+
+if sys.platform == 'win32':
+    jsonnet = "jsonnetbin>=0.16.0"
+else:
+    jsonnet = "jsonnet>=0.16.0"
 
 setup(
     name="dh_segment_torch",
@@ -33,6 +39,7 @@ setup(
         "shapely>=1.7.0",
         "tqdm>=4.41.1",
         "requests>=2.23.0",
+        jsonnet
     ],
     extras_require={
         "doc": [
