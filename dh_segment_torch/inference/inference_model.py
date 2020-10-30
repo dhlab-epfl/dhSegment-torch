@@ -192,7 +192,6 @@ class InferenceModel(Registrable):
         else:
             patches_size = None
 
-        model_state_dict = torch.load(model_state_dict, map_location=device)
         return cls.from_partial(
             model,
             color_labels.num_classes,

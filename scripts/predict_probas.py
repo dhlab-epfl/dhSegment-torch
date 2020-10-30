@@ -12,15 +12,15 @@ parser.add_argument(
     "config", type=str, help="The configuration file for predicting probabilities."
 )
 
-parser.add_argument("output_dir", type=str, help="The output directory to store the probabilities.")
-
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     args = parser.parse_args()
     params = Params.from_file(args.config)
 
-    output_dir = args.output_dir
+    output_dir = params.pop("output_directory")
+
+    os.makedirs(output_dir, exist_ok=True)
 
     params['post_process'] = None
     params['add_path'] = True
