@@ -26,9 +26,4 @@ if __name__ == "__main__":
     params['add_path'] = True
 
     predict_annots = PredictProcess.from_params(params)
-    results = predict_annots.process()
-
-    for result in results:
-        basename = os.path.splitext(os.path.basename(result['path']))[0] + ".npy"
-        output_path = os.path.join(output_dir, basename)
-        np.save(output_path, result['probas'])
+    results = predict_annots.process_to_probas_files(output_dir)

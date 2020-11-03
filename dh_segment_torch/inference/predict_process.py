@@ -1,5 +1,7 @@
+import os
 from typing import Dict, Optional, List, Union
 
+import numpy as np
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
@@ -67,9 +69,9 @@ class PredictProcess(Registrable):
                     for index, name in self.index_to_name.items():
                         input_data[name] = probas[index]
                 else:
-                    input_data['probas'] = probas
+                    input_data["probas"] = probas
                 if self.add_path:
-                    input_data['path'] = path
+                    input_data["path"] = path
 
                 if self.post_process:
                     result = self.post_process.apply(**input_data)
@@ -88,6 +90,32 @@ class PredictProcess(Registrable):
 
                 results.append(result)
         return results
+
+    def process_to_probas_files(
+        self, output_directory: str, prefix: str = "", suffix: str = ""
+    ):
+        data_loader = DataLoader(
+            self.data,
+            self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            collate_fn=collate_fn_with_paths,
+        )
+
+        for example in tqdm(data_loader):
+            images_batch = example["input"]
+            shapes = example["shapes"]
+            paths = example["paths"]
+            batch_probas = self.model.predict(images_batch, shapes).to("cpu").numpy()
+            for probas, path in zip(batch_probas, paths):
+                basename = (
+                    prefix
+                    + os.path.splitext(os.path.basename(path))[0]
+                    + suffix
+                    + ".npy"
+                )
+                output_path = os.path.join(output_directory, basename)
+                np.save(output_path, probas)
 
 
 PredictProcess.register("default")(PredictProcess)

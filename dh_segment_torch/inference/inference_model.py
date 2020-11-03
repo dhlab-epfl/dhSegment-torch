@@ -84,7 +84,7 @@ class InferenceModel(Registrable):
     ) -> torch.tensor:
         if self.patch_size is None:
             raise ValueError("In order to predict ")
-        if shapes:
+        if shapes is not None:
             if len(images_batch) != len(shapes):
                 raise ValueError(
                     "Images shapes and images batch should have the same number of samples."
