@@ -87,7 +87,9 @@ train_base + {
   evaluate_every_epoch: 2,
 
   # Once the network was evaluated n times without improvement, the training will automatically stop.
-  early_stopping: {
-    patience: 5
-  },
+  # Commented out by default.
+  # You can use it if you have enough data and the validation metric (miou) is relatively smooth.
+  #early_stopping: {
+  #  patience: 5
+  #},
 }
