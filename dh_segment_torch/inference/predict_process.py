@@ -63,7 +63,9 @@ class PredictProcess(Registrable):
             shapes = example["shapes"]
             paths = example["paths"]
             batch_probas = self.model.predict(images_batch, shapes).to("cpu").numpy()
-            for probas, path in zip(batch_probas, paths):
+            for probas, shape, path in zip(batch_probas, shapes, paths):
+                if shape is not None:
+                    probas = probas[..., : shape[0].item(), : shape[1].item()]
                 input_data = {}
                 if self.index_to_name:
                     for index, name in self.index_to_name.items():
@@ -107,7 +109,9 @@ class PredictProcess(Registrable):
             shapes = example["shapes"]
             paths = example["paths"]
             batch_probas = self.model.predict(images_batch, shapes).to("cpu").numpy()
-            for probas, path in zip(batch_probas, paths):
+            for probas, shape, path in zip(batch_probas, shapes, paths):
+                if shape is not None:
+                    probas = probas[..., : shape[0].item(), : shape[1].item()]
                 basename = (
                     prefix
                     + os.path.splitext(os.path.basename(path))[0]
