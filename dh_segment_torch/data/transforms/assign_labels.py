@@ -37,7 +37,7 @@ class AssignLabel(Assign):
         return self.apply(img)
 
     def second_phase(self, label):
-        return label
+        return label.astype(np.long)
 
     def apply(self, img):
 
