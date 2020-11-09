@@ -31,13 +31,13 @@ class Loss(torch.nn.Module, Registrable):
         loss = self._loss_module(input, target)
         if self.ignore_padding:
             if shapes is None:
-                raise ValueError("Ignoring padding, thus shapes should be null.")
+                raise ValueError("Ignoring padding, thus shapes should not be null.")
             return compute_with_shapes(
                 loss, shapes, reduce=self._reduce_function, margin=self.margin
             )
+        elif self.margin > 0:
+            return compute_with_margin(loss, self.margin, reduce=self._reduce_function)
         else:
-            if self.margin > 0:
-                loss = loss[..., self.margin : -self.margin, self.margin : -self.margin]
             return loss
 
 
@@ -61,7 +61,7 @@ class CrossEntropyLoss(Loss):
         :param ignore_padding:
         :param margin:
         """
-        if ignore_padding:
+        if ignore_padding or margin > 0:
             reduction = "none"
         loss = torch.nn.CrossEntropyLoss(
             weight=torch.tensor(weights).to(torch.float)
@@ -92,7 +92,7 @@ class BCEWithLogitsLoss(Loss):
         :param ignore_padding:
         :param margin:
         """
-        if ignore_padding:
+        if ignore_padding or margin > 0:
             reduction = "none"
         loss = torch.nn.BCEWithLogitsLoss(
             size_average=size_average,
@@ -109,7 +109,7 @@ class DiceLoss(Loss):
     def __init__(
         self, smooth: float = 1.0, ignore_padding: bool = False, margin: int = 0
     ):
-        loss = dice_loss.Dice(smooth, no_reduce=ignore_padding)
+        loss = dice_loss.Dice(smooth, no_reduce=ignore_padding or margin > 0)
         super().__init__(
             loss_module=loss,
             reduce_function=loss.reduce_dice,
@@ -128,8 +128,10 @@ class TopologyLoss(Loss):
         ignore_padding: bool = False,
         margin: int = 0,
     ):
-        if ignore_padding:
-            raise ValueError("Cannot compute topology loss and ignore padding")
+        if ignore_padding or margin > 0:
+            raise ValueError(
+                "Cannot compute topology loss and ignore padding or use margin."
+            )
         loss = topology_loss.TopologyLoss(layers_sel, labels_sel, multilabel)
         super().__init__(
             loss_module=loss, ignore_padding=False, margin=margin,
@@ -168,3 +170,9 @@ def compute_with_shapes(input_tensor, shapes, reduce=torch.mean, margin=0):
         res += reduce(cut_with_padding(input_tensor[idx], shape, margin))
     res = reduce(res)
     return res
+
+
+def compute_with_margin(
+    input_tensor: torch.Tensor, margin: int, reduce=torch.mean
+) -> torch.Tensor:
+    return reduce(input_tensor[..., margin:-margin, margin:-margin])
