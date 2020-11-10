@@ -53,6 +53,8 @@ class InferenceModel(Registrable):
 
         if patch_size:
             self.predict = self.predict_patches
+            self.patches_margin = self.margin
+            self.margin = 0
         else:
             self.predict = self.predict_batch
 
@@ -97,6 +99,12 @@ class InferenceModel(Registrable):
         for image, shape in zip(images_batch, shapes):
             h, w = shape.numpy()
             image = image[..., :h, :w]
+            image = F.pad(
+                image.unsqueeze(0),
+                [self.patches_margin] * 4,
+                self.padding_mode,
+                self.padding_value,
+            ).squeeze(0)
 
             x_step = compute_step(
                 h, self.patch_size[0], self.margin, self.patches_overlap
@@ -131,10 +139,31 @@ class InferenceModel(Registrable):
 
                 probas = self.predict_batch(crops)
                 for idx, (x, y) in enumerate(positions):
-                    counts[x : x + self.patch_size[0], y : y + self.patch_size[1]] += 1
+                    counts[
+                        x
+                        + self.patches_margin: x
+                        + self.patch_size[0]
+                        - self.patches_margin,
+                        y
+                        + self.patches_margin: y
+                        + self.patch_size[1]
+                        - self.patches_margin,
+                    ] += 1
                     probas_sum[
-                        :, x : x + self.patch_size[0], y : y + self.patch_size[1]
-                    ] += probas[idx]
+                        :,
+                        x
+                        + self.patches_margin: x
+                        + self.patch_size[0]
+                        - self.patches_margin,
+                        y
+                        + self.patches_margin: y
+                        + self.patch_size[1]
+                        - self.patches_margin,
+                    ] += probas[idx][
+                        ...,
+                        self.patches_margin: -self.patches_margin,
+                        self.patches_margin: -self.patches_margin,
+                    ]
             image_probas = probas_sum / counts
             results.append(image_probas)
         return torch.stack(results)
@@ -205,7 +234,6 @@ class InferenceModel(Registrable):
             model_state_dict,
             device,
         )
-
 
 
 InferenceModel.register("default", "from_partial")(InferenceModel)
