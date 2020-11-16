@@ -23,7 +23,7 @@ setup(
         "torch>=1.6.0",
         "torchvision>=0.7.0",
         "tensorboard>=2.0.0",
-        "scikit-image>=0.15.0,<0.16.0",
+        "scikit-image>=0.16.0",
         "scikit-learn>=0.22.1,<0.23.0",
         "pandas>=1.0.3",
         "numpy>=1.18.1,<1.19.0",
