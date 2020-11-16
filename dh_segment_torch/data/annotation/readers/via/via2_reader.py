@@ -7,7 +7,7 @@ import pandas as pd
 
 from dh_segment_torch.data.annotation.annotation import Annotation
 from dh_segment_torch.data.annotation.readers.annotation_reader import AnnotationReader
-from dh_segment_torch.data.annotation.readers.via.utils import (
+from dh_segment_torch.data.annotation.readers.utils import (
     annotation_data_to_data,
     data_row_to_annotation,
 )
