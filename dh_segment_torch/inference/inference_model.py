@@ -161,8 +161,8 @@ class InferenceModel(Registrable):
                         - self.patches_margin,
                     ] += probas[idx][
                         ...,
-                        self.patches_margin: -self.patches_margin,
-                        self.patches_margin: -self.patches_margin,
+                        self.patches_margin: self.patch_size[0]-self.patches_margin,
+                        self.patches_margin: self.patch_size[1]-self.patches_margin,
                     ]
             image_probas = probas_sum / counts
             results.append(image_probas)
