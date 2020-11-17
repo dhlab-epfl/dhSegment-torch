@@ -16,11 +16,11 @@ class Thresholding(ProbasIntOperation):
         high_threshold: Union[int, float] = 1.0,
         threshold_mode: str = "binary",
     ):
+        self.threshold_mode = parse_threshold_mode(threshold_mode)
 
         if low_threshold < 0:
             self.low_threshold = 0
             self.high_threshold = normalize_threshold(high_threshold)
-            self.threshold_mode = parse_threshold_mode(threshold_mode)
             self.threshold_mode += cv2.THRESH_OTSU
         else:
             self.low_threshold = normalize_threshold(low_threshold)
@@ -29,7 +29,7 @@ class Thresholding(ProbasIntOperation):
     def apply(self, input: np.array, *args, **kwargs) -> np.array:
         return cv2.threshold(
             input, self.low_threshold, self.high_threshold, self.threshold_mode
-        )
+        )[1]
 
 
 @Operation.register("threshold_adaptative")

@@ -51,7 +51,7 @@ class ExtractIndexOpration(Operation):
 
 
 @Operation.register("split")
-class SplitOperation(Operation):
+class ConcatLists(Operation):
     def __init__(self, operations_splits: List[List[Operation]]):
         self.operations_splits = operations_splits
 
@@ -84,13 +84,6 @@ class ConcatLists(Operation):
         for list_ in lists:
             result += list_
         return result
-
-
-@Operation.register("intermediary_output")
-class IntermediaryOutput(SplitOperation):
-    def __init__(self, operations: List[Operation]):
-        super().__init__([[NoOperation()], operations])
-
 
 @Operation.register("probas_to_image_size")
 class ProbasToImageSize(Operation):

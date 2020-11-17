@@ -3,6 +3,8 @@ from dh_segment_torch.post_processing.annotation.to_annotation import *
 from dh_segment_torch.post_processing.annotation.to_labels_annotations import *
 from dh_segment_torch.post_processing.geometries.box import *
 from dh_segment_torch.post_processing.geometries.filter import *
+from dh_segment_torch.post_processing.geometries.polygon import *
+from dh_segment_torch.post_processing.geometries.simplify import *
 from dh_segment_torch.post_processing.geometries.lines.lines import *
 from dh_segment_torch.post_processing.geometries.lines.lines_filter import *
 from dh_segment_torch.post_processing.geometries.lines.lines_page import *
@@ -12,18 +14,17 @@ from dh_segment_torch.post_processing.operation import *
 from dh_segment_torch.post_processing.post_processing_pipeline import *
 from dh_segment_torch.post_processing.probabilities.filters import *
 from dh_segment_torch.post_processing.probabilities.thresholding import *
+from dh_segment_torch.post_processing.probabilities.morphology import *
+
 
 _BASE = [
     "Operation",
     "NoOperation",
     "ClasswiseNoOperation",
-    "SplitOperation",
     "ConcatLists",
     "MergeLists",
     "ExtractIndexOpration",
-    "IntermediaryOutput",
     "ProbasToImageSize",
-    "MergeListsOperation",
     "PostProcessingPipeline",
     "DagPipeline",
     "OperationsInputs",
@@ -66,14 +67,14 @@ _GEOMETRY = [
 
 
 _SHAPELY_TO_SHAPE = [
-    "to_point",
-    "to_circle",
-    "to_linestring",
-    "to_line",
-    "to_ellipse",
-    "to_rectangle",
-    "to_polygon",
-    "to_multipolygon",
+    "ToPoint",
+    "ToCircle",
+    "ToLineString",
+    "ToLine",
+    "ToEllipse",
+    "ToRectangle",
+    "ToPolygon",
+    "ToMultiPolygon",
 ]
 
 _ANNOTATION = [

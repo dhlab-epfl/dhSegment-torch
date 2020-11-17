@@ -40,9 +40,9 @@ class OpencvStructuringElement(StructuringElement):
         cls(cv2.MORPH_ELLIPSE, ksize, anchor)
 
 
-OpencvStructuringElement.register("rectangle", "rectangle")(StructuringElement)
-OpencvStructuringElement.register("cross", "cross")(StructuringElement)
-OpencvStructuringElement.register("ellipse", "ellipse")(StructuringElement)
+StructuringElement.register("rectangle", "rectangle")(OpencvStructuringElement)
+StructuringElement.register("cross", "cross")(OpencvStructuringElement)
+StructuringElement.register("ellipse", "ellipse")(OpencvStructuringElement)
 
 
 @StructuringElement.register("square")
