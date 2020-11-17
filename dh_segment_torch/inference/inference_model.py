@@ -97,14 +97,16 @@ class InferenceModel(Registrable):
             shapes = torch.tensor([images_batch.size()[-2:]])
         results = []
         for image, shape in zip(images_batch, shapes):
-            h, w = shape.numpy()
-            image = image[..., :h, :w]
+            original_h, original_w = shape.numpy()
+            image = image[..., :original_h, :original_w]
             image = F.pad(
                 image.unsqueeze(0),
                 [self.patches_margin] * 4,
                 self.padding_mode,
                 self.padding_value,
             ).squeeze(0)
+
+            h, w = image.size()[1:]
 
             x_step = compute_step(
                 h, self.patch_size[0], self.margin, self.patches_overlap
@@ -141,30 +143,35 @@ class InferenceModel(Registrable):
                 for idx, (x, y) in enumerate(positions):
                     counts[
                         x
-                        + self.patches_margin: x
+                        + self.patches_margin : x
                         + self.patch_size[0]
                         - self.patches_margin,
                         y
-                        + self.patches_margin: y
+                        + self.patches_margin : y
                         + self.patch_size[1]
                         - self.patches_margin,
                     ] += 1
                     probas_sum[
                         :,
                         x
-                        + self.patches_margin: x
+                        + self.patches_margin : x
                         + self.patch_size[0]
                         - self.patches_margin,
                         y
-                        + self.patches_margin: y
+                        + self.patches_margin : y
                         + self.patch_size[1]
                         - self.patches_margin,
                     ] += probas[idx][
                         ...,
-                        self.patches_margin: self.patch_size[0]-self.patches_margin,
-                        self.patches_margin: self.patch_size[1]-self.patches_margin,
+                        self.patches_margin : self.patch_size[0] - self.patches_margin,
+                        self.patches_margin : self.patch_size[1] - self.patches_margin,
                     ]
             image_probas = probas_sum / counts
+            image_probas = image_probas[
+                ...,
+                self.patches_margin : self.patches_margin + original_h,
+                self.patches_margin : self.patches_margin + original_w,
+            ]
             results.append(image_probas)
         return torch.stack(results)
 
