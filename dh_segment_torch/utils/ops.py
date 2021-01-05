@@ -10,6 +10,7 @@ from typing import (
     Iterator,
 )
 
+import numpy as np
 
 import torch
 
@@ -28,7 +29,9 @@ def detach_and_move_tensors(
     *tensors: torch.Tensor, device: Optional[str] = None, non_blocking: bool = True,
 ) -> Iterable[torch.Tensor]:
     tensors = [
-        tensor.detach().to(device if device else tensor.device, non_blocking=non_blocking)
+        tensor.detach().to(
+            device if device else tensor.device, non_blocking=non_blocking
+        )
         if isinstance(tensor, torch.Tensor)
         else tensor
         for tensor in tensors
@@ -86,3 +89,7 @@ def normalize_dict(dict_: Union[Dict[str, T], List[T]]) -> Dict[str, T]:
 
 def list_to_index_dict(list_: Iterable[T]) -> Dict[str, T]:
     return {str(idx): item for idx, item in enumerate(list_)}
+
+
+def is_int_array(array: np.array, eps: float = 1e-8):
+    return np.all(np.abs(array - array.astype(np.int32)) < eps)

@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 
@@ -69,7 +69,7 @@ class AssignMultilabel(AssignLabel):
     def __init__(
         self,
         colors_array: List[Tuple[int, int, int]],
-        onehot_label_array: List[List[int]],
+        onehot_label_array: List[List[Union[int, float]]],
     ):
         super().__init__(colors_array)
         self.onehot_label_array = onehot_label_array
@@ -78,7 +78,7 @@ class AssignMultilabel(AssignLabel):
         return super().apply(img)
 
     def second_phase(self, label):
-        mask_image = np.take(self.onehot_label_array, label, axis=0) > 0  # [H, W, C]
+        mask_image = np.take(self.onehot_label_array, label, axis=0)  # [H, W, C]
         mask_image = mask_image.astype(
             np.float32
         )  # TODO check that is later converted to float32

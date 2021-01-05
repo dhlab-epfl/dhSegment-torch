@@ -82,6 +82,7 @@ class SegmentationModel(Model):
         logits = self.decoder(*features_maps)
         res["logits"] = logits
         if target is not None:
+            print(target)
             loss = self.loss(logits, target, shapes)
             res["loss"] = loss
             if track_metrics:

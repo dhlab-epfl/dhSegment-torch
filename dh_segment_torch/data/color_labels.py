@@ -9,6 +9,7 @@ import numpy as np
 
 from dh_segment_torch.config.registrable import Registrable
 from dh_segment_torch.data.utils import parse_and_validate_color, n_colors
+from dh_segment_torch.utils.ops import is_int_array
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class ColorLabels(Registrable):
     def __init__(
         self,
         colors: List[Tuple[int, int, int]],
-        one_hot_encoding: Optional[List[List[int]]] = None,
+        one_hot_encoding: Optional[List[List[Union[int, float]]]] = None,
         labels: Optional[List[str]] = None,
     ):
         self.colors = colors
@@ -159,7 +160,7 @@ class ColorLabels(Registrable):
         cls, color_labels: List[Dict[str, Any]], labels: Optional[List[str]] = None
     ):
         colors: List[Tuple[int, int, int]] = []
-        one_hot_encoding: Optional[List[List[int]]] = None
+        one_hot_encoding: Optional[List[List[Union[int, float]]]] = None
         labels: Optional[List[str]] = labels
 
         has_one_hot = None
@@ -260,13 +261,25 @@ ColorLabels.register("labels_multilabel", "from_labels_multilabel")(ColorLabels)
 
 
 def parse_validate_one_hot(one_hot) -> List[int]:
+    """
+    Parse and validate a one-hot encoding.
+
+    It can be either 0s and 1s or floats between 0 and 1
+    """
     if not isinstance(one_hot, str) and not isinstance(one_hot, Sized):
         raise ValueError("One hot needs to be defined either by a sequence or a string")
     if isinstance(one_hot, str):
         one_hot = [x for x in one_hot]
-    one_hot = np.array(one_hot).astype(np.int32)
-    if len(set(np.unique(one_hot).tolist()).difference({0, 1})) > 0:
-        raise ValueError("Found not 0 and 1 ")
+
+    one_hot = np.array(one_hot).astype(np.float32)
+
+    if is_int_array(one_hot):
+        if len(set(np.unique(one_hot).tolist()).difference({0, 1})) > 0:
+            raise ValueError("Found not 0 and 1 when one hot is integers.")
+        one_hot = one_hot.astype(np.int32)
+    else:
+        if np.any((one_hot < 0) | (one_hot > 1)):
+            raise ValueError("Found values smaller than 0 or larger than 1 in one-hot.")
     return [x for x in one_hot]
 
 
