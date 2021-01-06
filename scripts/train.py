@@ -32,6 +32,7 @@ if __name__ == "__main__":
     params = Params.from_file(args.config)
 
     model_out_dir = params.get("model_out_dir", "./")
+    os.makedirs(model_out_dir, exist_ok=True)
     params.to_file(os.path.join(model_out_dir, "config.json"))
 
     exp_name = params.pop("experiment_name", "dhSegment_experiment")
