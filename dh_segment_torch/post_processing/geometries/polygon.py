@@ -44,4 +44,4 @@ class PolygonDetection(BinaryToGeometriesOperation):
         found_polygons = sorted(
             found_polygons, key=lambda poly: poly.area, reverse=True
         )
-        return found_polygons[: min(self.max_boxes, len(found_polygons))]
+        return found_polygons[: min(self.max_polygons, len(found_polygons))]
