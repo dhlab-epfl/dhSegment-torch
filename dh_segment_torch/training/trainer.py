@@ -279,6 +279,10 @@ class Trainer(Registrable):
                 load_state_dict_not_none(self.__dict__.get(key, None), value)
             elif key not in {"train_loader", "val_loader", "loggers"}:
                 self.__dict__[key] = value
+                
+    def worker_init_fn(worker_id):
+        np.random.seed(np.random.get_state()[1][0] + torch.utils.data.get_worker_info().seed + self.epoch + torch.randint)
+        random.seed(np.random.get_state()[1][0] + torch.utils.data.get_worker_info().seed + self.epoch + torch.randint)
 
     @property
     def should_terminate(self):
@@ -346,6 +350,7 @@ class Trainer(Registrable):
                 batch_size=batch_size,
                 num_workers=min(num_data_workers, train_dataset.num_images),
                 shuffle=True and not is_patches,
+                worker_init_fn=worker_init_fn,
             )
         else:
             train_loader = DataLoader(
@@ -353,6 +358,7 @@ class Trainer(Registrable):
                 batch_size=batch_size,
                 num_workers=min(num_data_workers, train_dataset.num_images),
                 shuffle=True and not is_patches,
+                worker_init_fn=worker_init_fn,
             )
 
         if val_dataset:
@@ -363,6 +369,7 @@ class Trainer(Registrable):
                     batch_size=batch_size,
                     num_workers=min(num_data_workers, val_dataset.num_images),
                     shuffle=False,
+                    worker_init_fn=worker_init_fn,
                 )
             else:
                 val_loader = DataLoader(
@@ -370,6 +377,7 @@ class Trainer(Registrable):
                     batch_size=batch_size,
                     num_workers=min(num_data_workers, val_dataset.num_images),
                     shuffle=False,
+                    worker_init_fn=worker_init_fn,
                 )
 
         model = model.construct(
