@@ -1,4 +1,5 @@
 from dh_segment_torch.data.annotation.readers.annotation_reader import *
+from dh_segment_torch.data.annotation.readers.cvat_reader import *
 from dh_segment_torch.data.annotation.readers.via.via2_reader import *
 from dh_segment_torch.data.annotation.readers.via.via3_reader import *
 
@@ -16,7 +17,7 @@ from dh_segment_torch.data.annotation.labels_annotations import *
 from dh_segment_torch.data.annotation.shape import *
 
 
-_READER = ["AnnotationReader", "VIA2Reader", "VIA3Reader"]
+_READER = ["AnnotationReader", "CVATReader", "VIA2Reader", "VIA3Reader"]
 
 _WRITER = ["AnnotationWriter", "ImageWriter", "VIA2Writer", "VIA3Writer", "MiradorWebAnnotationWriter"]
 
