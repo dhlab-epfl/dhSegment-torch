@@ -18,7 +18,6 @@ from dh_segment_torch.data.annotation.shape import (
 from dh_segment_torch.data.annotation.utils import Coordinates, append_image_dir
 
 
-@AnnotationReader.register("cvat")
 class CVATReader(AnnotationReader):
     def __init__(
         self,
@@ -117,6 +116,7 @@ class CVATReader(AnnotationReader):
             for coord in coords
         ]
 
+AnnotationReader.register("cvat")(CVATReader)
 
 def round_int(number: str) -> int:
     return int(round(float(number)))
