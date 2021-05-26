@@ -2,8 +2,6 @@ import argparse
 import logging
 import os
 
-import numpy as np
-
 from dh_segment_torch.config.params import Params
 from dh_segment_torch.inference import PredictProcess
 

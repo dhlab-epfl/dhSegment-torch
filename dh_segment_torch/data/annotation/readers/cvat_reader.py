@@ -1,13 +1,12 @@
 from typing import Union, List, Optional, Tuple
 
 import pandas as pd
-from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
 from lxml import etree
 
 from dh_segment_torch.data.annotation import ImageSize
 from dh_segment_torch.data.annotation.annotation import Annotation
+from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
 from dh_segment_torch.data.annotation.readers.annotation_reader import AnnotationReader
-from dh_segment_torch.data.annotation.readers.utils import annotation_data_to_data
 from dh_segment_torch.data.annotation.shape import (
     Rectangle,
     Polygon,

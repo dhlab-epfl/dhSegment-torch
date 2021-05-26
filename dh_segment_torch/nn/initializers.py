@@ -11,7 +11,7 @@ class Initializer(Registrable):
         self.regexes = [regexes] if isinstance(regexes, str) else regexes
         self.initializer = lambda param: initializer(param, **kwargs)
 
-    def apply(self, params: List[torch.nn.Parameter]):
+    def apply(self, params: List[torch.Tensor]):
         for param in params:
             self.initializer(param)
 
@@ -123,6 +123,24 @@ class SparseInitializer(Initializer):
 
 
 class InitializerApplier(Registrable):
+    """Applies a list of initializers
+
+    Example in config:
+
+    "initializer": {
+        "initializers": [
+            {
+                "regexes": "decoder.*.conv2d.weight$",
+                "type": "xavier_uniform"
+            },
+            {
+                "regexes": "decoder.*.conv2d.bias$",
+                "type": "zeros"
+            }
+        ]
+    }
+
+    """
     default_implementation = "default"
 
     def __init__(
@@ -135,7 +153,7 @@ class InitializerApplier(Registrable):
         ]
         self.exclude_regexes = exclude_regexes
 
-    def apply(self, parameters: List[Tuple[str, torch.nn.Parameter]]):
+    def apply(self, parameters: List[Tuple[str, torch.Tensor]]):
         param_groups = make_params_groups(
             parameters, self.initializers, self.exclude_regexes
         )

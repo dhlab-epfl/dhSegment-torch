@@ -1,5 +1,5 @@
 from types import ModuleType
-from typing import Callable, Optional
+from typing import Callable, Optional, List, Tuple
 
 import numpy as np
 import torch
@@ -9,7 +9,7 @@ from torch.utils import data
 from dh_segment_torch.config.registrable import Registrable
 
 
-def compute_paddings(heights, widths):
+def compute_paddings(heights, widths) -> List[List[int]]:
     max_height = np.max(heights)
     max_width = np.max(widths)
 
@@ -20,7 +20,7 @@ def compute_paddings(heights, widths):
     paddings = np.stack(
         [paddings_zeros, paddings_width, paddings_zeros, paddings_height]
     ).T
-    return list(map(tuple, paddings))
+    return list(map(list, paddings))
 
 
 def collate_fn(examples):
