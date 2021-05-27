@@ -1,3 +1,4 @@
+import abc
 from typing import List, Tuple, Optional
 
 import cv2
@@ -14,7 +15,12 @@ from dh_segment_torch.data.annotation.utils import (
 )
 
 
-class Shape(Registrable):
+class Shape(Registrable, abc.ABC):
+    """
+    Abstract shape class.
+
+    Can create a mask or a shapeply geometry of itself.
+    """
     def __init__(self, normalized_coords: bool = True):
         self.normalized_coords = normalized_coords
 

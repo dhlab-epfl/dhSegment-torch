@@ -31,7 +31,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     params = Params.from_file(args.config)
 
-    model_out_dir = params.get("model_out_dir", "./")
+    model_out_dir = params.get("model_out_dir", "./model")
     os.makedirs(model_out_dir, exist_ok=True)
     params.to_file(os.path.join(model_out_dir, "config.json"))
 

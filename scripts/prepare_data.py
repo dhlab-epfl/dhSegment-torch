@@ -20,22 +20,20 @@ if __name__ == "__main__":
     num_processes = params.pop("num_processes", 4)
 
     data_path = params.pop("data_path")
-
     os.makedirs(data_path, exist_ok=True)
 
-    relative_path = params.pop("relative_path", True)
-
+    # Setting default params for image writer
     params.setdefault("labels_dir", os.path.join(data_path, "labels"))
     labels_dir = params.get("labels_dir")
 
     params.setdefault("images_dir", os.path.join(data_path, "images"))
     images_dir = params.get("images_dir")
-
     params.setdefault(
         "color_labels_file_path", os.path.join(data_path, "color_labels.json")
     )
     params.setdefault("csv_path", os.path.join(data_path, "data.csv"))
 
+    # Getting data splitter params
     data_splitter_params = params.pop("data_splitter", None)
     train_csv_path = params.pop("train_csv", os.path.join(data_path, "train.csv"))
     val_csv_path = params.pop("val_csv", os.path.join(data_path, "val.csv"))
@@ -45,9 +43,11 @@ if __name__ == "__main__":
     image_writer = AnnotationWriter.from_params(params)
     data = image_writer.write(num_processes)
 
+    relative_path = params.pop("relative_path", True)
+
     if relative_path:
-        data['image'] = data['image'].apply(lambda path: os.path.join("images", os.path.basename(path)))
-        data['label'] = data['label'].apply(lambda path: os.path.join("labels", os.path.basename(path)))
+        data['image'] = data['image'].apply(lambda path: os.path.join(images_dir, os.path.basename(path)))
+        data['label'] = data['label'].apply(lambda path: os.path.join(labels_dir, os.path.basename(path)))
 
     if data_splitter_params:
         data_splitter = DataSplitter.from_params(data_splitter_params)

@@ -286,6 +286,15 @@ def parse_validate_one_hot(one_hot) -> List[int]:
 def all_one_hot_and_colors(
     colors: List[Tuple[int, int, int]]
 ) -> Tuple[List[List[int]], List[Tuple[int, int, int]]]:
+    """
+    Given a list of colors, mix them to have all one hots combinations
+
+    For example, given three colors, then the result will be
+    the three colors, plus the 4 one-hot combination (101, 110, 011, 111)
+    and the background color (0, 0, 0)
+    :param colors: Colors to use to generate
+    :return: The list of one hot combinations and the list of their corresponding colors
+    """
     num_classes = len(colors)
     colors = np.array(colors)
     one_hots = get_all_one_hots(num_classes)
@@ -305,6 +314,13 @@ def all_one_hot_and_colors(
 
 
 def get_all_one_hots(num_classes: int) -> np.array:
+    """
+    Given a number of class, generate an array of all possible one combination
+
+    For example for 2 classes, we get [[0, 0], [0, 1], [1, 0], [1, 1]]
+    :param num_classes: Number of classes
+    :return: The list of one hot combination
+    """
     return (
         (np.arange(0, 2 ** num_classes)[:, None] & (1 << np.arange(num_classes))) > 0
     ).astype(int)
