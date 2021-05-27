@@ -10,4 +10,3 @@ def worker_init_fn(worker_id):
     # More than 128 bits (4 32-bit words) would be overkill.
     np.random.seed(ss.generate_state(4))
     random.seed(ss.generate_state(1)[0])
-    print(ss.generate_state(4))
