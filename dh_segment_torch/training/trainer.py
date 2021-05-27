@@ -27,6 +27,7 @@ from dh_segment_torch.training.schedulers import (
     ReduceOnPlateauScheduler,
     ConstantScheduler,
 )
+from dh_segment_torch.training.utils import worker_init_fn
 from dh_segment_torch.utils.ops import batch_items, move_batch
 
 logger_console = logging.getLogger(__name__)
@@ -279,11 +280,7 @@ class Trainer(Registrable):
                 load_state_dict_not_none(self.__dict__.get(key, None), value)
             elif key not in {"train_loader", "val_loader", "loggers"}:
                 self.__dict__[key] = value
-                
-    def worker_init_fn(worker_id):
-        np.random.seed(np.random.get_state()[1][0] + torch.utils.data.get_worker_info().seed + self.epoch + torch.randint)
-        random.seed(np.random.get_state()[1][0] + torch.utils.data.get_worker_info().seed + self.epoch + torch.randint)
-
+    
     @property
     def should_terminate(self):
         return self.early_stopping and self.early_stopping.should_terminate()
