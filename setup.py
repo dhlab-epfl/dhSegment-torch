@@ -35,7 +35,7 @@ setup(
         "opencv-python-headless>=4.3.0",
         "PyYaml>=5.3.0",
         "frozendict>=1.2",
-        "albumentations>=0.4.5",
+        "albumentations==0.5.2",
         "shapely>=1.7.0",
         "tqdm>=4.41.1",
         "requests>=2.23.0",
