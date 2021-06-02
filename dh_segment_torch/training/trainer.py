@@ -28,6 +28,7 @@ from dh_segment_torch.training.schedulers import (
     ReduceOnPlateauScheduler,
     ConstantScheduler,
 )
+from dh_segment_torch.training.utils import worker_init_fn
 from dh_segment_torch.utils.ops import batch_items, move_batch
 
 logger_console = logging.getLogger(__name__)
