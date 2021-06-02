@@ -62,7 +62,7 @@ class Metric(Registrable):
                 )
                 sub_probas = (
                     cut_with_padding(probas[idx], shape, self.margin)
-                    .unsqueeze(0)
+                    .unsqeeze(0)
                     .contiguous()
                 )
 
@@ -118,17 +118,13 @@ class MultilabelConfusionMetric(Metric):
 
     def _update(self, labels: torch.Tensor, probas: torch.Tensor):
         if self.multilabel:
-            predictions = torch.gt(probas, self.probas_threshold).to(torch.long)
+            predictions = (probas > self.probas_threshold).to(torch.long)
         else:
             predictions = probas.argmax(dim=1).to(torch.long)
 
-        matrix = detach_and_move_tensors(
-            batch_multilabel_confusion_matrix(
-                labels, predictions, self.num_classes, self.multilabel
-            ),
-            device="cpu",
-            non_blocking=True,
-        )
+        matrix = detach_and_move_tensors(batch_multilabel_confusion_matrix(
+            labels, predictions, self.num_classes, self.multilabel
+        ), device='cpu', non_blocking=True)
         self._batch_multilabel_confusion_matrix = torch.cat(
             [self._batch_multilabel_confusion_matrix, matrix], 0
         )
