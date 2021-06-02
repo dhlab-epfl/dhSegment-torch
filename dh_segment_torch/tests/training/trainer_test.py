@@ -26,23 +26,10 @@ class TrainerTest(DhSegmentTestCase):
                     "base_dir": self.FIXTURES_ROOT / "dataset" / "multiclass",
                 },
                 "model": {
-                    "encoder": "resnet18",
-                    "decoder": {"decoder_channels": [16, 16, 16, 16, 16]}
+                    "encoder": "resnet50",
+                    "decoder": {"decoder_channels": [512, 256, 128, 64, 32]}
                     # "loss": {"type": "dice"},
                 },
-                "initializer": {
-                    "initializers": [
-                        {
-                            "regexes": "decoder.*.conv2d.weight$",
-                            "type": "xavier_uniform"
-                        },
-                        {
-                            "regexes": "decoder.*.conv2d.bias$",
-                            "type": "zeros"
-                        }
-                    ]
-                },
-                "ignore_padding": True,
                 "metrics": [
                     "iou",
                     ("iou_class", {"type": "iou", "average": None}),
