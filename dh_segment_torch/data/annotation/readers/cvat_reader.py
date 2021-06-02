@@ -1,12 +1,13 @@
 from typing import Union, List, Optional, Tuple
 
 import pandas as pd
+from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
 from lxml import etree
 
-from dh_segment_torch.data.annotation.image_size import ImageSize
+from dh_segment_torch.data.annotation import ImageSize
 from dh_segment_torch.data.annotation.annotation import Annotation
-from dh_segment_torch.data.annotation.labels_annotations import LabelsAnnotations
 from dh_segment_torch.data.annotation.readers.annotation_reader import AnnotationReader
+from dh_segment_torch.data.annotation.readers.utils import annotation_data_to_data
 from dh_segment_torch.data.annotation.shape import (
     Rectangle,
     Polygon,
@@ -17,6 +18,7 @@ from dh_segment_torch.data.annotation.shape import (
 from dh_segment_torch.data.annotation.utils import Coordinates, append_image_dir
 
 
+@AnnotationReader.register("cvat")
 class CVATReader(AnnotationReader):
     def __init__(
         self,
@@ -115,7 +117,6 @@ class CVATReader(AnnotationReader):
             for coord in coords
         ]
 
-AnnotationReader.register("cvat")(CVATReader)
 
 def round_int(number: str) -> int:
     return int(round(float(number)))
