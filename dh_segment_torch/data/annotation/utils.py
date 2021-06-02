@@ -32,6 +32,10 @@ def int_coords(
     return [(int(round(x)), int(round(y))) for x, y in coords]
 
 
+T = TypeVar("T")
+U = TypeVar("U")
+
+
 def append_image_dir(uri: str, image_dir: str = None):
     if image_dir is None or uri.startswith("http"):
         return uri
@@ -39,9 +43,6 @@ def append_image_dir(uri: str, image_dir: str = None):
         return uri.replace("file://", "file://" + image_dir)
     else:
         return os.path.join(image_dir, uri)
-
-T = TypeVar("T")
-U = TypeVar("U")
 
 
 def reverse_dict(dico: Dict[T, U]) -> Dict[U, T]:
