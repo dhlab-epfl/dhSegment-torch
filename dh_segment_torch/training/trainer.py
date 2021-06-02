@@ -4,6 +4,7 @@ from typing import Optional, List, Union, Dict, Tuple, Any
 import torch
 from torch.utils import data
 from tqdm.auto import tqdm
+import numpy as np
 
 from dh_segment_torch.config.lazy import Lazy
 from dh_segment_torch.config.registrable import Registrable
@@ -27,7 +28,6 @@ from dh_segment_torch.training.schedulers import (
     ReduceOnPlateauScheduler,
     ConstantScheduler,
 )
-from dh_segment_torch.training.utils import worker_init_fn
 from dh_segment_torch.utils.ops import batch_items, move_batch
 
 logger_console = logging.getLogger(__name__)
@@ -280,7 +280,10 @@ class Trainer(Registrable):
                 load_state_dict_not_none(self.__dict__.get(key, None), value)
             elif key not in {"train_loader", "val_loader", "loggers"}:
                 self.__dict__[key] = value
-    
+
+    def worker_init_fn(worker_id):                                                          
+        np.random.seed(np.random.get_state()[1][0] + worker_id + self.epoch)
+        
     @property
     def should_terminate(self):
         return self.early_stopping and self.early_stopping.should_terminate()
@@ -291,13 +294,7 @@ class Trainer(Registrable):
         color_labels: ColorLabels,
         train_dataset: Lazy[Dataset],
         model: Lazy[Model],
-        train_loader: Optional[Lazy[DataLoader]] = None,
-        val_dataset: Optional[Lazy[Dataset]] = None,
-        val_loader: Optional[Lazy[DataLoader]] = None,
         optimizer: Optional[Lazy[Optimizer]] = None,
-        lr_scheduler: Optional[Lazy[Scheduler]] = None,
-        regularizer: Optional[Lazy[Regularizer]] = None,
-        initializer: Optional[InitializerApplier] = None,
         metrics: Optional[
             Union[
                 Dict[str, Lazy[Metric]],
@@ -305,23 +302,29 @@ class Trainer(Registrable):
                 Lazy[Metric],
             ]
         ] = None,
-        val_metric: str = "-loss",
-        val_metric_tracker: Optional[Lazy[MetricTracker]] = None,
+        train_loader: Optional[Lazy[DataLoader]] = None,
+        val_dataset: Optional[Lazy[Dataset]] = None,
+        val_loader: Optional[Lazy[DataLoader]] = None,
+        lr_scheduler: Optional[Lazy[Scheduler]] = None,
+        regularizer: Optional[Lazy[Regularizer]] = None,
+        initializer: Optional[InitializerApplier] = None,
         early_stopping: Optional[Lazy[EarlyStopping]] = None,
         train_checkpoint: Optional[Lazy[Checkpoint]] = None,
         val_checkpoint: Optional[Lazy[BestCheckpoint]] = None,  # TODO check if can do
+        val_metric_tracker: Optional[Lazy[MetricTracker]] = None,
+        loggers: Optional[Union[List[Lazy[Logger]], Lazy[Logger]]] = None,
+        val_metric: str = "-loss",
         batch_size: int = 8,
         shuffle_train: bool = True,
+        num_data_workers: int = 4,
         ignore_padding: bool = False,
         training_margin: int = 0,
         num_epochs: int = 20,
         evaluate_every_epoch: int = 10,
         num_accumulation_steps: int = 1,
-        num_data_workers: int = 4,
-        device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
-        loggers: Optional[Union[List[Lazy[Logger]], Lazy[Logger]]] = None,
         model_out_dir: str = "./model",
         track_train_metrics: bool = False,
+        device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
         reset_early_stopping: bool = True,
         exp_name: str = "dhSegment_experiment",
         config: Optional[Dict[str, Any]] = None,
