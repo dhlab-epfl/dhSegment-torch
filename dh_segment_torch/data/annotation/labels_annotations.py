@@ -11,10 +11,9 @@ from dh_segment_torch.data.annotation.shape import Shape
 
 
 class LabelsAnnotations(Registrable, MutableMapping):
-    """Represents a dictionary of label to shapes.
-
+    """
+    Represents a dictionary of label to shapes.
     The keys can be either tuples in case of multi-labels, either string for multi-class.
-    This class know how to create a mask or geometries for a given label/multi-label key.
     """
     default_implementation = "default"
 
@@ -65,11 +64,6 @@ class LabelsAnnotations(Registrable, MutableMapping):
                 shape.normalize_coords(image_size)
 
     def groupby_shape(self):
-        """
-        Group the current labels annotations by shape.
-        It is used when two same shapes have a different label.
-        :return: The grouped label annotation
-        """
         label_shape = [
             (shape, label) for label, shapes in self.items() for shape in shapes
         ]
