@@ -65,7 +65,7 @@ class MobileNetV2Encoder(Encoder, MobileNetV2):
             Dict[str, Union[str, int, float, List[Union[int, float]]]]
         ] = pretrained_settings_mobilenet_v2,
         pretrained: bool = True,
-        progress: bool = False,
+        progress: bool = False
     ):
         return cls(
             [3, 16, 24, 32, 96, 1280][: blocks + 2],
