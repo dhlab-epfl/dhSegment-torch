@@ -24,6 +24,18 @@ class Annotation(Registrable):
         auth: Optional[Tuple[str, str]] = None,
         cache_image: bool = True,
     ):
+        """Holds an annotation for a file.
+
+        It consists in an image with its path/url and a dict of labels annotations
+
+        :param uri: The path or url to the image
+        :param image_id: The optional image id, will be inferred from uri if not given
+        :param image_size: The image size, will be inferred if not given
+        :param labels_annotations: The label annotations dictionary
+        :param normalize_shapes: whether to normalize the shapes of the annotations
+        :param auth: an optional http auth tuple for fetching images
+        :param cache_image: Whether to cache the image once read once
+        """
         self.uri = uri
         self.auth = auth
         self.cache_image = cache_image
