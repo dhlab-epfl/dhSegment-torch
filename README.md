@@ -9,11 +9,21 @@ The no longer developed Tensorflow version can still be found at this [address](
 
 The original version was created by [Benoit Seguin](https://twitter.com/Seguin_Be) and Sofia Ares Oliveira at DHLAB, EPFL.
 
-The complete rewrite in Pytorch was done by Sofia Ares Oliveira and Raphäel Barman. Current development is currently pursued by Raphaël Barman.
+The complete rewrite in Pytorch was done by Sofia Ares Oliveira and Raphäel Barman.
 
-## Installation and usage
+## Installation
 
-Documentation is in progress and will be available soon.
+dhSegment will not work properly if the dependencies are not respected. In particular, inaccurate dependencies may result in an inability to converge, even if no error is displayed. Therefore, we highly recommend to create a dedicated environment as following :
+
+```
+conda env create --name dhs --file environment.yml
+conda activate dhs
+python setup.py install
+```
+
+## Usage
+
+Documentation is in progress and will be available as soon as possible.
 
 ## Citation
 If you are using this code for your research, you can cite the corresponding paper as :
