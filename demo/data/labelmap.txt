@@ -1,0 +1,4 @@
+# label:color_rgb:parts:actions
+background:0,0,0::
+cardboard:255,0,0::
+picture:0,0,255::
