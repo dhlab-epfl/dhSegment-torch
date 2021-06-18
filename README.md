@@ -16,7 +16,7 @@ The complete rewrite in Pytorch was done by Sofia Ares Oliveira and Raphäel Bar
 dhSegment will not work properly if the dependencies are not respected. In particular, inaccurate dependencies may result in an inability to converge, even if no error is displayed. Therefore, we highly recommend to create a dedicated environment as following :
 
 ```
-conda env create --name dhs_test --file environment.yml
+conda env create --name dhs --file environment.yml
 conda activate dhs
 python setup.py install
 ```
