@@ -19,6 +19,7 @@ setup(
         "Source Code": "https://github.com/dhlab-epfl/dhSegment-torch",
     },
     install_requires=[
+        "xmltodict>=0.12.0",
         "sacred==0.8",
         "torch>=1.6.0",
         "torchvision>=0.7.0",
@@ -38,7 +39,6 @@ setup(
         "shapely>=1.7.0",
         "tqdm>=4.41.0",
         "requests>=2.23.0",
-        jsonnet
     ],
     extras_require={
         "doc": [
