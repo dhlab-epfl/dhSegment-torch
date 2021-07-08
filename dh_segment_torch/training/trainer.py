@@ -281,9 +281,6 @@ class Trainer(Registrable):
                 load_state_dict_not_none(self.__dict__.get(key, None), value)
             elif key not in {"train_loader", "val_loader", "loggers"}:
                 self.__dict__[key] = value
-
-    def worker_init_fn(worker_id):                                                          
-        np.random.seed(np.random.get_state()[1][0] + worker_id + self.epoch)
         
     @property
     def should_terminate(self):
