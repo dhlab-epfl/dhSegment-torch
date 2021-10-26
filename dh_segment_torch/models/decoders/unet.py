@@ -32,7 +32,7 @@ class UnetDecoder(Decoder):
             )
 
         if activation is None:
-            activation = Activation.get_constructor("relu")(inplace=True)
+            activation = Activation.get_constructor("leaky_relu")(inplace=True)
 
         encoder_channels = list(reversed(encoder_channels))
         output_encoder_channels = encoder_channels[0]

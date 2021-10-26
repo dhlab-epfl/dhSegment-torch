@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Encoder(torch.nn.Module, Registrable):
-    default_implementation = "resnet50"
+    default_implementation = "resnet101"
 
     def __init__(
         self,
