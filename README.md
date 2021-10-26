@@ -25,6 +25,13 @@ python setup.py install
 
 Documentation is in progress and will be available as soon as possible.
 
+### Training the demo model
+
+Demo train script and dataset are provided. This requires only 6 GB GPU RAM and circa 30 min to train. 
+```
+python3 demo/train_demo.py
+```
+
 ## Citation
 If you are using this code for your research, you can cite the corresponding paper as :
 ```
