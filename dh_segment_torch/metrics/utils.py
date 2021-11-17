@@ -36,16 +36,13 @@ def batch_multilabel_confusion_matrix(
             for batch_idx in range(n_batches)
         ]
         num_samples = y_pred.shape[1:].numel()
-        tp_sum = batch_bincount(true_and_pred, n_batches, weights, minlength=n_classes)[
-            :, 1:
-        ]
+        tp_sum = batch_bincount(true_and_pred, n_batches, weights, minlength=n_classes)
         pred_sum = batch_bincount(
             y_pred.view(n_batches, -1), n_batches, weights, minlength=n_classes
-        )[:, 1:]
+        )
         true_sum = batch_bincount(
             y_true.view(n_batches, -1), n_batches, weights, minlength=n_classes
-        )[:, 1:]
-        n_classes -= 1
+        )
 
     fp = pred_sum - tp_sum
     fn = true_sum - tp_sum
