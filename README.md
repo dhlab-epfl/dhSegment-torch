@@ -17,7 +17,7 @@ dhSegment will not work properly if the dependencies are not respected. In parti
 
 ```
 conda env create --name dhs --file environment.yml
-conda activate dhs
+source activate dhs
 python setup.py install
 ```
 
