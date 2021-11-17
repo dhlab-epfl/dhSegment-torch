@@ -64,7 +64,7 @@ class ResNetEncoder(Encoder, ResNet):
         x = super().normalize_if_pretrained(x)
 
         layers = [
-            nn.Sequential(self.conv1, self.bn1, self.leaky_relu),
+            nn.Sequential(self.conv1, self.bn1, self.relu),
             nn.Sequential(self.maxpool, self.layer1),
             self.layer2,
             self.layer3,
