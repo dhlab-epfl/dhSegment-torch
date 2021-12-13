@@ -29,7 +29,7 @@ setup(
         "numpy==1.18.1",
         "scipy==1.3.2",
         "networkx==2.4",
-        "lxml==4.6.3",
+        "lxml==4.6.5",
         "pretrainedmodels==0.7.4",
         "opencv-python-headless==4.5.2.52",
         "PyYaml==5.4.1",
