@@ -26,7 +26,7 @@ setup(
         "scikit-image==0.17.2",
         "scikit-learn==0.22.2.post1",
         "pandas==1.2.4",
-        "numpy==1.18.1",
+        "numpy==1.22.0",
         "scipy==1.3.2",
         "networkx==2.4",
         "lxml==4.6.3",
