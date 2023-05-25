@@ -6,7 +6,7 @@ dependencies:
   - pip=19.3.1
   - setuptools=44.0.0
   - python=3.7
-  - pytorch=1.6.0
+  - pytorch=1.11.0
   - torchvision=0.7.0
   - cudatoolkit=10.1
   - tensorboard=2.0.0
