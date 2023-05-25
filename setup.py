@@ -21,7 +21,7 @@ setup(
     install_requires=[
         "sacred==0.8",
         "torch==1.11.0",
-        "torchvision==0.7.0",
+        "torchvision==0.12.0",
         "tensorboard==2.0.0",
         "scikit-image==0.17.2",
         "scikit-learn==0.22.2.post1",
