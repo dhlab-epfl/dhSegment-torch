@@ -19,7 +19,8 @@ setup(
         "Source Code": "https://github.com/dhlab-epfl/dhSegment-torch",
     },
     install_requires=[
-        "jsonnet==0.17.0"
+        "jsonnet==0.17.0",
+        "albumentations==0.5.2"
     ],
     extras_require={
         "doc": [
