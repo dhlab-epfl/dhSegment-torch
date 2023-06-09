@@ -20,7 +20,8 @@ setup(
     },
     install_requires=[
         "jsonnet==0.17.0",
-        "albumentations==0.5.2"
+        "albumentations==0.5.2",
+        "pretrainedmodels==0.7.4"
     ],
     extras_require={
         "doc": [
