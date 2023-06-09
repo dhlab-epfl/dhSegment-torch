@@ -18,7 +18,7 @@ dependencies:
   - networkx=2.5.1
   - pip:
       - sacred==0.8.1
-      - pretrainedmodels==0.7.4  # as of the latest version till my knowledge cut-off
+      - pretrainedmodels==0.7.4
       - opencv-python-headless==4.5.3.56
       - PyYaml==5.4.1
       - frozendict==2.0.6
