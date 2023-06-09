@@ -20,8 +20,8 @@ setup(
     },
     install_requires=[
         "sacred==0.8.1",
-        "torch==1.9.0",
-        "torchvision==0.10.1",
+        "torch==1.11.0",
+        "torchvision==0.12.0",
         "tensorboard==2.4.1",
         "scikit-image==0.18.1",
         "scikit-learn==0.24.2",
