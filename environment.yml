@@ -22,7 +22,7 @@ dependencies:
       - opencv-python-headless==4.5.3.56
       - PyYaml==5.4.1
       - frozendict==2.0.6
-      - albumentations==1.0.3
+      - albumentations==0.5.2
       - shapely==1.7.1
       - tqdm==4.61.2
       - requests==2.26.0
