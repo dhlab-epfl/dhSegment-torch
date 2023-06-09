@@ -37,7 +37,7 @@ setup(
         "albumentations==1.0.3",
         "shapely==1.7.1",
         "tqdm==4.61.2",
-        "requests==2.26.0",
+        "requests==2.31.0",
         "jsonnet==0.17.0"
     ],
     extras_require={
