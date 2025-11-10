@@ -1,5 +1,5 @@
 from itertools import product
-from typing import Dict, Any, Tuple, Union
+from typing import Dict, Any, Tuple, Union, Optional, List
 
 import numpy as np
 import torch
@@ -189,9 +189,10 @@ class InferenceModel(Registrable):
         patches_batch_size: int = 4,
         model_state_dict: str = None,
         device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
+        weights: Optional[List[float]] = None,
     ):
         model = model.construct(
-            num_classes=num_classes, multilabel=multilabel, margin=margin
+            num_classes=num_classes, multilabel=multilabel, margin=margin, weights=weights,
         )
 
         model_state_dict = torch.load(model_state_dict, map_location=device)
@@ -240,6 +241,7 @@ class InferenceModel(Registrable):
             patches_batch_size,
             model_state_dict,
             device,
+            color_labels.weights,
         )
 
 

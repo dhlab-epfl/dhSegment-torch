@@ -52,6 +52,10 @@ if __name__ == "__main__":
         state_dict["model"] = torch.load(args.model_checkpoint)
 
     trainer.load_state_dict(state_dict)
+    for state in trainer.optimizer.state.values():
+        for k, v in state.items():
+            if isinstance(v, torch.Tensor):
+                state[k] = v.to(trainer.device)
 
     try:
         trainer.train()

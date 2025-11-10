@@ -131,6 +131,7 @@ class SegmentationModel(Model):
         classes_labels: Optional[List[str]] = None,
         ignore_padding: bool = False,
         margin: int = 0,
+        weights: Optional[List[float]] = None,
     ):
         decoder = decoder.construct(
             encoder_channels=encoder.output_dims, num_classes=num_classes
@@ -189,12 +190,12 @@ class SegmentationModel(Model):
         metrics = dict(zip(metric_names, metrics_built))
 
         if loss:
-            loss = loss.construct(ignore_padding=ignore_padding, margin=margin)
+            loss = loss.construct(ignore_padding=ignore_padding, margin=margin, weights=weights)
         else:
             if multilabel:
-                loss = BCEWithLogitsLoss(ignore_padding=ignore_padding, margin=margin)
+                loss = BCEWithLogitsLoss(ignore_padding=ignore_padding, margin=margin, weights=weights)
             else:
-                loss = CrossEntropyLoss(ignore_padding=ignore_padding, margin=margin)
+                loss = CrossEntropyLoss(ignore_padding=ignore_padding, margin=margin, weights=weights)
 
         return cls(encoder, decoder, loss, metrics)
 

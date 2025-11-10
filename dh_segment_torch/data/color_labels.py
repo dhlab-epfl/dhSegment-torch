@@ -22,11 +22,13 @@ class ColorLabels(Registrable):
         colors: List[Tuple[int, int, int]],
         one_hot_encoding: Optional[List[List[Union[int, float]]]] = None,
         labels: Optional[List[str]] = None,
+        weights: Optional[List[float]] = None,
     ):
         self.colors = colors
         self.one_hot_encoding = one_hot_encoding
         self.labels = labels
         self.log_labels = None
+        self._weights = weights
 
         if one_hot_encoding:
             if len(colors) != len(one_hot_encoding):
@@ -53,6 +55,13 @@ class ColorLabels(Registrable):
                 self.log_labels = labels
                 assert len(self.log_labels) == len(colors)
 
+        if weights:
+            if self.num_classes != len(self._weights):
+                raise ValueError(
+                    f"Cannot have a different number of classes, {self.num_classes}"
+                    f", and weights, {len(self._weights)}"
+                )
+
     @property
     def multilabel(self):
         return self.one_hot_encoding is not None
@@ -63,6 +72,10 @@ class ColorLabels(Registrable):
             return len(self.one_hot_encoding[0])
         else:
             return len(self.colors)
+
+    @property
+    def weights(self):
+        return self._weights
 
     @classmethod
     def from_filter_by_colors(cls, color_labels, colors: Set[Tuple[int, int, int]]):

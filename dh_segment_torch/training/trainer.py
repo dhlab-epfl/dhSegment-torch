@@ -385,6 +385,7 @@ class Trainer(Registrable):
             classes_labels=color_labels.labels,
             ignore_padding=ignore_padding,
             margin=training_margin,
+            weights=color_labels.weights,
         )
 
         parameters = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
